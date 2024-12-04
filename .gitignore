@@ -1,0 +1,7 @@
+/bin
+trading_bot_env/
+utils/__pycache__
+config/__pycache__
+api/__pycache__
+bot_env
+strategy/__pycache__
