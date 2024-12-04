@@ -1,9 +1,10 @@
+# main.py
+
 import asyncio
 import logging
 from utils.logger import setup_logger
 from strategy.trading_strategy import TradingStrategy
 from config import config
-from utils.openai_utils import initialize_openai
 from deriv_api import DerivAPI
 
 async def main():
@@ -14,9 +15,6 @@ async def main():
     # Setup logger with configuration
     logger = setup_logger(config.LOG_LEVEL, config.LOG_FILE)
     logger.info("Starting trading bot...")
-
-    # Initialize OpenAI API
-    initialize_openai(config.OPENAI_API_KEY, logger)
 
     # Initialize Deriv API using the official `python_deriv_api` package
     deriv_api = DerivAPI(app_id=config.DERIV_APP_ID)
@@ -31,8 +29,12 @@ async def main():
         else:
             logger.info("Authorized with Deriv API.")
 
-        # Initialize trading strategy
-        strategy = TradingStrategy(logger=logger, deriv_api=deriv_api)
+        # Initialize trading strategy with OpenAI API Key
+        strategy = TradingStrategy(
+            logger=logger,
+            deriv_api=deriv_api,
+            openai_api_key=config.OPENAI_API_KEY  # Ensure this is defined in config.py
+        )
 
         # Fetch active symbols
         active_symbols_response = await deriv_api.active_symbols({"active_symbols": "full"})
@@ -45,13 +47,19 @@ async def main():
 
         # Start receiving ticks
         tick_stream = await deriv_api.subscribe({"ticks": config.SYMBOL})
+
+        # Define an asynchronous tick handler
+        async def handle_tick(tick):
+            await strategy.tick_callback(tick)
+
+        # Subscribe to ticks with the asynchronous handler
         tick_stream.subscribe(
-            on_next=lambda tick: asyncio.create_task(strategy.tick_callback(tick))
+            on_next=lambda tick: asyncio.create_task(handle_tick(tick))
         )
         logger.info(f"Subscribed to ticks for symbol: {config.SYMBOL}")
 
         # Run indefinitely
-        await asyncio.Future()  # Keep the main coroutine running
+        await asyncio.Future()  # Keeps the main coroutine running
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")

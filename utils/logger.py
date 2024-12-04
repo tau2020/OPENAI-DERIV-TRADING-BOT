@@ -1,30 +1,29 @@
+# utils/logger.py
+
 import logging
-import os
 from logging.handlers import RotatingFileHandler
 
-def setup_logger(level, log_file):
+def setup_logger(log_level, log_file):
     """
-    Sets up the logging configuration.
+    Sets up and returns a logger with the specified log level and log file.
     """
-    logger = logging.getLogger()
-    logger.setLevel(level.upper())
+    logger = logging.getLogger('TradingBot')
+    logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
 
-    # Console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(level.upper())
-    console_format = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
-    console_handler.setFormatter(console_format)
+    # Create handlers
+    c_handler = logging.StreamHandler()
+    f_handler = RotatingFileHandler(log_file, maxBytes=10**6, backupCount=5)  # 1MB per file, 5 backups
 
-    # File handler with rotation
-    if log_file:
-        log_dir = os.path.dirname(log_file)
-        if log_dir and not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-        file_handler = RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
-        file_handler.setLevel(level.upper())
-        file_format = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
-        file_handler.setFormatter(file_format)
-        logger.addHandler(file_handler)
+    c_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
+    f_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
 
-    logger.addHandler(console_handler)
+    # Create formatters and add them to handlers
+    formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
+    c_handler.setFormatter(formatter)
+    f_handler.setFormatter(formatter)
+
+    # Add handlers to the logger
+    logger.addHandler(c_handler)
+    logger.addHandler(f_handler)
+
     return logger

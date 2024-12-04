@@ -1,15 +1,18 @@
-from openai import OpenAI
+# utils/openai_utils.py
+
+import openai
 import logging
+import asyncio
 
 def initialize_openai(api_key, logger):
     """
     Initializes the OpenAI API client with the provided API key.
     """
-    client = OpenAI(api_key=api_key)
+    openai.api_key = api_key
     logger.info("OpenAI API initialized.")
-    return client
+    return openai  # Return the OpenAI client for use in TradingStrategy
 
-def get_trading_signal_from_openai(client, symbol, prices, times, logger):
+async def get_trading_signal_from_openai(client, symbol, prices, times, logger):
     """
     Uses OpenAI to analyze price data and provide a trading signal.
     """
@@ -35,8 +38,10 @@ Provide only the recommendation as one of the words: BUY, SELL, or HOLD.
 """
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
+        # Since OpenAI's Python library is synchronous, run it in a separate thread
+        response = await asyncio.to_thread(
+            client.chat.completions.create,
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}
@@ -45,9 +50,10 @@ Provide only the recommendation as one of the words: BUY, SELL, or HOLD.
             temperature=0,
         )
 
-        # Parse the response
+        # Parse the response (Corrected)
         if response and response.choices and len(response.choices) > 0:
-            content = response.choices[0].message.get('content', '').strip().upper()
+            # Access content using dot notation
+            content = response.choices[0].message.content.strip().upper()
             logger.info(f"OpenAI assistant recommendation: {content}")
 
             # Ensure the response is one of the expected signals

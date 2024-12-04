@@ -1,3 +1,5 @@
+# strategy/trading_strategy.py
+
 import logging
 from datetime import datetime
 import asyncio
@@ -5,7 +7,7 @@ import threading
 import matplotlib.pyplot as plt
 import io
 from config import config
-from utils.openai_utils import get_trading_signal_from_openai
+from utils.openai_utils import initialize_openai, get_trading_signal_from_openai
 
 class TradingStrategy:
     """
@@ -13,7 +15,7 @@ class TradingStrategy:
     decision-making, and risk management.
     """
 
-    def __init__(self, logger, deriv_api):
+    def __init__(self, logger, deriv_api, openai_api_key):
         self.logger = logger
         self.deriv_api = deriv_api
         self.tick_times = []
@@ -25,12 +27,8 @@ class TradingStrategy:
         self.active_symbols = []
         self.current_symbol = config.SYMBOL
 
-    def set_active_symbols(self, symbols):
-        """
-        Sets the list of active symbols available for trading.
-        """
-        self.active_symbols = symbols
-        self.logger.info(f"Active symbols set. Total symbols: {len(symbols)}")
+        # Initialize OpenAI client
+        self.openai_client = initialize_openai(openai_api_key, self.logger)
 
     async def tick_callback(self, tick):
         """
@@ -186,7 +184,13 @@ class TradingStrategy:
             times = self.tick_times.copy()
 
         # Use OpenAI assistant to get trading signal
-        signal = await get_trading_signal_from_openai(self.current_symbol, prices, times, self.logger)
+        signal = await get_trading_signal_from_openai(
+            self.openai_client,
+            self.current_symbol,
+            prices,
+            times,
+            self.logger
+        )
         confidence = 0.8  # Adjust confidence as needed
 
         self.logger.info(f"Strategy evaluated using OpenAI assistant. Signal: {signal}, Confidence: {confidence}")
@@ -266,3 +270,9 @@ class TradingStrategy:
         elif profit <= -config.STOP_LOSS:
             self.logger.info(f"Stop loss reached: {profit}")
             await self.deriv_api.sell({"sell": contract_id, "price": 0})
+    def set_active_symbols(self, symbols):
+        """
+        Sets the list of active symbols available for trading.
+        """
+        self.active_symbols = symbols
+        self.logger.info(f"Active symbols set. Total symbols: {len(symbols)}")
