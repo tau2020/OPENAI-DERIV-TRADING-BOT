@@ -26,6 +26,8 @@ class TradingStrategy:
         self.account_info_logged = False
         self.active_symbols = []
         self.current_symbol = config.SYMBOL
+        self.latest_balance = 0.0
+        self.currency = 'USD'  # Default currency, will be updated
 
         # Initialize OpenAI client
         self.openai_client = initialize_openai(openai_api_key, self.logger)
@@ -90,6 +92,10 @@ class TradingStrategy:
                 currency = balance_data.get('currency', 'USD')
                 account_type = 'Real' if account_status.get('is_virtual', 1) == 0 else 'Demo'
 
+                with self.lock:
+                    self.latest_balance = balance
+                    self.currency = currency
+
                 self.logger.info(f"Account Name (Login ID): {account_name}")
                 self.logger.info(f"Account Balance: {balance} {currency}")
                 self.logger.info(f"Account Type: {account_type}")
@@ -99,19 +105,23 @@ class TradingStrategy:
             self.logger.error(f"Error fetching account info: {e}")
 
     async def log_current_balance(self):
-        """
-        Logs the current account balance.
-        """
-        try:
-            balance_response = await self.deriv_api.balance()
-            if balance_response and 'balance' in balance_response:
-                balance = float(balance_response['balance'])
-                currency = balance_response.get('currency', 'USD')
-                self.logger.info(f"Updated Account Balance: {balance} {currency}")
-            else:
-                self.logger.error("Failed to retrieve account balance.")
-        except Exception as e:
-            self.logger.error(f"Error fetching balance: {e}")
+            """
+            Logs the current account balance.
+            """
+            try:
+                balance_response = await self.deriv_api.balance()
+                if balance_response and 'balance' in balance_response:
+                    balance = float(balance_response['balance'])
+                    currency = balance_response.get('currency', 'USD')
+                    with self.lock:
+                        self.latest_balance = balance
+                        self.currency = currency
+                    self.logger.info(f"Updated Account Balance: {balance} {currency}")
+                else:
+                    self.logger.error("Failed to retrieve account balance.")
+            except Exception as e:
+                self.logger.error(f"Error fetching balance: {e}")
+
 
     def should_update_chart(self):
         """

@@ -2,15 +2,17 @@
 
 import asyncio
 import logging
+import threading
 from utils.logger import setup_logger
 from strategy.trading_strategy import TradingStrategy
 from config import config
 from deriv_api import DerivAPI
+from dashboard import Dashboard
 
 async def main():
     """
     Main entry point for the trading bot.
-    Sets up logging, initializes API connections, and starts the trading strategy.
+    Sets up logging, initializes API connections, starts the trading strategy, and runs the dashboard.
     """
     # Setup logger with configuration
     logger = setup_logger(config.LOG_LEVEL, config.LOG_FILE)
@@ -41,9 +43,16 @@ async def main():
         active_symbols = active_symbols_response.get('active_symbols', [])
         if active_symbols:
             strategy.set_active_symbols(active_symbols)
+            logger.info(f"Fetched {len(active_symbols)} active symbols.")
         else:
             logger.error("Failed to retrieve active symbols.")
             return
+
+        # Initialize and start the Dashboard in a separate thread
+        dashboard = Dashboard(trading_strategy=strategy, host='0.0.0.0', port=8050)
+        dashboard_thread = threading.Thread(target=dashboard.run, daemon=True)
+        dashboard_thread.start()
+        logger.info("Dashboard is running... Access it at http://localhost:8050/")
 
         # Start receiving ticks
         tick_stream = await deriv_api.subscribe({"ticks": config.SYMBOL})
