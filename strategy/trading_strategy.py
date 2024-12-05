@@ -240,15 +240,46 @@ class TradingStrategy:
         Monitors the open trade for stop-loss and take-profit conditions.
         """
         self.logger.info(f"Monitoring trade. Contract ID: {contract_id}")
+        
         # Subscribe to proposal_open_contract stream
         poc_stream = await self.deriv_api.subscribe({"proposal_open_contract": 1, "contract_id": contract_id})
-        poc_subscription = poc_stream.subscribe(lambda poc: asyncio.create_task(self.handle_poc_update(poc, contract_id)))
-
-        # Keep monitoring until the contract is settled
-        await poc_stream.pipe().to_future()
-
-        # Dispose of the subscription when done
-        poc_subscription.dispose()
+        
+        # Create an asyncio Future to await until the contract is settled
+        loop = asyncio.get_event_loop()
+        future = loop.create_future()
+        
+        def on_next(poc):
+            # Handle each update from the proposal_open_contract stream
+            asyncio.create_task(self.handle_poc_update(poc, contract_id))
+            
+            # Check if the contract is settled
+            if poc.get('is_settled'):
+                if not future.done():
+                    future.set_result(None)
+        
+        def on_error(error):
+            self.logger.error(f"Error in poc_stream: {error}")
+            if not future.done():
+                future.set_exception(error)
+        
+        def on_completed():
+            if not future.done():
+                future.set_result(None)
+        
+        # Subscribe to the Observable with the defined callbacks
+        poc_subscription = poc_stream.subscribe(
+            on_next=on_next,
+            on_error=on_error,
+            on_completed=on_completed
+        )
+        
+        try:
+            # Await the future until the contract is settled
+            await future
+        finally:
+            # Dispose of the subscription when done
+            poc_subscription.dispose()
+            self.logger.info(f"Stopped monitoring trade. Contract ID: {contract_id}")
 
     async def handle_poc_update(self, poc_update, contract_id):
         """
