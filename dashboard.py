@@ -1,11 +1,11 @@
-# dashboard.py
+
 
 import dash
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
-import threading
+from datetime import datetime, timedelta
 
 class Dashboard:
     def __init__(self, trading_strategy, host='0.0.0.0', port=8050):
@@ -74,19 +74,38 @@ class Dashboard:
             Returns:
                 tuple: Updated figures and balance information.
             """
+            # Define the sliding window duration (e.g., last 60 minutes)
+            window_duration = timedelta(minutes=60)
+            current_time = datetime.now()
+
             # Acquire the lock to safely access shared data
             with self.trading_strategy.lock:
+                # Filter Price Data within the sliding window
+                filtered_tick_times = [t for t in self.trading_strategy.tick_times if current_time - t <= window_duration]
+                filtered_tick_prices = self.trading_strategy.tick_prices[-len(filtered_tick_times):]
+
+                # Filter P/L Data within the sliding window
+                filtered_pl_times = [t for t in self.trading_strategy.pl_times if current_time - t <= window_duration]
+                filtered_pl_values = self.trading_strategy.pl_values[-len(filtered_pl_times):]
+
                 # Prepare Price Chart
                 price_trace = go.Scatter(
-                    x=self.trading_strategy.tick_times,
-                    y=self.trading_strategy.tick_prices,
+                    x=filtered_tick_times,
+                    y=filtered_tick_prices,
                     mode='lines',
                     name='Price',
                     line=dict(color='blue')
                 )
                 price_layout = go.Layout(
                     title=f"{self.trading_strategy.current_symbol} Price Chart",
-                    xaxis=dict(title='Time'),
+                    xaxis=dict(
+                        title='Time',
+                        range=[
+                            min(filtered_tick_times) if filtered_tick_times else current_time,
+                            max(filtered_tick_times) if filtered_tick_times else current_time
+                        ],
+                        type='date'
+                    ),
                     yaxis=dict(title='Price'),
                     showlegend=True
                 )
@@ -94,15 +113,22 @@ class Dashboard:
 
                 # Prepare P/L Chart
                 pl_trace = go.Scatter(
-                    x=self.trading_strategy.pl_times,
-                    y=self.trading_strategy.pl_values,
+                    x=filtered_pl_times,
+                    y=filtered_pl_values,
                     mode='lines',
                     name='Net Cumulative P/L',
                     line=dict(color='red')
                 )
                 pl_layout = go.Layout(
                     title="Net Cumulative Profit/Loss",
-                    xaxis=dict(title='Time'),
+                    xaxis=dict(
+                        title='Time',
+                        range=[
+                            min(filtered_pl_times) if filtered_pl_times else current_time,
+                            max(filtered_pl_times) if filtered_pl_times else current_time
+                        ],
+                        type='date'
+                    ),
                     yaxis=dict(title='Net P/L'),
                     showlegend=True
                 )

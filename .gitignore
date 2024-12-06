@@ -9,3 +9,5 @@ Python-3.12.0
 settings.json
 Python-3.12.0.tgz
 models.cpython-312.pyc
+__pycache__/
+logs/

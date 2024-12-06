@@ -1,294 +1,153 @@
-2024-12-06 01:57:41,346 INFO:Starting trading bot...
-2024-12-06 01:57:41,347 INFO:Deriv API instance created.
-2024-12-06 01:57:43,624 INFO:Authorized with Deriv API.
-2024-12-06 01:57:43,625 INFO:OpenAI API initialized.
-2024-12-06 01:57:43,912 INFO:Active symbols set. Total symbols: 81
-2024-12-06 01:57:43,912 INFO:Fetched 81 active symbols.
-2024-12-06 01:57:43,920 INFO:Dashboard is running... Access it at http://localhost:8050/
-2024-12-06 01:57:43,923 INFO:Subscribed to ticks for symbol: R_50
-2024-12-06 01:57:44,965 INFO:Account Name (Login ID): Unknown
-2024-12-06 01:57:44,965 INFO:Account Balance: 9859.36 USD
-2024-12-06 01:57:44,965 INFO:Account Type: Demo
-2024-12-06 01:58:14,659 INFO:Historical data fetched for symbol: R_50
-2024-12-06 01:58:16,950 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 01:58:16,950 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 01:58:16,950 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 01:58:16,950 INFO:No trade action taken.
-2024-12-06 01:58:44,397 INFO:Chart updated.
-2024-12-06 01:58:44,693 INFO:Historical data fetched for symbol: R_50
-2024-12-06 01:58:45,932 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 01:58:45,932 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 01:58:45,932 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 01:58:45,932 INFO:No trade action taken.
-2024-12-06 01:59:16,745 INFO:Historical data fetched for symbol: R_50
-2024-12-06 01:59:18,282 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 01:59:18,282 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 01:59:18,282 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 01:59:18,282 INFO:No trade action taken.
-2024-12-06 01:59:46,393 INFO:Chart updated.
-2024-12-06 01:59:46,750 INFO:Historical data fetched for symbol: R_50
-2024-12-06 01:59:48,500 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 01:59:48,501 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 01:59:48,501 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 01:59:48,501 INFO:No trade action taken.
-2024-12-06 02:00:18,799 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:00:20,131 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:00:20,131 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:00:20,131 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:00:20,438 INFO:Price proposal received: 10
-2024-12-06 02:00:20,438 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:00:20,724 INFO:Trade executed. Contract ID: 265371845748
-2024-12-06 02:00:20,724 INFO:Monitoring trade. Contract ID: 265371845748
-2024-12-06 02:00:48,350 INFO:Chart updated.
-2024-12-06 02:00:50,749 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:00:52,695 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:00:52,695 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:00:52,695 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:00:52,979 INFO:Price proposal received: 10
-2024-12-06 02:00:52,979 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:00:53,411 INFO:Trade executed. Contract ID: 265371869588
-2024-12-06 02:00:53,411 INFO:Monitoring trade. Contract ID: 265371869588
-2024-12-06 02:01:20,623 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:01:22,085 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:01:22,085 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:01:22,085 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:01:22,338 INFO:Price proposal received: 10
-2024-12-06 02:01:22,338 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:01:22,632 INFO:Trade executed. Contract ID: 265371892148
-2024-12-06 02:01:22,632 INFO:Monitoring trade. Contract ID: 265371892148
-2024-12-06 02:01:50,389 INFO:Chart updated.
-2024-12-06 02:01:50,756 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:01:52,190 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:01:52,190 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:01:52,190 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:01:52,190 INFO:No trade action taken.
-2024-12-06 02:02:21,066 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:02:23,832 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:02:23,832 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:02:23,832 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:02:23,832 INFO:No trade action taken.
-2024-12-06 02:02:50,568 INFO:Chart updated.
-2024-12-06 02:02:50,933 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:02:52,723 INFO:OpenAI assistant recommendation: BUY
-2024-12-06 02:02:52,723 INFO:Strategy evaluated using OpenAI assistant. Signal: BUY, Confidence: 0.8
-2024-12-06 02:02:52,723 INFO:Strategy evaluated. Signal: BUY, Confidence: 0.8
-2024-12-06 02:02:52,985 INFO:Price proposal received: 10
-2024-12-06 02:02:52,985 INFO:Executing trade: Symbol=R_50, Signal=BUY, Amount=10.0
-2024-12-06 02:02:53,300 INFO:Trade executed. Contract ID: 265371959368
-2024-12-06 02:02:53,300 INFO:Monitoring trade. Contract ID: 265371959368
-2024-12-06 02:03:22,578 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:03:24,468 INFO:OpenAI assistant recommendation: BUY
-2024-12-06 02:03:24,468 INFO:Strategy evaluated using OpenAI assistant. Signal: BUY, Confidence: 0.8
-2024-12-06 02:03:24,468 INFO:Strategy evaluated. Signal: BUY, Confidence: 0.8
-2024-12-06 02:03:24,717 INFO:Price proposal received: 10
-2024-12-06 02:03:24,717 INFO:Executing trade: Symbol=R_50, Signal=BUY, Amount=10.0
-2024-12-06 02:03:25,081 INFO:Trade executed. Contract ID: 265371983308
-2024-12-06 02:03:25,081 INFO:Monitoring trade. Contract ID: 265371983308
-2024-12-06 02:03:52,401 INFO:Chart updated.
-2024-12-06 02:03:52,817 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:03:54,354 INFO:OpenAI assistant recommendation: BUY
-2024-12-06 02:03:54,354 INFO:Strategy evaluated using OpenAI assistant. Signal: BUY, Confidence: 0.8
-2024-12-06 02:03:54,354 INFO:Strategy evaluated. Signal: BUY, Confidence: 0.8
-2024-12-06 02:03:54,709 INFO:Price proposal received: 10
-2024-12-06 02:03:54,709 INFO:Executing trade: Symbol=R_50, Signal=BUY, Amount=10.0
-2024-12-06 02:03:55,004 INFO:Trade executed. Contract ID: 265372005528
-2024-12-06 02:03:55,004 INFO:Monitoring trade. Contract ID: 265372005528
-2024-12-06 02:04:24,526 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:04:25,896 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:04:25,896 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:04:25,896 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:04:25,896 INFO:No trade action taken.
-2024-12-06 02:04:54,454 INFO:Chart updated.
-2024-12-06 02:04:54,759 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:04:56,203 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:04:56,203 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:04:56,204 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:04:56,204 INFO:No trade action taken.
-2024-12-06 02:05:24,395 INFO:Contract 265371845748 has been sold or expired.
-2024-12-06 02:05:24,395 INFO:Profit/Loss for Contract 265371845748: -10.0
-2024-12-06 02:05:24,395 INFO:Cumulative Loss: 10.0
-2024-12-06 02:05:24,640 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
-2024-12-06 02:05:26,719 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:05:27,948 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:05:27,949 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:05:27,949 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:05:27,949 INFO:No trade action taken.
-2024-12-06 02:05:55,964 INFO:Disconnected from Deriv API.
-2024-12-06 02:05:55,964 INFO:Trading bot stopped.
-2024-12-06 02:05:55,964 INFO:Stopped monitoring trade. Contract ID: 265371845748
-2024-12-06 02:05:55,964 INFO:Stopped monitoring trade. Contract ID: 265372005528
-2024-12-06 02:05:55,964 INFO:Stopped monitoring trade. Contract ID: 265371869588
-2024-12-06 02:05:55,964 INFO:Stopped monitoring trade. Contract ID: 265371959368
-2024-12-06 02:05:55,965 INFO:Stopped monitoring trade. Contract ID: 265371892148
-2024-12-06 02:05:55,965 INFO:Stopped monitoring trade. Contract ID: 265371983308
-2024-12-06 02:10:00,391 INFO:Starting trading bot...
-2024-12-06 02:10:00,392 INFO:Deriv API instance created.
-2024-12-06 02:10:01,560 INFO:Authorized with Deriv API.
-2024-12-06 02:10:01,560 INFO:OpenAI API initialized.
-2024-12-06 02:10:01,814 INFO:Active symbols set. Total symbols: 81
-2024-12-06 02:10:01,814 INFO:Fetched 81 active symbols.
-2024-12-06 02:10:01,819 INFO:Dashboard is running... Access it at http://localhost:8050/
-2024-12-06 02:10:01,822 INFO:Subscribed to ticks for symbol: R_50
-2024-12-06 02:10:02,886 INFO:Account Name (Login ID): Unknown
-2024-12-06 02:10:02,886 INFO:Account Balance: 9857.98 USD
-2024-12-06 02:10:02,886 INFO:Account Type: Demo
-2024-12-06 02:10:32,690 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:10:34,332 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:10:34,332 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:10:34,332 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:10:34,332 INFO:No trade action taken.
-2024-12-06 02:11:02,373 INFO:Chart updated.
-2024-12-06 02:11:02,668 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:11:04,129 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:11:04,129 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:11:04,129 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:11:04,129 INFO:No trade action taken.
-2024-12-06 02:11:34,631 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:11:35,975 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:11:35,975 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:11:35,975 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:11:36,222 INFO:Price proposal received: 10
-2024-12-06 02:11:36,222 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:11:36,591 INFO:Trade executed. Contract ID: 265372358608
-2024-12-06 02:11:36,591 INFO:Monitoring trade. Contract ID: 265372358608
-2024-12-06 02:12:04,374 INFO:Chart updated.
-2024-12-06 02:12:04,749 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:12:06,346 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:12:06,346 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:12:06,346 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:12:06,346 INFO:No trade action taken.
-2024-12-06 02:12:36,600 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:12:38,028 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:12:38,028 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:12:38,028 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:12:38,437 INFO:Price proposal received: 10
-2024-12-06 02:12:38,437 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:12:38,846 INFO:Trade executed. Contract ID: 265372404748
-2024-12-06 02:12:38,846 INFO:Monitoring trade. Contract ID: 265372404748
-2024-12-06 02:13:06,354 INFO:Chart updated.
-2024-12-06 02:13:06,607 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:13:07,792 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:13:07,792 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:13:07,792 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:13:08,031 INFO:Price proposal received: 10
-2024-12-06 02:13:08,031 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:13:08,358 INFO:Trade executed. Contract ID: 265372427088
-2024-12-06 02:13:08,358 INFO:Monitoring trade. Contract ID: 265372427088
-2024-12-06 02:13:38,662 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:13:40,287 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:13:40,287 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:13:40,287 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:13:40,593 INFO:Price proposal received: 10
-2024-12-06 02:13:40,594 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:13:40,882 INFO:Trade executed. Contract ID: 265372450428
-2024-12-06 02:13:40,882 INFO:Monitoring trade. Contract ID: 265372450428
-2024-12-06 02:14:08,392 INFO:Chart updated.
-2024-12-06 02:14:08,651 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:14:09,741 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:14:09,741 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:14:09,741 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:14:09,975 INFO:Price proposal received: 10
-2024-12-06 02:14:09,975 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:14:10,324 INFO:Trade executed. Contract ID: 265372473168
-2024-12-06 02:14:10,325 INFO:Monitoring trade. Contract ID: 265372473168
-2024-12-06 02:14:40,600 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:14:41,911 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:14:41,911 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:14:41,911 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:14:42,174 INFO:Price proposal received: 10
-2024-12-06 02:14:42,174 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:14:42,569 INFO:Trade executed. Contract ID: 265372497388
-2024-12-06 02:14:42,569 INFO:Monitoring trade. Contract ID: 265372497388
-2024-12-06 02:15:10,408 INFO:Chart updated.
-2024-12-06 02:15:10,808 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:15:12,550 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:15:12,550 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:15:12,550 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:15:12,550 INFO:No trade action taken.
-2024-12-06 02:15:42,635 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:15:44,088 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:15:44,088 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:15:44,088 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:15:44,088 INFO:No trade action taken.
-2024-12-06 02:16:12,451 INFO:Chart updated.
-2024-12-06 02:16:12,762 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:16:14,107 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:16:14,107 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:16:14,107 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:16:14,107 INFO:No trade action taken.
-2024-12-06 02:16:40,306 INFO:Contract 265372358608 has been sold or expired.
-2024-12-06 02:16:40,307 INFO:Profit/Loss for Contract 265372358608: 9.52
-2024-12-06 02:16:40,307 INFO:Cumulative Profit: 9.52
-2024-12-06 02:16:40,546 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
-2024-12-06 02:16:44,796 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:16:46,658 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:16:46,658 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:16:46,658 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:16:46,658 INFO:No trade action taken.
-2024-12-06 02:17:14,508 INFO:Chart updated.
-2024-12-06 02:17:15,019 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:17:17,171 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:17:17,171 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:17:17,171 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:17:17,171 INFO:No trade action taken.
-2024-12-06 02:17:42,305 INFO:Contract 265372404748 has been sold or expired.
-2024-12-06 02:17:42,305 INFO:Profit/Loss for Contract 265372404748: 9.52
-2024-12-06 02:17:42,305 INFO:Cumulative Profit: 19.04
-2024-12-06 02:17:42,666 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
-2024-12-06 02:17:46,641 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:17:48,115 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:17:48,115 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:17:48,115 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:17:48,115 INFO:No trade action taken.
-2024-12-06 02:18:12,469 INFO:Contract 265372427088 has been sold or expired.
-2024-12-06 02:18:12,469 INFO:Profit/Loss for Contract 265372427088: 9.52
-2024-12-06 02:18:12,469 INFO:Cumulative Profit: 28.56
-2024-12-06 02:18:12,719 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
-2024-12-06 02:18:16,358 INFO:Chart updated.
-2024-12-06 02:18:16,618 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:18:17,688 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:18:17,689 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:18:17,689 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:18:17,689 INFO:No trade action taken.
-2024-12-06 02:18:44,431 INFO:Contract 265372450428 has been sold or expired.
-2024-12-06 02:18:44,431 INFO:Profit/Loss for Contract 265372450428: 9.52
-2024-12-06 02:18:44,431 INFO:Cumulative Profit: 38.08
-2024-12-06 02:18:44,708 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
-2024-12-06 02:18:46,770 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:18:48,715 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:18:48,715 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:18:48,715 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:18:48,715 INFO:No trade action taken.
-2024-12-06 02:19:14,327 INFO:Contract 265372473168 has been sold or expired.
-2024-12-06 02:19:14,327 INFO:Profit/Loss for Contract 265372473168: -10.0
-2024-12-06 02:19:14,327 INFO:Cumulative Loss: 10.0
-2024-12-06 02:19:14,591 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
-2024-12-06 02:19:18,356 INFO:Chart updated.
-2024-12-06 02:19:18,835 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:19:20,255 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:19:20,255 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:19:20,256 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:19:20,256 INFO:No trade action taken.
-2024-12-06 02:19:46,301 INFO:Contract 265372497388 has been sold or expired.
-2024-12-06 02:19:46,301 INFO:Profit/Loss for Contract 265372497388: -10.0
-2024-12-06 02:19:46,301 INFO:Cumulative Loss: 20.0
-2024-12-06 02:19:46,545 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
-2024-12-06 02:19:50,784 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:19:52,424 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:19:52,424 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:19:52,424 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:19:52,424 INFO:No trade action taken.
-2024-12-06 02:20:20,365 INFO:Chart updated.
-2024-12-06 02:20:22,615 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:20:27,444 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:20:27,444 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:20:27,444 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:20:27,444 INFO:No trade action taken.
-2024-12-06 02:20:47,758 INFO:Disconnected from Deriv API.
-2024-12-06 02:20:47,758 INFO:Trading bot stopped.
-2024-12-06 02:20:47,759 INFO:Stopped monitoring trade. Contract ID: 265372358608
-2024-12-06 02:20:47,759 INFO:Stopped monitoring trade. Contract ID: 265372473168
-2024-12-06 02:20:47,759 INFO:Stopped monitoring trade. Contract ID: 265372497388
-2024-12-06 02:20:47,759 INFO:Stopped monitoring trade. Contract ID: 265372427088
-2024-12-06 02:20:47,759 INFO:Stopped monitoring trade. Contract ID: 265372404748
-2024-12-06 02:20:47,759 INFO:Stopped monitoring trade. Contract ID: 265372450428
+2024-12-06 02:40:44,150 INFO:Starting trading bot...
+2024-12-06 02:40:44,151 INFO:Deriv API instance created.
+2024-12-06 02:40:45,611 INFO:Authorized with Deriv API.
+2024-12-06 02:40:45,611 INFO:OpenAI API initialized.
+2024-12-06 02:40:45,851 INFO:Active symbols set. Total symbols: 81
+2024-12-06 02:40:45,851 INFO:Fetched 81 active symbols.
+2024-12-06 02:40:45,856 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 02:40:45,858 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 02:40:46,919 INFO:Account Name (Login ID): Unknown
+2024-12-06 02:40:46,919 INFO:Account Balance: 9856.06 USD
+2024-12-06 02:40:46,919 INFO:Account Type: Demo
+2024-12-06 02:41:16,613 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:41:18,076 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:41:18,076 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:41:18,076 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:41:18,076 INFO:No trade action taken.
+2024-12-06 02:41:27,028 INFO:Disconnected from Deriv API.
+2024-12-06 02:41:27,028 INFO:Trading bot stopped.
+2024-12-06 02:43:06,379 INFO:Starting trading bot...
+2024-12-06 02:43:06,380 INFO:Deriv API instance created.
+2024-12-06 02:43:07,838 INFO:Authorized with Deriv API.
+2024-12-06 02:43:07,839 INFO:OpenAI API initialized.
+2024-12-06 02:43:08,139 INFO:Active symbols set. Total symbols: 81
+2024-12-06 02:43:08,140 INFO:Fetched 81 active symbols.
+2024-12-06 02:43:08,145 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 02:43:08,148 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 02:43:11,109 INFO:Account Name (Login ID): Unknown
+2024-12-06 02:43:11,109 INFO:Account Balance: 9856.06 USD
+2024-12-06 02:43:11,109 INFO:Account Type: Demo
+2024-12-06 02:43:38,655 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:43:39,787 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:43:39,787 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:43:39,787 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:43:39,787 INFO:No trade action taken.
+2024-12-06 02:44:08,682 INFO:Chart updated.
+2024-12-06 02:44:09,011 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:44:10,419 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:44:10,419 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:44:10,419 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:44:10,419 INFO:No trade action taken.
+2024-12-06 02:44:40,643 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:44:41,955 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:44:41,955 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:44:41,955 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:44:41,955 INFO:No trade action taken.
+2024-12-06 02:45:10,419 INFO:Chart updated.
+2024-12-06 02:45:10,717 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:45:11,943 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:45:11,944 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:45:11,944 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:45:11,944 INFO:No trade action taken.
+2024-12-06 02:45:42,635 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:45:43,828 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:45:43,828 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:45:43,828 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:45:43,829 INFO:No trade action taken.
+2024-12-06 02:46:12,465 INFO:Chart updated.
+2024-12-06 02:46:12,744 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:46:14,205 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:46:14,205 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:46:14,205 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:46:14,205 INFO:No trade action taken.
+2024-12-06 02:46:44,624 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:46:45,884 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:46:45,884 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:46:45,884 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:46:45,884 INFO:No trade action taken.
+2024-12-06 02:47:14,416 INFO:Chart updated.
+2024-12-06 02:47:14,789 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:47:16,727 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:47:16,727 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:47:16,727 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:47:16,727 INFO:No trade action taken.
+2024-12-06 02:47:44,879 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:47:46,980 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:47:46,980 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:47:46,980 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:47:46,980 INFO:No trade action taken.
+2024-12-06 02:48:16,450 INFO:Chart updated.
+2024-12-06 02:48:16,799 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:48:18,155 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:48:18,155 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:48:18,155 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:48:18,155 INFO:No trade action taken.
+2024-12-06 02:48:48,727 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:48:50,147 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:48:50,147 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:48:50,147 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:48:50,147 INFO:No trade action taken.
+2024-12-06 02:49:18,425 INFO:Chart updated.
+2024-12-06 02:49:18,687 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:49:19,962 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:49:19,962 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:49:19,962 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:49:19,962 INFO:No trade action taken.
+2024-12-06 02:49:50,680 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:49:51,909 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:49:51,909 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:49:51,909 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:49:51,910 INFO:No trade action taken.
+2024-12-06 02:50:20,599 INFO:Chart updated.
+2024-12-06 02:50:20,968 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:50:22,543 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:50:22,543 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:50:22,543 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:50:22,543 INFO:No trade action taken.
+2024-12-06 02:50:52,616 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:50:53,795 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:50:53,795 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:50:53,795 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:50:53,795 INFO:No trade action taken.
+2024-12-06 02:51:22,427 INFO:Chart updated.
+2024-12-06 02:51:22,739 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:51:23,866 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:51:23,866 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:51:23,866 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:51:23,866 INFO:No trade action taken.
+2024-12-06 02:51:54,688 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:51:55,918 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 02:51:55,918 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:51:55,918 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 02:51:55,918 INFO:No trade action taken.
+2024-12-06 02:52:24,436 INFO:Chart updated.
+2024-12-06 02:52:24,781 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:52:26,330 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 02:52:26,330 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 02:52:26,330 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 02:52:27,357 INFO:Price proposal received: 10
+2024-12-06 02:52:27,357 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 02:52:27,763 INFO:Trade executed. Contract ID: 265374200368
+2024-12-06 02:52:27,763 INFO:Monitoring trade. Contract ID: 265374200368
+2024-12-06 02:52:28,020 INFO:Stop loss reached: -10.0
+2024-12-06 02:52:28,407 INFO:Contract 265374200368 has been sold or expired.
+2024-12-06 02:52:28,408 INFO:Profit/Loss for Contract 265374200368: -0.47
+2024-12-06 02:52:28,408 INFO:Cumulative Loss: 0.47
+2024-12-06 02:52:28,684 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-06 02:52:56,743 INFO:Historical data fetched for symbol: R_50
+2024-12-06 02:52:59,304 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 02:52:59,304 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 02:52:59,304 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 02:52:59,560 INFO:Price proposal received: 10
+2024-12-06 02:52:59,560 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 02:52:59,916 INFO:Trade executed. Contract ID: 265374221908
+2024-12-06 02:52:59,917 INFO:Monitoring trade. Contract ID: 265374221908
+2024-12-06 02:53:00,194 INFO:Stop loss reached: -10.0
+2024-12-06 02:53:02,677 INFO:Contract 265374221908 has been sold or expired.
+2024-12-06 02:53:02,677 INFO:Profit/Loss for Contract 265374221908: -0.47
+2024-12-06 02:53:02,677 INFO:Cumulative Loss: 0.94
+2024-12-06 02:53:02,919 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-06 02:53:20,848 INFO:Disconnected from Deriv API.
+2024-12-06 02:53:20,848 INFO:Trading bot stopped.
+2024-12-06 02:53:20,848 INFO:Stopped monitoring trade. Contract ID: 265374221908
+2024-12-06 02:53:20,848 INFO:Stopped monitoring trade. Contract ID: 265374200368
