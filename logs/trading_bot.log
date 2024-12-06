@@ -1,153 +1,1364 @@
-2024-12-06 02:40:44,150 INFO:Starting trading bot...
-2024-12-06 02:40:44,151 INFO:Deriv API instance created.
-2024-12-06 02:40:45,611 INFO:Authorized with Deriv API.
-2024-12-06 02:40:45,611 INFO:OpenAI API initialized.
-2024-12-06 02:40:45,851 INFO:Active symbols set. Total symbols: 81
-2024-12-06 02:40:45,851 INFO:Fetched 81 active symbols.
-2024-12-06 02:40:45,856 INFO:Dashboard is running... Access it at http://localhost:8050/
-2024-12-06 02:40:45,858 INFO:Subscribed to ticks for symbol: R_50
-2024-12-06 02:40:46,919 INFO:Account Name (Login ID): Unknown
-2024-12-06 02:40:46,919 INFO:Account Balance: 9856.06 USD
-2024-12-06 02:40:46,919 INFO:Account Type: Demo
-2024-12-06 02:41:16,613 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:41:18,076 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:41:18,076 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:41:18,076 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:41:18,076 INFO:No trade action taken.
-2024-12-06 02:41:27,028 INFO:Disconnected from Deriv API.
-2024-12-06 02:41:27,028 INFO:Trading bot stopped.
-2024-12-06 02:43:06,379 INFO:Starting trading bot...
-2024-12-06 02:43:06,380 INFO:Deriv API instance created.
-2024-12-06 02:43:07,838 INFO:Authorized with Deriv API.
-2024-12-06 02:43:07,839 INFO:OpenAI API initialized.
-2024-12-06 02:43:08,139 INFO:Active symbols set. Total symbols: 81
-2024-12-06 02:43:08,140 INFO:Fetched 81 active symbols.
-2024-12-06 02:43:08,145 INFO:Dashboard is running... Access it at http://localhost:8050/
-2024-12-06 02:43:08,148 INFO:Subscribed to ticks for symbol: R_50
-2024-12-06 02:43:11,109 INFO:Account Name (Login ID): Unknown
-2024-12-06 02:43:11,109 INFO:Account Balance: 9856.06 USD
-2024-12-06 02:43:11,109 INFO:Account Type: Demo
-2024-12-06 02:43:38,655 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:43:39,787 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:43:39,787 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:43:39,787 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:43:39,787 INFO:No trade action taken.
-2024-12-06 02:44:08,682 INFO:Chart updated.
-2024-12-06 02:44:09,011 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:44:10,419 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:44:10,419 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:44:10,419 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:44:10,419 INFO:No trade action taken.
-2024-12-06 02:44:40,643 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:44:41,955 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:44:41,955 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:44:41,955 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:44:41,955 INFO:No trade action taken.
-2024-12-06 02:45:10,419 INFO:Chart updated.
-2024-12-06 02:45:10,717 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:45:11,943 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:45:11,944 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:45:11,944 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:45:11,944 INFO:No trade action taken.
-2024-12-06 02:45:42,635 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:45:43,828 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:45:43,828 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:45:43,828 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:45:43,829 INFO:No trade action taken.
-2024-12-06 02:46:12,465 INFO:Chart updated.
-2024-12-06 02:46:12,744 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:46:14,205 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:46:14,205 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:46:14,205 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:46:14,205 INFO:No trade action taken.
-2024-12-06 02:46:44,624 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:46:45,884 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:46:45,884 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:46:45,884 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:46:45,884 INFO:No trade action taken.
-2024-12-06 02:47:14,416 INFO:Chart updated.
-2024-12-06 02:47:14,789 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:47:16,727 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:47:16,727 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:47:16,727 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:47:16,727 INFO:No trade action taken.
-2024-12-06 02:47:44,879 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:47:46,980 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:47:46,980 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:47:46,980 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:47:46,980 INFO:No trade action taken.
-2024-12-06 02:48:16,450 INFO:Chart updated.
-2024-12-06 02:48:16,799 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:48:18,155 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:48:18,155 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:48:18,155 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:48:18,155 INFO:No trade action taken.
-2024-12-06 02:48:48,727 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:48:50,147 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:48:50,147 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:48:50,147 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:48:50,147 INFO:No trade action taken.
-2024-12-06 02:49:18,425 INFO:Chart updated.
-2024-12-06 02:49:18,687 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:49:19,962 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:49:19,962 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:49:19,962 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:49:19,962 INFO:No trade action taken.
-2024-12-06 02:49:50,680 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:49:51,909 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:49:51,909 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:49:51,909 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:49:51,910 INFO:No trade action taken.
-2024-12-06 02:50:20,599 INFO:Chart updated.
-2024-12-06 02:50:20,968 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:50:22,543 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:50:22,543 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:50:22,543 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:50:22,543 INFO:No trade action taken.
-2024-12-06 02:50:52,616 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:50:53,795 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:50:53,795 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:50:53,795 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:50:53,795 INFO:No trade action taken.
-2024-12-06 02:51:22,427 INFO:Chart updated.
-2024-12-06 02:51:22,739 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:51:23,866 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:51:23,866 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:51:23,866 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:51:23,866 INFO:No trade action taken.
-2024-12-06 02:51:54,688 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:51:55,918 INFO:OpenAI assistant recommendation: HOLD
-2024-12-06 02:51:55,918 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:51:55,918 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
-2024-12-06 02:51:55,918 INFO:No trade action taken.
-2024-12-06 02:52:24,436 INFO:Chart updated.
-2024-12-06 02:52:24,781 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:52:26,330 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:52:26,330 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:52:26,330 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:52:27,357 INFO:Price proposal received: 10
-2024-12-06 02:52:27,357 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:52:27,763 INFO:Trade executed. Contract ID: 265374200368
-2024-12-06 02:52:27,763 INFO:Monitoring trade. Contract ID: 265374200368
-2024-12-06 02:52:28,020 INFO:Stop loss reached: -10.0
-2024-12-06 02:52:28,407 INFO:Contract 265374200368 has been sold or expired.
-2024-12-06 02:52:28,408 INFO:Profit/Loss for Contract 265374200368: -0.47
-2024-12-06 02:52:28,408 INFO:Cumulative Loss: 0.47
-2024-12-06 02:52:28,684 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
-2024-12-06 02:52:56,743 INFO:Historical data fetched for symbol: R_50
-2024-12-06 02:52:59,304 INFO:OpenAI assistant recommendation: SELL
-2024-12-06 02:52:59,304 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
-2024-12-06 02:52:59,304 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
-2024-12-06 02:52:59,560 INFO:Price proposal received: 10
-2024-12-06 02:52:59,560 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
-2024-12-06 02:52:59,916 INFO:Trade executed. Contract ID: 265374221908
-2024-12-06 02:52:59,917 INFO:Monitoring trade. Contract ID: 265374221908
-2024-12-06 02:53:00,194 INFO:Stop loss reached: -10.0
-2024-12-06 02:53:02,677 INFO:Contract 265374221908 has been sold or expired.
-2024-12-06 02:53:02,677 INFO:Profit/Loss for Contract 265374221908: -0.47
-2024-12-06 02:53:02,677 INFO:Cumulative Loss: 0.94
-2024-12-06 02:53:02,919 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
-2024-12-06 02:53:20,848 INFO:Disconnected from Deriv API.
-2024-12-06 02:53:20,848 INFO:Trading bot stopped.
-2024-12-06 02:53:20,848 INFO:Stopped monitoring trade. Contract ID: 265374221908
-2024-12-06 02:53:20,848 INFO:Stopped monitoring trade. Contract ID: 265374200368
+2024-12-06 15:37:35,693 INFO:Starting trading bot...
+2024-12-06 15:37:35,693 INFO:Deriv API instance created.
+2024-12-06 15:37:37,418 INFO:Authorized with Deriv API.
+2024-12-06 15:37:37,418 INFO:OpenAI API initialized.
+2024-12-06 15:37:37,831 INFO:Active symbols set. Total symbols: 81
+2024-12-06 15:37:37,831 INFO:Fetched 81 active symbols.
+2024-12-06 15:37:37,840 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 15:37:37,845 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 15:37:38,975 INFO:Account Name (Login ID): Unknown
+2024-12-06 15:37:38,975 INFO:Account Balance: 9894.16 USD
+2024-12-06 15:37:38,975 INFO:Account Type: Demo
+2024-12-06 15:38:08,652 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:38:12,001 INFO:OpenAI assistant recommendation: 
+2024-12-06 15:38:12,001 ERROR:Unexpected recommendation from OpenAI assistant: 
+2024-12-06 15:38:12,001 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:38:12,001 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:38:12,001 INFO:No trade action taken.
+2024-12-06 15:38:38,391 INFO:Chart updated.
+2024-12-06 15:38:38,765 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:38:40,406 INFO:OpenAI assistant recommendation: 
+2024-12-06 15:38:40,406 ERROR:Unexpected recommendation from OpenAI assistant: 
+2024-12-06 15:38:40,406 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:38:40,406 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:38:40,406 INFO:No trade action taken.
+2024-12-06 15:38:58,308 INFO:Disconnected from Deriv API.
+2024-12-06 15:38:58,309 INFO:Trading bot stopped.
+2024-12-06 15:40:31,895 INFO:Starting trading bot...
+2024-12-06 15:40:31,895 INFO:Deriv API instance created.
+2024-12-06 15:40:33,269 INFO:Authorized with Deriv API.
+2024-12-06 15:40:33,269 INFO:OpenAI API initialized.
+2024-12-06 15:40:33,531 INFO:Active symbols set. Total symbols: 81
+2024-12-06 15:40:33,531 INFO:Fetched 81 active symbols.
+2024-12-06 15:40:33,536 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 15:40:33,538 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 15:40:35,121 INFO:Account Name (Login ID): Unknown
+2024-12-06 15:40:35,121 INFO:Account Balance: 9894.16 USD
+2024-12-06 15:40:35,121 INFO:Account Type: Demo
+2024-12-06 15:41:04,846 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:41:06,923 INFO:OpenAI assistant recommendation: 
+2024-12-06 15:41:06,923 ERROR:Unexpected recommendation from OpenAI assistant: 
+2024-12-06 15:41:06,923 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:41:06,923 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:41:06,923 INFO:No trade action taken.
+2024-12-06 15:42:07,911 INFO:Disconnected from Deriv API.
+2024-12-06 15:42:07,911 INFO:Trading bot stopped.
+2024-12-06 15:46:30,346 INFO:Starting trading bot...
+2024-12-06 15:46:30,347 INFO:Deriv API instance created.
+2024-12-06 15:46:31,944 INFO:Authorized with Deriv API.
+2024-12-06 15:46:31,944 INFO:OpenAI API initialized.
+2024-12-06 15:46:32,190 INFO:Active symbols set. Total symbols: 81
+2024-12-06 15:46:32,190 INFO:Fetched 81 active symbols.
+2024-12-06 15:46:32,195 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 15:46:32,198 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 15:46:35,026 INFO:Account Name (Login ID): Unknown
+2024-12-06 15:46:35,026 INFO:Account Balance: 9894.16 USD
+2024-12-06 15:46:35,026 INFO:Account Type: Demo
+2024-12-06 15:47:02,765 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:47:05,210 INFO:OpenAI assistant recommendation: 
+2024-12-06 15:47:05,210 ERROR:Unexpected recommendation from OpenAI assistant: 
+2024-12-06 15:47:05,210 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:47:05,210 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:47:05,210 INFO:No trade action taken.
+2024-12-06 15:47:13,412 INFO:Disconnected from Deriv API.
+2024-12-06 15:47:13,413 INFO:Trading bot stopped.
+2024-12-06 15:47:39,648 INFO:Starting trading bot...
+2024-12-06 15:47:39,649 INFO:Deriv API instance created.
+2024-12-06 15:47:40,950 INFO:Authorized with Deriv API.
+2024-12-06 15:47:40,950 INFO:OpenAI API initialized.
+2024-12-06 15:47:41,264 INFO:Active symbols set. Total symbols: 81
+2024-12-06 15:47:41,264 INFO:Fetched 81 active symbols.
+2024-12-06 15:47:41,269 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 15:47:41,272 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 15:47:43,141 INFO:Account Name (Login ID): Unknown
+2024-12-06 15:47:43,141 INFO:Account Balance: 9894.16 USD
+2024-12-06 15:47:43,141 INFO:Account Type: Demo
+2024-12-06 15:48:12,589 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:48:17,312 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 15:48:17,312 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:48:17,312 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:48:17,312 INFO:No trade action taken.
+2024-12-06 15:48:42,421 INFO:Chart updated.
+2024-12-06 15:48:42,808 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:48:46,088 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 15:48:46,089 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:48:46,089 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:48:46,089 INFO:No trade action taken.
+2024-12-06 15:48:49,202 INFO:Disconnected from Deriv API.
+2024-12-06 15:48:49,202 INFO:Trading bot stopped.
+2024-12-06 15:49:46,358 INFO:Starting trading bot...
+2024-12-06 15:49:46,359 INFO:Deriv API instance created.
+2024-12-06 15:49:48,032 INFO:Authorized with Deriv API.
+2024-12-06 15:49:48,032 INFO:OpenAI API initialized.
+2024-12-06 15:49:48,458 INFO:Active symbols set. Total symbols: 81
+2024-12-06 15:49:48,458 INFO:Fetched 81 active symbols.
+2024-12-06 15:49:48,465 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 15:49:48,467 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 15:49:51,361 INFO:Account Name (Login ID): Unknown
+2024-12-06 15:49:51,361 INFO:Account Balance: 9894.16 USD
+2024-12-06 15:49:51,361 INFO:Account Type: Demo
+2024-12-06 15:50:18,721 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:50:26,230 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 15:50:26,230 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:50:26,230 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:50:26,230 INFO:No trade action taken.
+2024-12-06 15:50:48,678 INFO:Chart updated.
+2024-12-06 15:50:49,179 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:50:54,693 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 15:50:54,693 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:50:54,693 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:50:54,693 INFO:No trade action taken.
+2024-12-06 15:51:21,126 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:51:27,358 INFO:OpenAI assistant recommendation: BUY
+2024-12-06 15:51:27,358 INFO:Strategy evaluated using OpenAI assistant. Signal: BUY, Confidence: 0.8
+2024-12-06 15:51:27,358 INFO:Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-06 15:51:27,728 INFO:Price proposal received: 10
+2024-12-06 15:51:27,728 INFO:Executing trade: Symbol=R_50, Signal=BUY, Amount=10.0
+2024-12-06 15:51:28,176 INFO:Trade executed. Contract ID: 265425627008
+2024-12-06 15:51:28,177 INFO:Monitoring trade. Contract ID: 265425627008
+2024-12-06 15:51:50,497 INFO:Chart updated.
+2024-12-06 15:51:52,779 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:51:59,203 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 15:51:59,203 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:51:59,203 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:51:59,203 INFO:No trade action taken.
+2024-12-06 15:52:22,962 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:52:30,393 INFO:OpenAI assistant recommendation: BUY
+2024-12-06 15:52:30,394 INFO:Strategy evaluated using OpenAI assistant. Signal: BUY, Confidence: 0.8
+2024-12-06 15:52:30,394 INFO:Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-06 15:52:31,166 INFO:Price proposal received: 10
+2024-12-06 15:52:31,166 INFO:Executing trade: Symbol=R_50, Signal=BUY, Amount=10.0
+2024-12-06 15:52:31,662 INFO:Trade executed. Contract ID: 265425720768
+2024-12-06 15:52:31,662 INFO:Monitoring trade. Contract ID: 265425720768
+2024-12-06 15:52:52,552 INFO:Chart updated.
+2024-12-06 15:52:52,948 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:52:57,878 INFO:OpenAI assistant recommendation: BUY
+2024-12-06 15:52:57,878 INFO:Strategy evaluated using OpenAI assistant. Signal: BUY, Confidence: 0.8
+2024-12-06 15:52:57,878 INFO:Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-06 15:52:58,406 INFO:Price proposal received: 10
+2024-12-06 15:52:58,406 INFO:Executing trade: Symbol=R_50, Signal=BUY, Amount=10.0
+2024-12-06 15:52:58,794 INFO:Trade executed. Contract ID: 265425760448
+2024-12-06 15:52:58,794 INFO:Monitoring trade. Contract ID: 265425760448
+2024-12-06 15:53:23,016 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:53:28,493 INFO:Stop loss reached: -5.56
+2024-12-06 15:53:30,541 INFO:Contract 265425720768 has been sold or expired.
+2024-12-06 15:53:30,541 INFO:Profit/Loss for Contract 265425720768: -5.56
+2024-12-06 15:53:30,541 INFO:Cumulative Loss: 5.56
+2024-12-06 15:53:30,896 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-06 15:53:45,593 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 15:53:45,593 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:53:45,594 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:53:45,594 INFO:No trade action taken.
+2024-12-06 15:53:48,534 INFO:Stop loss reached: -5.94
+2024-12-06 15:53:48,534 INFO:Stop loss reached: -5.31
+2024-12-06 15:53:50,430 INFO:Contract 265425627008 has been sold or expired.
+2024-12-06 15:53:50,430 INFO:Profit/Loss for Contract 265425627008: -5.94
+2024-12-06 15:53:50,430 INFO:Cumulative Loss: 11.5
+2024-12-06 15:53:50,430 INFO:Contract 265425760448 has been sold or expired.
+2024-12-06 15:53:50,430 INFO:Profit/Loss for Contract 265425760448: -5.31
+2024-12-06 15:53:50,430 INFO:Cumulative Loss: 16.81
+2024-12-06 15:53:50,837 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-06 15:53:50,837 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-06 15:53:54,599 INFO:Chart updated.
+2024-12-06 15:53:55,161 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:54:02,568 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 15:54:02,568 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:54:02,568 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:54:02,568 INFO:No trade action taken.
+2024-12-06 15:54:27,268 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:54:35,665 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 15:54:35,665 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 15:54:35,665 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 15:54:36,078 INFO:Price proposal received: 10
+2024-12-06 15:54:36,078 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 15:54:36,553 INFO:Trade executed. Contract ID: 265425903928
+2024-12-06 15:54:36,553 INFO:Monitoring trade. Contract ID: 265425903928
+2024-12-06 15:54:37,097 INFO:Stop loss reached: -10.0
+2024-12-06 15:54:37,561 ERROR:Error executing stop loss sell: ResponseError: Waiting for entry tick.
+2024-12-06 15:54:56,549 INFO:Chart updated.
+2024-12-06 15:54:59,010 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:54:59,421 INFO:Disconnected from Deriv API.
+2024-12-06 15:54:59,421 INFO:Trading bot stopped.
+2024-12-06 15:54:59,422 INFO:Stopped monitoring trade. Contract ID: 265425760448
+2024-12-06 15:54:59,422 INFO:Stopped monitoring trade. Contract ID: 265425627008
+2024-12-06 15:54:59,422 INFO:Stopped monitoring trade. Contract ID: 265425720768
+2024-12-06 15:54:59,422 INFO:Stopped monitoring trade. Contract ID: 265425903928
+2024-12-06 15:56:41,077 INFO:Starting trading bot...
+2024-12-06 15:56:41,078 INFO:Deriv API instance created.
+2024-12-06 15:56:44,892 INFO:Authorized with Deriv API.
+2024-12-06 15:56:44,892 INFO:OpenAI API initialized.
+2024-12-06 15:56:45,280 INFO:Active symbols set. Total symbols: 81
+2024-12-06 15:56:45,281 INFO:Fetched 81 active symbols.
+2024-12-06 15:56:45,285 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 15:56:45,288 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 15:56:47,255 INFO:Account Name (Login ID): Unknown
+2024-12-06 15:56:47,255 INFO:Account Balance: 9867.35 USD
+2024-12-06 15:56:47,255 INFO:Account Type: Demo
+2024-12-06 15:57:16,735 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:57:46,435 INFO:Chart updated.
+2024-12-06 15:57:46,843 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:58:18,889 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:58:48,474 INFO:Chart updated.
+2024-12-06 15:58:48,749 INFO:Historical data fetched for symbol: R_50
+2024-12-06 15:58:51,558 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 15:58:51,558 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:58:51,558 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:58:51,558 INFO:No trade action taken.
+2024-12-06 15:58:53,602 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 15:58:53,602 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:58:53,602 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:58:53,602 INFO:No trade action taken.
+2024-12-06 15:58:56,724 INFO:OpenAI assistant recommendation: I'M SORRY, BUT I CAN'T PROVIDE FINANCIAL ADVICE.
+2024-12-06 15:58:56,724 ERROR:Unexpected recommendation from OpenAI assistant: I'M SORRY, BUT I CAN'T PROVIDE FINANCIAL ADVICE.
+2024-12-06 15:58:56,724 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:58:56,724 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 15:58:56,724 INFO:No trade action taken.
+2024-12-06 15:59:12,646 INFO:Disconnected from Deriv API.
+2024-12-06 15:59:12,646 INFO:Trading bot stopped.
+2024-12-06 16:02:39,004 INFO:Starting trading bot...
+2024-12-06 16:02:39,005 INFO:Deriv API instance created.
+2024-12-06 16:02:41,227 INFO:Authorized with Deriv API.
+2024-12-06 16:02:41,227 INFO:OpenAI API initialized.
+2024-12-06 16:02:41,740 INFO:Active symbols set. Total symbols: 81
+2024-12-06 16:02:41,740 INFO:Fetched 81 active symbols.
+2024-12-06 16:02:41,745 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 16:02:41,747 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 16:02:44,914 INFO:Account Name (Login ID): Unknown
+2024-12-06 16:02:44,914 INFO:Account Balance: 9886.87 USD
+2024-12-06 16:02:44,914 INFO:Account Type: Demo
+2024-12-06 16:02:45,323 INFO:Account Name (Login ID): Unknown
+2024-12-06 16:02:45,324 INFO:Account Balance: 9886.87 USD
+2024-12-06 16:02:45,324 INFO:Account Type: Demo
+2024-12-06 16:03:12,833 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:03:42,570 INFO:Chart updated.
+2024-12-06 16:03:42,973 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:03:51,372 INFO:OpenAI assistant recommendation: BUY
+2024-12-06 16:03:51,372 INFO:Strategy evaluated using OpenAI assistant. Signal: BUY, Confidence: 0.8
+2024-12-06 16:03:51,372 INFO:Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-06 16:03:51,681 INFO:Price proposal received: 10
+2024-12-06 16:03:51,681 INFO:Executing trade: Symbol=R_50, Signal=BUY, Amount=10.0
+2024-12-06 16:03:52,049 INFO:Trade executed. Contract ID: 265426714388
+2024-12-06 16:03:52,049 INFO:Monitoring trade. Contract ID: 265426714388
+2024-12-06 16:04:14,769 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:04:31,203 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 16:04:31,203 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:04:31,203 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:04:31,203 INFO:No trade action taken.
+2024-12-06 16:04:44,509 INFO:Chart updated.
+2024-12-06 16:04:44,868 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:04:58,649 INFO:OpenAI assistant recommendation: I'M SORRY, BUT I CAN'T ASSIST WITH THAT REQUEST.
+2024-12-06 16:04:58,649 ERROR:Unexpected recommendation from OpenAI assistant: I'M SORRY, BUT I CAN'T ASSIST WITH THAT REQUEST.
+2024-12-06 16:04:58,649 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:04:58,649 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:04:58,649 INFO:No trade action taken.
+2024-12-06 16:05:04,177 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 16:05:04,177 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 16:05:04,177 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 16:05:04,555 INFO:Price proposal received: 10
+2024-12-06 16:05:04,555 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 16:05:04,993 INFO:Trade executed. Contract ID: 265426819688
+2024-12-06 16:05:04,994 INFO:Monitoring trade. Contract ID: 265426819688
+2024-12-06 16:05:05,506 INFO:Stop loss reached: -10.0
+2024-12-06 16:05:05,902 ERROR:Error executing stop loss sell: ResponseError: Waiting for entry tick.
+2024-12-06 16:05:16,667 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:05:35,683 INFO:Disconnected from Deriv API.
+2024-12-06 16:05:35,683 INFO:Trading bot stopped.
+2024-12-06 16:05:35,683 INFO:Stopped monitoring trade. Contract ID: 265426714388
+2024-12-06 16:05:35,683 INFO:Stopped monitoring trade. Contract ID: 265426819688
+2024-12-06 16:07:45,329 INFO:Starting trading bot...
+2024-12-06 16:07:45,330 INFO:Deriv API instance created.
+2024-12-06 16:07:47,398 INFO:Authorized with Deriv API.
+2024-12-06 16:07:47,398 INFO:OpenAI API initialized.
+2024-12-06 16:07:47,808 INFO:Active symbols set. Total symbols: 81
+2024-12-06 16:07:47,808 INFO:Fetched 81 active symbols.
+2024-12-06 16:07:47,813 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 16:07:47,816 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 16:07:59,874 INFO:Account Name (Login ID): Unknown
+2024-12-06 16:07:59,874 INFO:Account Balance: 9866.87 USD
+2024-12-06 16:07:59,874 INFO:Account Type: Demo
+2024-12-06 16:08:02,089 INFO:Account Name (Login ID): Unknown
+2024-12-06 16:08:02,089 INFO:Account Balance: 9866.87 USD
+2024-12-06 16:08:02,089 INFO:Account Type: Demo
+2024-12-06 16:08:02,089 INFO:Account Name (Login ID): Unknown
+2024-12-06 16:08:02,089 INFO:Account Balance: 9866.87 USD
+2024-12-06 16:08:02,089 INFO:Account Type: Demo
+2024-12-06 16:08:02,089 INFO:Account Name (Login ID): Unknown
+2024-12-06 16:08:02,089 INFO:Account Balance: 9866.87 USD
+2024-12-06 16:08:02,089 INFO:Account Type: Demo
+2024-12-06 16:08:02,089 INFO:Account Name (Login ID): Unknown
+2024-12-06 16:08:02,089 INFO:Account Balance: 9866.87 USD
+2024-12-06 16:08:02,089 INFO:Account Type: Demo
+2024-12-06 16:08:02,089 INFO:Account Name (Login ID): Unknown
+2024-12-06 16:08:02,089 INFO:Account Balance: 9866.87 USD
+2024-12-06 16:08:02,089 INFO:Account Type: Demo
+2024-12-06 16:08:18,835 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:08:23,039 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 16:08:23,039 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:08:23,039 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:08:23,039 INFO:No trade action taken.
+2024-12-06 16:08:48,537 INFO:Chart updated.
+2024-12-06 16:08:48,941 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:08:53,447 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 16:08:53,447 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 16:08:53,447 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 16:08:53,736 INFO:Price proposal received: 10
+2024-12-06 16:08:53,736 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 16:08:54,163 INFO:Trade executed. Contract ID: 265427151968
+2024-12-06 16:08:54,163 INFO:Monitoring trade. Contract ID: 265427151968
+2024-12-06 16:09:20,873 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:09:27,490 INFO:OpenAI assistant recommendation: I'M SORRY, BUT I CAN'T HELP WITH THAT.
+2024-12-06 16:09:27,490 ERROR:Unexpected recommendation from OpenAI assistant: I'M SORRY, BUT I CAN'T HELP WITH THAT.
+2024-12-06 16:09:27,490 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:09:27,490 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:09:27,490 INFO:No trade action taken.
+2024-12-06 16:09:50,580 INFO:Chart updated.
+2024-12-06 16:09:50,868 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:09:56,831 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 16:09:56,831 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 16:09:56,831 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 16:09:57,137 INFO:Price proposal received: 10
+2024-12-06 16:09:57,138 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 16:09:57,498 INFO:Trade executed. Contract ID: 265427242668
+2024-12-06 16:09:57,498 INFO:Monitoring trade. Contract ID: 265427242668
+2024-12-06 16:09:57,825 INFO:Stop loss reached: -10.0
+2024-12-06 16:09:58,274 ERROR:Error executing stop loss sell: ResponseError: Waiting for entry tick.
+2024-12-06 16:10:23,026 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:10:27,757 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 16:10:27,758 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 16:10:27,758 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 16:10:28,023 INFO:Price proposal received: 10
+2024-12-06 16:10:28,023 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 16:10:28,471 INFO:Trade executed. Contract ID: 265427287388
+2024-12-06 16:10:28,471 INFO:Monitoring trade. Contract ID: 265427287388
+2024-12-06 16:10:28,771 INFO:Stop loss reached: -10.0
+2024-12-06 16:10:29,069 ERROR:Error executing stop loss sell: ResponseError: Contract cannot be sold at this time. Please try again.
+2024-12-06 16:10:52,566 INFO:Chart updated.
+2024-12-06 16:10:54,676 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:11:06,773 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 16:11:06,773 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 16:11:06,773 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 16:11:07,008 INFO:Price proposal received: 10
+2024-12-06 16:11:07,008 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 16:11:07,383 INFO:Trade executed. Contract ID: 265427343088
+2024-12-06 16:11:07,383 INFO:Monitoring trade. Contract ID: 265427343088
+2024-12-06 16:11:07,656 INFO:Stop loss reached: -10.0
+2024-12-06 16:11:07,999 ERROR:Error executing stop loss sell: ResponseError: Contract cannot be sold at this time. Please try again.
+2024-12-06 16:11:24,678 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:11:29,092 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 16:11:29,092 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 16:11:29,093 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 16:11:29,363 INFO:Price proposal received: 10
+2024-12-06 16:11:29,363 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 16:11:29,808 INFO:Trade executed. Contract ID: 265427375348
+2024-12-06 16:11:29,808 INFO:Monitoring trade. Contract ID: 265427375348
+2024-12-06 16:11:30,115 INFO:Stop loss reached: -10.0
+2024-12-06 16:11:32,472 INFO:Contract 265427375348 has been sold or expired.
+2024-12-06 16:11:32,472 INFO:Profit/Loss for Contract 265427375348: -0.47
+2024-12-06 16:11:32,472 INFO:Cumulative Loss: 0.47
+2024-12-06 16:11:32,745 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-06 16:11:54,581 INFO:Chart updated.
+2024-12-06 16:11:54,998 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:12:01,655 INFO:OpenAI assistant recommendation: I'M SORRY, BUT I CAN'T PROVIDE FINANCIAL ADVICE. IT'S BEST TO CONSULT WITH A QUALIFIED FINANCIAL PROFESSIONAL FOR ASSISTANCE.
+2024-12-06 16:12:01,655 ERROR:Unexpected recommendation from OpenAI assistant: I'M SORRY, BUT I CAN'T PROVIDE FINANCIAL ADVICE. IT'S BEST TO CONSULT WITH A QUALIFIED FINANCIAL PROFESSIONAL FOR ASSISTANCE.
+2024-12-06 16:12:01,655 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:12:01,655 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:12:01,655 INFO:No trade action taken.
+2024-12-06 16:12:26,845 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:12:31,042 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 16:12:31,042 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:12:31,042 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:12:31,042 INFO:No trade action taken.
+2024-12-06 16:12:40,405 INFO:Stop loss reached: -5.09
+2024-12-06 16:12:42,476 INFO:Contract 265427242668 has been sold or expired.
+2024-12-06 16:12:42,476 INFO:Profit/Loss for Contract 265427242668: -5.09
+2024-12-06 16:12:42,476 INFO:Cumulative Loss: 5.56
+2024-12-06 16:12:42,773 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-06 16:12:44,456 INFO:Stop loss reached: -5.0
+2024-12-06 16:12:46,473 INFO:Contract 265427343088 has been sold or expired.
+2024-12-06 16:12:46,473 INFO:Profit/Loss for Contract 265427343088: -5.0
+2024-12-06 16:12:46,473 INFO:Cumulative Loss: 10.559999999999999
+2024-12-06 16:12:46,760 ERROR:Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-06 16:12:56,759 INFO:Chart updated.
+2024-12-06 16:12:57,271 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:13:04,018 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 16:13:04,018 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 16:13:04,019 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 16:13:04,423 INFO:Price proposal received: 10
+2024-12-06 16:13:04,424 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 16:13:04,784 INFO:Trade executed. Contract ID: 265427513748
+2024-12-06 16:13:04,784 INFO:Monitoring trade. Contract ID: 265427513748
+2024-12-06 16:13:05,098 INFO:Stop loss reached: -10.0
+2024-12-06 16:13:05,377 ERROR:Error executing stop loss sell: ResponseError: Waiting for entry tick.
+2024-12-06 16:13:19,579 INFO:Disconnected from Deriv API.
+2024-12-06 16:13:19,579 INFO:Trading bot stopped.
+2024-12-06 16:13:19,579 INFO:Stopped monitoring trade. Contract ID: 265427343088
+2024-12-06 16:13:19,579 INFO:Stopped monitoring trade. Contract ID: 265427287388
+2024-12-06 16:13:19,580 INFO:Stopped monitoring trade. Contract ID: 265427513748
+2024-12-06 16:13:19,580 INFO:Stopped monitoring trade. Contract ID: 265427375348
+2024-12-06 16:13:19,580 INFO:Stopped monitoring trade. Contract ID: 265427242668
+2024-12-06 16:13:19,580 INFO:Stopped monitoring trade. Contract ID: 265427151968
+2024-12-06 16:19:41,561 INFO:Starting trading bot...
+2024-12-06 16:19:41,562 INFO:Deriv API instance created.
+2024-12-06 16:19:43,286 INFO:Authorized with Deriv API.
+2024-12-06 16:19:43,286 INFO:OpenAI API initialized.
+2024-12-06 16:19:43,670 INFO:Active symbols set. Total symbols: 81
+2024-12-06 16:19:43,671 INFO:Fetched 81 active symbols.
+2024-12-06 16:19:43,676 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 16:19:43,679 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 16:19:45,078 INFO:Account Name (Login ID): Unknown
+2024-12-06 16:19:45,078 INFO:Account Balance: 9884.89 USD
+2024-12-06 16:19:45,078 INFO:Account Type: Demo
+2024-12-06 16:20:14,791 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:20:38,925 INFO:OpenAI assistant recommendation: BASED ON THE **QUANTITATIVE ANALYSIS FRAMEWORK (VERSION 1.0)** YOU'VE PROVIDED AND THE SUPPLIED DATA POINTS FOR **SYMBOL: R_50**, I'LL PERFORM A SYSTEMATIC TECHNICAL PATTERN RECOGNITION TO DETERMINE THE APPROPRIATE TRADING SIGNAL (**BUY**, **SELL**, OR **HOLD**).
+
+GIVEN THE **KNOWLEDGE CUTOFF** AND THE **PREDEFINED MATHEMATICAL CRITERIA**, HERE'S A STEP-BY-STEP ANALYSIS:
+
+---
+
+### **1. DATA OVERVIEW**
+
+- **TIMEFRAME:** CURRENT PERIOD
+- **DATA POINTS:** 99 ENTRIES FROM `2024-12-06 14:16:56` TO `2024-12-06 14:20:14`
+- **PRICE RANGE:** APPROXIMATELY BETWEEN **322.0655** AND **322.6016**
+
+### **2. TECHNICAL INDICATORS CALCULATION**
+
+**NOTE:** FOR A COMPREHENSIVE ANALYSIS, EACH TECHNICAL INDICATOR REQUIRES PRECISE CALCULATIONS. HOWEVER, GIVEN THE CONSTRAINTS OF THIS MEDIUM, I'LL PROVIDE AN APPROXIMATE ASSESSMENT BASED ON THE DATA TRENDS.
+
+#### **A. MOMENTUM COMPONENTS**
+
+1. **RSI (RELATIVE STRENGTH INDEX) - 14-PERIOD:**
+   - **OBSERVATION:** PRICE FLUCTUATIONS ARE MINIMAL WITH NO SIGNIFICANT UPWARD OR DOWNWARD TRENDS.
+   - **APPROXIMATION:** RSI IS LIKELY HOVERING AROUND THE MIDDLE (50). NO OVERBOUGHT OR OVERSOLD CONDITIONS DETECTED.
+   
+2. **MACD (12,26,9):**
+   - **OBSERVATION:** MINIMAL PRICE MOVEMENT SUGGESTS THAT THE MACD LINE IS CLOSE TO THE SIGNAL LINE.
+   - **APPROXIMATION:** NO CLEAR CROSSOVER INDICATING BULLISH OR BEARISH MOMENTUM.
+
+3. **ROC (RATE OF CHANGE) - 10-PERIOD:**
+   - **OBSERVATION:** SMALL PRICE CHANGES INDICATE LOW RATE OF CHANGE.
+   - **APPROXIMATION:** ROC IS NEUTRAL, CLOSE TO 0, INDICATING NO STRONG MOMENTUM.
+
+4. **STOCHASTIC OSCILLATOR (14,3,3):**
+   - **OBSERVATION:** PRICES ARE OSCILLATING WITHIN A TIGHT RANGE.
+   - **APPROXIMATION:** STOCHASTIC VALUES ARE LIKELY AROUND 50, SUGGESTING NO OVERBOUGHT OR OVERSOLD CONDITIONS.
+
+#### **B. VOLATILITY METRICS**
+
+1. **BOLLINGER BANDS (20,2):**
+   - **OBSERVATION:** TIGHT PRICE RANGE INDICATES LOW VOLATILITY.
+   - **APPROXIMATION:** BOLLINGER BANDS ARE NARROW, SHOWING CONSOLIDATION.
+
+2. **ATR (AVERAGE TRUE RANGE) - 14-PERIOD:**
+   - **OBSERVATION:** LOW ATR VALUES DUE TO MINIMAL PRICE MOVEMENT.
+   - **APPROXIMATION:** INDICATES LOW MARKET VOLATILITY.
+
+3. **HISTORICAL VOLATILITY - 20-PERIOD:**
+   - **OBSERVATION:** CONSISTENT PRICE LEVELS IMPLY LOW HISTORICAL VOLATILITY.
+   - **APPROXIMATION:** VOLATILITY REMAINS SUBDUED.
+
+4. **VOLATILITY RATIO: CURRENT/HISTORICAL:**
+   - **APPROXIMATION:** RATIO CLOSE TO 1, INDICATING CURRENT VOLATILITY ALIGNS WITH HISTORICAL NORMS.
+
+#### **C. PRICE STRUCTURE ANALYSIS**
+
+1. **SUPPORT/RESISTANCE LEVELS:**
+   - **OBSERVATION:** IMMEDIATE SUPPORT AROUND 322.16 AND RESISTANCE AROUND 322.60.
+   
+2. **TRENDLINE ANALYSIS:**
+   - **OBSERVATION:** NO CLEAR TREND; PRICES ARE OSCILLATING SIDEWAYS.
+   
+3. **VOLUME PROFILE METRICS:**
+   - **OBSERVATION:** VOLUME DATA NOT PROVIDED; ASSUMING AVERAGE BASED ON SECONDARY CONDITIONS.
+   
+4. **MOVING AVERAGE CONFIGURATION (50,200):**
+   - **OBSERVATION:** PRICE HOVERS AROUND THE 50-PERIOD MA (~322.30-322.40).
+   - **APPROXIMATION:** PRICE IS APPROXIMATELY AT THE 50-PERIOD MA.
+
+#### **D. RISK METRICS**
+
+1. **VOLATILITY-ADJUSTED POSITION VALUE:**
+   - **OBSERVATION:** LOW VOLATILITY SUGGESTS LOWER RISK.
+   
+2. **SUPPORT/RESISTANCE DISTANCE RATIO:**
+   - **OBSERVATION:** BALANCED DISTANCE BETWEEN SUPPORT AND RESISTANCE.
+   
+3. **PRICE/VOLUME CORRELATION:**
+   - **OBSERVATION:** ASSUMING NO STRONG CORRELATION DUE TO LACK OF SIGNIFICANT VOLUME SPIKES.
+
+### **3. DECISION CRITERIA EVALUATION**
+
+#### **A. LONG SIGNAL (BUY):**
+
+- **PRIMARY CONDITIONS:**
+  - **RSI > 40 AND RISING:** RSI IS AROUND 50 BUT NOT SIGNIFICANTLY RISING.
+  - **MACD CROSSING ABOVE SIGNAL LINE:** NO MACD CROSSOVER DETECTED.
+  - **PRICE > 50-PERIOD MA:** PRICE IS APPROXIMATELY AT THE 50-PERIOD MA.
+  
+  **RESULT:** **PRIMARY CONDITIONS NOT FULLY MET**
+
+- **SECONDARY CONDITIONS:**
+  - **VOLUME > 20-PERIOD AVERAGE:** ASSUMING NEUTRAL.
+  - **BOLLINGER BAND EXPANSION:** BANDS ARE NARROW, INDICATING NO EXPANSION.
+  - **POSITIVE ROC:** ROC IS NEUTRAL.
+  
+  **RESULT:** **SECONDARY CONDITIONS NOT MET**
+
+#### **B. SHORT SIGNAL (SELL):**
+
+- **PRIMARY CONDITIONS:**
+  - **RSI < 60 AND FALLING:** RSI IS AROUND 50 BUT NOT SIGNIFICANTLY FALLING.
+  - **MACD CROSSING BELOW SIGNAL LINE:** NO MACD CROSSOVER DETECTED.
+  - **PRICE < 50-PERIOD MA:** PRICE IS APPROXIMATELY AT THE 50-PERIOD MA.
+  
+  **RESULT:** **PRIMARY CONDITIONS NOT FULLY MET**
+
+- **SECONDARY CONDITIONS:**
+  - **VOLUME > 20-PERIOD AVERAGE:** ASSUMING NEUTRAL.
+  - **BOLLINGER BAND EXPANSION:** BANDS ARE NARROW, INDICATING NO EXPANSION.
+  - **NEGATIVE ROC:** ROC IS NEUTRAL.
+  
+  **RESULT:** **SECONDARY CONDITIONS NOT MET**
+
+#### **C. NEUTRAL SIGNAL (HOLD):**
+
+- **CONDITIONS:**
+  - **MIXED INDICATOR READINGS:** INDICATORS ARE NEUTRAL WITH NO CLEAR BULLISH OR BEARISH SIGNALS.
+  - **LOW VOLUME ENVIRONMENT:** ASSUMING VOLUME IS AVERAGE TO LOW.
+  - **TIGHT BOLLINGER BAND RANGE:** CONFIRMED LOW VOLATILITY.
+  
+  **RESULT:** **CONDITIONS MET FOR HOLD**
+
+### **4. **FINAL SIGNAL**
+
+BASED ON THE SYSTEMATIC ANALYSIS OF THE PROVIDED DATA AGAINST THE DEFINED DECISION CRITERIA:
+
+**🔔 **FINAL SIGNAL: HOLD**
+
+---
+
+### **5. RECOMMENDATIONS**
+
+- **MONITOR INDICATORS:** CONTINUE OBSERVING RSI, MACD, AND ROC FOR ANY SHIFTS THAT MAY TRIGGER BUY OR SELL SIGNALS.
+- **VOLUME ANALYSIS:** INCORPORATE DETAILED VOLUME DATA TO ENHANCE THE ACCURACY OF SECONDARY CONDITIONS.
+- **PRICE ACTION:** WATCH FOR SIGNIFICANT MOVEMENTS BEYOND SUPPORT OR RESISTANCE LEVELS TO REASSESS THE SIGNAL.
+- **UPDATE FRAMEWORK:** CONSIDER INTEGRATING ADDITIONAL INDICATORS OR ADJUSTING PARAMETERS TO BETTER CAPTURE MARKET NUANCES.
+
+**NOTE:** THIS ANALYSIS IS BASED ON THE PROVIDED DATA AND THE SPECIFIED FRAMEWORK. FOR REAL-TIME TRADING DECISIONS, IT'S ADVISABLE TO USE AUTOMATED TOOLS OR SOFTWARE DESIGNED FOR COMPREHENSIVE TECHNICAL ANALYSIS.
+2024-12-06 16:20:38,925 ERROR:Unexpected recommendation from OpenAI assistant: BASED ON THE **QUANTITATIVE ANALYSIS FRAMEWORK (VERSION 1.0)** YOU'VE PROVIDED AND THE SUPPLIED DATA POINTS FOR **SYMBOL: R_50**, I'LL PERFORM A SYSTEMATIC TECHNICAL PATTERN RECOGNITION TO DETERMINE THE APPROPRIATE TRADING SIGNAL (**BUY**, **SELL**, OR **HOLD**).
+
+GIVEN THE **KNOWLEDGE CUTOFF** AND THE **PREDEFINED MATHEMATICAL CRITERIA**, HERE'S A STEP-BY-STEP ANALYSIS:
+
+---
+
+### **1. DATA OVERVIEW**
+
+- **TIMEFRAME:** CURRENT PERIOD
+- **DATA POINTS:** 99 ENTRIES FROM `2024-12-06 14:16:56` TO `2024-12-06 14:20:14`
+- **PRICE RANGE:** APPROXIMATELY BETWEEN **322.0655** AND **322.6016**
+
+### **2. TECHNICAL INDICATORS CALCULATION**
+
+**NOTE:** FOR A COMPREHENSIVE ANALYSIS, EACH TECHNICAL INDICATOR REQUIRES PRECISE CALCULATIONS. HOWEVER, GIVEN THE CONSTRAINTS OF THIS MEDIUM, I'LL PROVIDE AN APPROXIMATE ASSESSMENT BASED ON THE DATA TRENDS.
+
+#### **A. MOMENTUM COMPONENTS**
+
+1. **RSI (RELATIVE STRENGTH INDEX) - 14-PERIOD:**
+   - **OBSERVATION:** PRICE FLUCTUATIONS ARE MINIMAL WITH NO SIGNIFICANT UPWARD OR DOWNWARD TRENDS.
+   - **APPROXIMATION:** RSI IS LIKELY HOVERING AROUND THE MIDDLE (50). NO OVERBOUGHT OR OVERSOLD CONDITIONS DETECTED.
+   
+2. **MACD (12,26,9):**
+   - **OBSERVATION:** MINIMAL PRICE MOVEMENT SUGGESTS THAT THE MACD LINE IS CLOSE TO THE SIGNAL LINE.
+   - **APPROXIMATION:** NO CLEAR CROSSOVER INDICATING BULLISH OR BEARISH MOMENTUM.
+
+3. **ROC (RATE OF CHANGE) - 10-PERIOD:**
+   - **OBSERVATION:** SMALL PRICE CHANGES INDICATE LOW RATE OF CHANGE.
+   - **APPROXIMATION:** ROC IS NEUTRAL, CLOSE TO 0, INDICATING NO STRONG MOMENTUM.
+
+4. **STOCHASTIC OSCILLATOR (14,3,3):**
+   - **OBSERVATION:** PRICES ARE OSCILLATING WITHIN A TIGHT RANGE.
+   - **APPROXIMATION:** STOCHASTIC VALUES ARE LIKELY AROUND 50, SUGGESTING NO OVERBOUGHT OR OVERSOLD CONDITIONS.
+
+#### **B. VOLATILITY METRICS**
+
+1. **BOLLINGER BANDS (20,2):**
+   - **OBSERVATION:** TIGHT PRICE RANGE INDICATES LOW VOLATILITY.
+   - **APPROXIMATION:** BOLLINGER BANDS ARE NARROW, SHOWING CONSOLIDATION.
+
+2. **ATR (AVERAGE TRUE RANGE) - 14-PERIOD:**
+   - **OBSERVATION:** LOW ATR VALUES DUE TO MINIMAL PRICE MOVEMENT.
+   - **APPROXIMATION:** INDICATES LOW MARKET VOLATILITY.
+
+3. **HISTORICAL VOLATILITY - 20-PERIOD:**
+   - **OBSERVATION:** CONSISTENT PRICE LEVELS IMPLY LOW HISTORICAL VOLATILITY.
+   - **APPROXIMATION:** VOLATILITY REMAINS SUBDUED.
+
+4. **VOLATILITY RATIO: CURRENT/HISTORICAL:**
+   - **APPROXIMATION:** RATIO CLOSE TO 1, INDICATING CURRENT VOLATILITY ALIGNS WITH HISTORICAL NORMS.
+
+#### **C. PRICE STRUCTURE ANALYSIS**
+
+1. **SUPPORT/RESISTANCE LEVELS:**
+   - **OBSERVATION:** IMMEDIATE SUPPORT AROUND 322.16 AND RESISTANCE AROUND 322.60.
+   
+2. **TRENDLINE ANALYSIS:**
+   - **OBSERVATION:** NO CLEAR TREND; PRICES ARE OSCILLATING SIDEWAYS.
+   
+3. **VOLUME PROFILE METRICS:**
+   - **OBSERVATION:** VOLUME DATA NOT PROVIDED; ASSUMING AVERAGE BASED ON SECONDARY CONDITIONS.
+   
+4. **MOVING AVERAGE CONFIGURATION (50,200):**
+   - **OBSERVATION:** PRICE HOVERS AROUND THE 50-PERIOD MA (~322.30-322.40).
+   - **APPROXIMATION:** PRICE IS APPROXIMATELY AT THE 50-PERIOD MA.
+
+#### **D. RISK METRICS**
+
+1. **VOLATILITY-ADJUSTED POSITION VALUE:**
+   - **OBSERVATION:** LOW VOLATILITY SUGGESTS LOWER RISK.
+   
+2. **SUPPORT/RESISTANCE DISTANCE RATIO:**
+   - **OBSERVATION:** BALANCED DISTANCE BETWEEN SUPPORT AND RESISTANCE.
+   
+3. **PRICE/VOLUME CORRELATION:**
+   - **OBSERVATION:** ASSUMING NO STRONG CORRELATION DUE TO LACK OF SIGNIFICANT VOLUME SPIKES.
+
+### **3. DECISION CRITERIA EVALUATION**
+
+#### **A. LONG SIGNAL (BUY):**
+
+- **PRIMARY CONDITIONS:**
+  - **RSI > 40 AND RISING:** RSI IS AROUND 50 BUT NOT SIGNIFICANTLY RISING.
+  - **MACD CROSSING ABOVE SIGNAL LINE:** NO MACD CROSSOVER DETECTED.
+  - **PRICE > 50-PERIOD MA:** PRICE IS APPROXIMATELY AT THE 50-PERIOD MA.
+  
+  **RESULT:** **PRIMARY CONDITIONS NOT FULLY MET**
+
+- **SECONDARY CONDITIONS:**
+  - **VOLUME > 20-PERIOD AVERAGE:** ASSUMING NEUTRAL.
+  - **BOLLINGER BAND EXPANSION:** BANDS ARE NARROW, INDICATING NO EXPANSION.
+  - **POSITIVE ROC:** ROC IS NEUTRAL.
+  
+  **RESULT:** **SECONDARY CONDITIONS NOT MET**
+
+#### **B. SHORT SIGNAL (SELL):**
+
+- **PRIMARY CONDITIONS:**
+  - **RSI < 60 AND FALLING:** RSI IS AROUND 50 BUT NOT SIGNIFICANTLY FALLING.
+  - **MACD CROSSING BELOW SIGNAL LINE:** NO MACD CROSSOVER DETECTED.
+  - **PRICE < 50-PERIOD MA:** PRICE IS APPROXIMATELY AT THE 50-PERIOD MA.
+  
+  **RESULT:** **PRIMARY CONDITIONS NOT FULLY MET**
+
+- **SECONDARY CONDITIONS:**
+  - **VOLUME > 20-PERIOD AVERAGE:** ASSUMING NEUTRAL.
+  - **BOLLINGER BAND EXPANSION:** BANDS ARE NARROW, INDICATING NO EXPANSION.
+  - **NEGATIVE ROC:** ROC IS NEUTRAL.
+  
+  **RESULT:** **SECONDARY CONDITIONS NOT MET**
+
+#### **C. NEUTRAL SIGNAL (HOLD):**
+
+- **CONDITIONS:**
+  - **MIXED INDICATOR READINGS:** INDICATORS ARE NEUTRAL WITH NO CLEAR BULLISH OR BEARISH SIGNALS.
+  - **LOW VOLUME ENVIRONMENT:** ASSUMING VOLUME IS AVERAGE TO LOW.
+  - **TIGHT BOLLINGER BAND RANGE:** CONFIRMED LOW VOLATILITY.
+  
+  **RESULT:** **CONDITIONS MET FOR HOLD**
+
+### **4. **FINAL SIGNAL**
+
+BASED ON THE SYSTEMATIC ANALYSIS OF THE PROVIDED DATA AGAINST THE DEFINED DECISION CRITERIA:
+
+**🔔 **FINAL SIGNAL: HOLD**
+
+---
+
+### **5. RECOMMENDATIONS**
+
+- **MONITOR INDICATORS:** CONTINUE OBSERVING RSI, MACD, AND ROC FOR ANY SHIFTS THAT MAY TRIGGER BUY OR SELL SIGNALS.
+- **VOLUME ANALYSIS:** INCORPORATE DETAILED VOLUME DATA TO ENHANCE THE ACCURACY OF SECONDARY CONDITIONS.
+- **PRICE ACTION:** WATCH FOR SIGNIFICANT MOVEMENTS BEYOND SUPPORT OR RESISTANCE LEVELS TO REASSESS THE SIGNAL.
+- **UPDATE FRAMEWORK:** CONSIDER INTEGRATING ADDITIONAL INDICATORS OR ADJUSTING PARAMETERS TO BETTER CAPTURE MARKET NUANCES.
+
+**NOTE:** THIS ANALYSIS IS BASED ON THE PROVIDED DATA AND THE SPECIFIED FRAMEWORK. FOR REAL-TIME TRADING DECISIONS, IT'S ADVISABLE TO USE AUTOMATED TOOLS OR SOFTWARE DESIGNED FOR COMPREHENSIVE TECHNICAL ANALYSIS.
+2024-12-06 16:20:38,926 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:20:38,926 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:20:38,926 INFO:No trade action taken.
+2024-12-06 16:20:44,606 INFO:Chart updated.
+2024-12-06 16:20:44,967 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:21:17,261 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:21:32,726 INFO:OpenAI assistant recommendation: BASED ON THE **QUANTITATIVE ANALYSIS FRAMEWORK (VERSION 1.0)** YOU'VE PROVIDED AND THE SUPPLIED PRICE DATA FOR THE SYMBOL **R_50** FROM **2024-12-06 14:17:26** TO **2024-12-06 14:20:44**, HERE'S THE ANALYSIS AND RESULTING SIGNAL.
+
+### **1. DATA OVERVIEW**
+- **TOTAL DATA POINTS:** 100 (SAMPLED EVERY 2 SECONDS)
+- **TIMEFRAME COVERED:** APPROXIMATELY 3 MINUTES AND 18 SECONDS
+- **KEY OBSERVATIONS:**
+  - **PRICE TREND:** DECLINING FROM 322.4892 TO 321.7058
+  - **50-PERIOD MOVING AVERAGE (MA50):** CALCULATED AS **322.1623**
+  - **CURRENT PRICE:** **321.7058** (BELOW MA50)
+
+### **2. TECHNICAL INDICATORS ANALYSIS**
+
+#### **A. RELATIVE STRENGTH INDEX (RSI)**
+- **CALCULATION PERIOD:** 14-PERIOD
+- **RSI VALUE:** **≈11.2**
+- **INTERPRETATION:** EXTREMELY OVERSOLD CONDITION.
+- **TREND:** **FALLING**
+
+#### **B. MOVING AVERAGE CONVERGENCE DIVERGENCE (MACD)**
+- **CALCULATION PARAMETERS:** (12, 26, 9)
+- **CURRENT STATUS:** LIKELY **CROSSING BELOW** THE SIGNAL LINE GIVEN THE DECLINING PRICE TREND.
+
+#### **C. MOVING AVERAGE (MA)**
+- **50-PERIOD MA (MA50):** **322.1623**
+- **PRICE VS. MA50:** CURRENT PRICE **321.7058** IS **BELOW** MA50.
+
+#### **D. OTHER INDICATORS:**
+- **RATE OF CHANGE (ROC):** NOT COMPUTED DUE TO LACK OF VOLUME DATA.
+- **BOLLINGER BANDS, ATR, HISTORICAL VOLATILITY, ETC.:** NOT FULLY ASSESSED DUE TO INCOMPLETE DATA.
+
+### **3. DECISION CRITERIA EVALUATION**
+
+#### **A. SELL SIGNAL CONDITIONS:**
+
+**PRIMARY CONDITIONS (ALL MUST BE MET):**
+1. **RSI < 60 AND FALLING:** **TRUE** (RSI ≈11.2 AND FALLING)
+2. **MACD CROSSING BELOW SIGNAL LINE:** **LIKELY TRUE**
+3. **PRICE < 50-PERIOD MA:** **TRUE** (321.7058 < 322.1623)
+
+**SECONDARY CONDITIONS (AT LEAST 2 MUST BE MET):**
+1. **VOLUME > 20-PERIOD AVERAGE:** **UNKNOWN** (VOLUME DATA NOT PROVIDED)
+2. **BOLLINGER BAND EXPANSION:** **CANNOT CONFIRM** (INSUFFICIENT DATA)
+3. **NEGATIVE ROC:** **CANNOT CONFIRM** (ROC NOT COMPUTED)
+
+**ASSESSMENT:** ALL PRIMARY CONDITIONS FOR A **SELL** SIGNAL ARE MET. HOWEVER, DUE TO THE ABSENCE OF VOLUME DATA, SECONDARY CONDITIONS CANNOT BE FULLY EVALUATED.
+
+### **4. GENERATED SIGNAL**
+
+- **PRIMARY CONDITIONS MET FOR SELL:** **YES**
+- **SECONDARY CONDITIONS MET:** **INSUFFICIENT DATA TO CONFIRM**
+
+**ACCORDING TO THE FRAMEWORK:**
+- **BUY OR SELL SIGNALS REQUIRE BOTH ALL PRIMARY CONDITIONS AND AT LEAST TWO SECONDARY CONDITIONS TO BE MET.**
+- **SINCE SECONDARY CONDITIONS CANNOT BE FULLY EVALUATED WITHOUT VOLUME DATA, THE FRAMEWORK ADVISES A CONSERVATIVE APPROACH.**
+
+### **5. **FINAL SIGNAL: HOLD**
+
+**RATIONALE:** WHILE THE PRIMARY CONDITIONS STRONGLY INDICATE A POTENTIAL **SELL** SIGNAL, THE INABILITY TO ASSESS SECONDARY CONDITIONS DUE TO MISSING VOLUME DATA PREVENTS A DEFINITIVE ACTION. THEREFORE, THE MOST PRUDENT RECOMMENDATION IS TO **HOLD** UNTIL SUFFICIENT DATA IS AVAILABLE TO FULLY VALIDATE THE SIGNAL.
+
+---
+
+**NOTE:** FOR MORE ACCURATE AND ACTIONABLE SIGNALS, ENSURING THE AVAILABILITY OF ALL RELEVANT DATA, INCLUDING VOLUME METRICS, IS ESSENTIAL. INTEGRATING COMPREHENSIVE DATA WILL ENHANCE THE RELIABILITY OF THE TECHNICAL INDICATORS AND THE RESULTING TRADING SIGNALS.
+2024-12-06 16:21:32,726 ERROR:Unexpected recommendation from OpenAI assistant: BASED ON THE **QUANTITATIVE ANALYSIS FRAMEWORK (VERSION 1.0)** YOU'VE PROVIDED AND THE SUPPLIED PRICE DATA FOR THE SYMBOL **R_50** FROM **2024-12-06 14:17:26** TO **2024-12-06 14:20:44**, HERE'S THE ANALYSIS AND RESULTING SIGNAL.
+
+### **1. DATA OVERVIEW**
+- **TOTAL DATA POINTS:** 100 (SAMPLED EVERY 2 SECONDS)
+- **TIMEFRAME COVERED:** APPROXIMATELY 3 MINUTES AND 18 SECONDS
+- **KEY OBSERVATIONS:**
+  - **PRICE TREND:** DECLINING FROM 322.4892 TO 321.7058
+  - **50-PERIOD MOVING AVERAGE (MA50):** CALCULATED AS **322.1623**
+  - **CURRENT PRICE:** **321.7058** (BELOW MA50)
+
+### **2. TECHNICAL INDICATORS ANALYSIS**
+
+#### **A. RELATIVE STRENGTH INDEX (RSI)**
+- **CALCULATION PERIOD:** 14-PERIOD
+- **RSI VALUE:** **≈11.2**
+- **INTERPRETATION:** EXTREMELY OVERSOLD CONDITION.
+- **TREND:** **FALLING**
+
+#### **B. MOVING AVERAGE CONVERGENCE DIVERGENCE (MACD)**
+- **CALCULATION PARAMETERS:** (12, 26, 9)
+- **CURRENT STATUS:** LIKELY **CROSSING BELOW** THE SIGNAL LINE GIVEN THE DECLINING PRICE TREND.
+
+#### **C. MOVING AVERAGE (MA)**
+- **50-PERIOD MA (MA50):** **322.1623**
+- **PRICE VS. MA50:** CURRENT PRICE **321.7058** IS **BELOW** MA50.
+
+#### **D. OTHER INDICATORS:**
+- **RATE OF CHANGE (ROC):** NOT COMPUTED DUE TO LACK OF VOLUME DATA.
+- **BOLLINGER BANDS, ATR, HISTORICAL VOLATILITY, ETC.:** NOT FULLY ASSESSED DUE TO INCOMPLETE DATA.
+
+### **3. DECISION CRITERIA EVALUATION**
+
+#### **A. SELL SIGNAL CONDITIONS:**
+
+**PRIMARY CONDITIONS (ALL MUST BE MET):**
+1. **RSI < 60 AND FALLING:** **TRUE** (RSI ≈11.2 AND FALLING)
+2. **MACD CROSSING BELOW SIGNAL LINE:** **LIKELY TRUE**
+3. **PRICE < 50-PERIOD MA:** **TRUE** (321.7058 < 322.1623)
+
+**SECONDARY CONDITIONS (AT LEAST 2 MUST BE MET):**
+1. **VOLUME > 20-PERIOD AVERAGE:** **UNKNOWN** (VOLUME DATA NOT PROVIDED)
+2. **BOLLINGER BAND EXPANSION:** **CANNOT CONFIRM** (INSUFFICIENT DATA)
+3. **NEGATIVE ROC:** **CANNOT CONFIRM** (ROC NOT COMPUTED)
+
+**ASSESSMENT:** ALL PRIMARY CONDITIONS FOR A **SELL** SIGNAL ARE MET. HOWEVER, DUE TO THE ABSENCE OF VOLUME DATA, SECONDARY CONDITIONS CANNOT BE FULLY EVALUATED.
+
+### **4. GENERATED SIGNAL**
+
+- **PRIMARY CONDITIONS MET FOR SELL:** **YES**
+- **SECONDARY CONDITIONS MET:** **INSUFFICIENT DATA TO CONFIRM**
+
+**ACCORDING TO THE FRAMEWORK:**
+- **BUY OR SELL SIGNALS REQUIRE BOTH ALL PRIMARY CONDITIONS AND AT LEAST TWO SECONDARY CONDITIONS TO BE MET.**
+- **SINCE SECONDARY CONDITIONS CANNOT BE FULLY EVALUATED WITHOUT VOLUME DATA, THE FRAMEWORK ADVISES A CONSERVATIVE APPROACH.**
+
+### **5. **FINAL SIGNAL: HOLD**
+
+**RATIONALE:** WHILE THE PRIMARY CONDITIONS STRONGLY INDICATE A POTENTIAL **SELL** SIGNAL, THE INABILITY TO ASSESS SECONDARY CONDITIONS DUE TO MISSING VOLUME DATA PREVENTS A DEFINITIVE ACTION. THEREFORE, THE MOST PRUDENT RECOMMENDATION IS TO **HOLD** UNTIL SUFFICIENT DATA IS AVAILABLE TO FULLY VALIDATE THE SIGNAL.
+
+---
+
+**NOTE:** FOR MORE ACCURATE AND ACTIONABLE SIGNALS, ENSURING THE AVAILABILITY OF ALL RELEVANT DATA, INCLUDING VOLUME METRICS, IS ESSENTIAL. INTEGRATING COMPREHENSIVE DATA WILL ENHANCE THE RELIABILITY OF THE TECHNICAL INDICATORS AND THE RESULTING TRADING SIGNALS.
+2024-12-06 16:21:32,726 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:21:32,726 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:21:32,726 INFO:No trade action taken.
+2024-12-06 16:21:32,726 INFO:OpenAI assistant recommendation: TO ANALYZE THE PROVIDED DATA FOR THE SYMBOL **R_50** USING THE **QUANTITATIVE ANALYSIS FRAMEWORK VERSION 1.0**, WE'LL FOLLOW THE SYSTEMATIC APPROACH DEFINED IN YOUR FRAMEWORK. GIVEN THE EXTENSIVE DATA POINTS AND THE COMPLEXITY OF CALCULATING EACH TECHNICAL INDICATOR MANUALLY, THIS ANALYSIS WILL PROVIDE AN APPROXIMATE ASSESSMENT BASED ON OBSERVABLE TRENDS. FOR PRECISE CALCULATIONS, USING SPECIALIZED SOFTWARE OR PROGRAMMING TOOLS (E.G., PYTHON WITH PANDAS AND TA-LIB) IS RECOMMENDED.
+
+### **1. DATA OVERVIEW**
+- **TIMEFRAME:** 2024-12-06 14:17:58 TO 2024-12-06 14:21:16
+- **PRICE MOVEMENT:** THE PRICE SHOWS A DECLINING TREND FROM APPROXIMATELY 322.2597 TO 321.4717 OVER THE ANALYZED PERIOD.
+
+### **2. TECHNICAL INDICATORS ANALYSIS**
+
+#### **A. MOMENTUM COMPONENTS**
+1. **RELATIVE STRENGTH INDEX (RSI, 14-PERIOD):**
+   - **OBSERVATION:** THE RSI APPEARS TO BE DECREASING, APPROACHING LOWER LEVELS, INDICATING WEAKENING BULLISH MOMENTUM.
+   - **APPROXIMATION:** RSI LIKELY BELOW 50 AND TRENDING DOWNWARD.
+
+2. **MACD (12,26,9):**
+   - **OBSERVATION:** GIVEN THE DOWNTREND IN PRICE, IT'S PROBABLE THAT THE MACD LINE HAS CROSSED BELOW THE SIGNAL LINE, SIGNALING A BEARISH MOMENTUM SHIFT.
+   - **APPROXIMATION:** MACD CROSSING BELOW THE SIGNAL LINE.
+
+3. **RATE OF CHANGE (ROC, 10-PERIOD):**
+   - **OBSERVATION:** NEGATIVE PRICE CHANGES SUGGEST A DECLINING ROC.
+   - **APPROXIMATION:** NEGATIVE ROC.
+
+4. **STOCHASTIC OSCILLATOR (14,3,3):**
+   - **OBSERVATION:** MOVING TOWARDS LOWER VALUES, POTENTIALLY INDICATING OVERSOLD CONDITIONS BUT CONFIRMING BEARISH MOMENTUM.
+   - **APPROXIMATION:** BELOW 50, POSSIBLY TRENDING DOWNWARD.
+
+#### **B. VOLATILITY METRICS**
+1. **BOLLINGER BANDS (20,2):**
+   - **OBSERVATION:** THE PRICE CONSISTENTLY TOUCHING OR MOVING BELOW THE LOWER BOLLINGER BAND SUGGESTS INCREASED VOLATILITY AND POTENTIAL CONTINUATION OF THE DOWNTREND.
+   - **APPROXIMATION:** BOLLINGER BAND CONTRACTION FOLLOWED BY EXPANSION DUE TO INCREASED VOLATILITY.
+
+2. **AVERAGE TRUE RANGE (ATR, 14-PERIOD):**
+   - **OBSERVATION:** RISING ATR VALUES INDICATE INCREASING VOLATILITY.
+   - **APPROXIMATION:** ATR IS LIKELY INCREASING.
+
+3. **HISTORICAL VOLATILITY (20-PERIOD):**
+   - **OBSERVATION:** RISING HISTORICAL VOLATILITY ALIGNS WITH THE INCREASING ATR.
+   - **APPROXIMATION:** HISTORICAL VOLATILITY IS ON THE RISE.
+
+4. **VOLATILITY RATIO:**
+   - **OBSERVATION:** CURRENT VOLATILITY EXCEEDS HISTORICAL AVERAGES.
+   - **APPROXIMATION:** VOLATILITY RATIO > 1.
+
+#### **C. PRICE STRUCTURE ANALYSIS**
+1. **SUPPORT/RESISTANCE LEVELS:**
+   - **OBSERVATION:** PRICE IS APPROACHING OR TESTING LOWER SUPPORT LEVELS WITHOUT SIGNIFICANT REBOUNDS.
+   - **APPROXIMATION:** BREAKING BELOW KEY SUPPORT LEVELS.
+
+2. **TRENDLINE ANALYSIS:**
+   - **OBSERVATION:** A DOWNWARD TRENDLINE IS EVIDENT.
+   - **APPROXIMATION:** CONFIRMED BEARISH TREND.
+
+3. **VOLUME PROFILE METRICS:**
+   - **OBSERVATION:** VOLUME DATA IS NOT EXPLICITLY PROVIDED, BUT IF VOLUME INCREASES DURING PRICE DECLINES, IT CONFIRMS SELLING PRESSURE.
+   - **APPROXIMATION:** ASSUMING VOLUME IS SUPPORTIVE OF THE DOWNTURN.
+
+4. **MOVING AVERAGE CONFIGURATION (50,200):**
+   - **OBSERVATION:** PRICE IS BELOW THE 50-PERIOD MOVING AVERAGE.
+   - **APPROXIMATION:** PRICE < 50-PERIOD MA.
+
+#### **D. RISK METRICS**
+1. **VOLATILITY-ADJUSTED POSITION VALUE:**
+   - **OBSERVATION:** INCREASED VOLATILITY SUGGESTS HIGHER RISK.
+   - **APPROXIMATION:** RISK-ADJUSTED POSITION VALUE IS LOWER.
+
+2. **SUPPORT/RESISTANCE DISTANCE RATIO:**
+   - **OBSERVATION:** PRICE IS MOVING CLOSER TO SUPPORT LEVELS, REDUCING THE DISTANCE FOR POTENTIAL REVERSALS.
+   - **APPROXIMATION:** DECREASING RATIO.
+
+3. **PRICE/VOLUME CORRELATION:**
+   - **OBSERVATION:** ASSUMING NEGATIVE CORRELATION WITH INCREASING PRICE DECLINE AND VOLUME.
+   - **APPROXIMATION:** NEGATIVE CORRELATION.
+
+### **3. DECISION CRITERIA EVALUATION**
+
+#### **SHORT SIGNAL (SELL):**
+- **PRIMARY CONDITIONS:**
+  1. **RSI < 60 AND FALLING:** MET (RSI LIKELY BELOW 50 AND DECREASING).
+  2. **MACD CROSSING BELOW THE SIGNAL LINE:** MET (BEARISH CROSSOVER OBSERVED).
+  3. **PRICE < 50-PERIOD MA:** MET.
+
+- **SECONDARY CONDITIONS (REQUIRE 2+):**
+  1. **VOLUME > 20-PERIOD AVERAGE:** ASSUMED MET BASED ON PRICE ACTION.
+  2. **BOLLINGER BAND EXPANSION:** MET DUE TO INCREASED VOLATILITY.
+  3. **NEGATIVE ROC:** MET.
+
+ALL **PRIMARY CONDITIONS** ARE SATISFIED, AND MULTIPLE **SECONDARY CONDITIONS** SUPPORT THE BEARISH OUTLOOK.
+
+### **4. **CONCLUSION**
+
+BASED ON THE **QUANTITATIVE ANALYSIS FRAMEWORK** AND THE PROVIDED DATA, THE **SIGNAL** IS:
+
+**🔴 SELL**
+
+---
+
+**NOTE:** THIS ANALYSIS PROVIDES AN APPROXIMATE ASSESSMENT BASED ON OBSERVABLE TRENDS. FOR PRECISE AND ACTIONABLE TRADING SIGNALS, IT'S ESSENTIAL TO COMPUTE EACH TECHNICAL INDICATOR ACCURATELY USING APPROPRIATE TOOLS AND TO CONSIDER ADDITIONAL FACTORS SUCH AS VOLUME DATA, NEWS EVENTS, AND BROADER MARKET CONDITIONS.
+2024-12-06 16:21:32,726 ERROR:Unexpected recommendation from OpenAI assistant: TO ANALYZE THE PROVIDED DATA FOR THE SYMBOL **R_50** USING THE **QUANTITATIVE ANALYSIS FRAMEWORK VERSION 1.0**, WE'LL FOLLOW THE SYSTEMATIC APPROACH DEFINED IN YOUR FRAMEWORK. GIVEN THE EXTENSIVE DATA POINTS AND THE COMPLEXITY OF CALCULATING EACH TECHNICAL INDICATOR MANUALLY, THIS ANALYSIS WILL PROVIDE AN APPROXIMATE ASSESSMENT BASED ON OBSERVABLE TRENDS. FOR PRECISE CALCULATIONS, USING SPECIALIZED SOFTWARE OR PROGRAMMING TOOLS (E.G., PYTHON WITH PANDAS AND TA-LIB) IS RECOMMENDED.
+
+### **1. DATA OVERVIEW**
+- **TIMEFRAME:** 2024-12-06 14:17:58 TO 2024-12-06 14:21:16
+- **PRICE MOVEMENT:** THE PRICE SHOWS A DECLINING TREND FROM APPROXIMATELY 322.2597 TO 321.4717 OVER THE ANALYZED PERIOD.
+
+### **2. TECHNICAL INDICATORS ANALYSIS**
+
+#### **A. MOMENTUM COMPONENTS**
+1. **RELATIVE STRENGTH INDEX (RSI, 14-PERIOD):**
+   - **OBSERVATION:** THE RSI APPEARS TO BE DECREASING, APPROACHING LOWER LEVELS, INDICATING WEAKENING BULLISH MOMENTUM.
+   - **APPROXIMATION:** RSI LIKELY BELOW 50 AND TRENDING DOWNWARD.
+
+2. **MACD (12,26,9):**
+   - **OBSERVATION:** GIVEN THE DOWNTREND IN PRICE, IT'S PROBABLE THAT THE MACD LINE HAS CROSSED BELOW THE SIGNAL LINE, SIGNALING A BEARISH MOMENTUM SHIFT.
+   - **APPROXIMATION:** MACD CROSSING BELOW THE SIGNAL LINE.
+
+3. **RATE OF CHANGE (ROC, 10-PERIOD):**
+   - **OBSERVATION:** NEGATIVE PRICE CHANGES SUGGEST A DECLINING ROC.
+   - **APPROXIMATION:** NEGATIVE ROC.
+
+4. **STOCHASTIC OSCILLATOR (14,3,3):**
+   - **OBSERVATION:** MOVING TOWARDS LOWER VALUES, POTENTIALLY INDICATING OVERSOLD CONDITIONS BUT CONFIRMING BEARISH MOMENTUM.
+   - **APPROXIMATION:** BELOW 50, POSSIBLY TRENDING DOWNWARD.
+
+#### **B. VOLATILITY METRICS**
+1. **BOLLINGER BANDS (20,2):**
+   - **OBSERVATION:** THE PRICE CONSISTENTLY TOUCHING OR MOVING BELOW THE LOWER BOLLINGER BAND SUGGESTS INCREASED VOLATILITY AND POTENTIAL CONTINUATION OF THE DOWNTREND.
+   - **APPROXIMATION:** BOLLINGER BAND CONTRACTION FOLLOWED BY EXPANSION DUE TO INCREASED VOLATILITY.
+
+2. **AVERAGE TRUE RANGE (ATR, 14-PERIOD):**
+   - **OBSERVATION:** RISING ATR VALUES INDICATE INCREASING VOLATILITY.
+   - **APPROXIMATION:** ATR IS LIKELY INCREASING.
+
+3. **HISTORICAL VOLATILITY (20-PERIOD):**
+   - **OBSERVATION:** RISING HISTORICAL VOLATILITY ALIGNS WITH THE INCREASING ATR.
+   - **APPROXIMATION:** HISTORICAL VOLATILITY IS ON THE RISE.
+
+4. **VOLATILITY RATIO:**
+   - **OBSERVATION:** CURRENT VOLATILITY EXCEEDS HISTORICAL AVERAGES.
+   - **APPROXIMATION:** VOLATILITY RATIO > 1.
+
+#### **C. PRICE STRUCTURE ANALYSIS**
+1. **SUPPORT/RESISTANCE LEVELS:**
+   - **OBSERVATION:** PRICE IS APPROACHING OR TESTING LOWER SUPPORT LEVELS WITHOUT SIGNIFICANT REBOUNDS.
+   - **APPROXIMATION:** BREAKING BELOW KEY SUPPORT LEVELS.
+
+2. **TRENDLINE ANALYSIS:**
+   - **OBSERVATION:** A DOWNWARD TRENDLINE IS EVIDENT.
+   - **APPROXIMATION:** CONFIRMED BEARISH TREND.
+
+3. **VOLUME PROFILE METRICS:**
+   - **OBSERVATION:** VOLUME DATA IS NOT EXPLICITLY PROVIDED, BUT IF VOLUME INCREASES DURING PRICE DECLINES, IT CONFIRMS SELLING PRESSURE.
+   - **APPROXIMATION:** ASSUMING VOLUME IS SUPPORTIVE OF THE DOWNTURN.
+
+4. **MOVING AVERAGE CONFIGURATION (50,200):**
+   - **OBSERVATION:** PRICE IS BELOW THE 50-PERIOD MOVING AVERAGE.
+   - **APPROXIMATION:** PRICE < 50-PERIOD MA.
+
+#### **D. RISK METRICS**
+1. **VOLATILITY-ADJUSTED POSITION VALUE:**
+   - **OBSERVATION:** INCREASED VOLATILITY SUGGESTS HIGHER RISK.
+   - **APPROXIMATION:** RISK-ADJUSTED POSITION VALUE IS LOWER.
+
+2. **SUPPORT/RESISTANCE DISTANCE RATIO:**
+   - **OBSERVATION:** PRICE IS MOVING CLOSER TO SUPPORT LEVELS, REDUCING THE DISTANCE FOR POTENTIAL REVERSALS.
+   - **APPROXIMATION:** DECREASING RATIO.
+
+3. **PRICE/VOLUME CORRELATION:**
+   - **OBSERVATION:** ASSUMING NEGATIVE CORRELATION WITH INCREASING PRICE DECLINE AND VOLUME.
+   - **APPROXIMATION:** NEGATIVE CORRELATION.
+
+### **3. DECISION CRITERIA EVALUATION**
+
+#### **SHORT SIGNAL (SELL):**
+- **PRIMARY CONDITIONS:**
+  1. **RSI < 60 AND FALLING:** MET (RSI LIKELY BELOW 50 AND DECREASING).
+  2. **MACD CROSSING BELOW THE SIGNAL LINE:** MET (BEARISH CROSSOVER OBSERVED).
+  3. **PRICE < 50-PERIOD MA:** MET.
+
+- **SECONDARY CONDITIONS (REQUIRE 2+):**
+  1. **VOLUME > 20-PERIOD AVERAGE:** ASSUMED MET BASED ON PRICE ACTION.
+  2. **BOLLINGER BAND EXPANSION:** MET DUE TO INCREASED VOLATILITY.
+  3. **NEGATIVE ROC:** MET.
+
+ALL **PRIMARY CONDITIONS** ARE SATISFIED, AND MULTIPLE **SECONDARY CONDITIONS** SUPPORT THE BEARISH OUTLOOK.
+
+### **4. **CONCLUSION**
+
+BASED ON THE **QUANTITATIVE ANALYSIS FRAMEWORK** AND THE PROVIDED DATA, THE **SIGNAL** IS:
+
+**🔴 SELL**
+
+---
+
+**NOTE:** THIS ANALYSIS PROVIDES AN APPROXIMATE ASSESSMENT BASED ON OBSERVABLE TRENDS. FOR PRECISE AND ACTIONABLE TRADING SIGNALS, IT'S ESSENTIAL TO COMPUTE EACH TECHNICAL INDICATOR ACCURATELY USING APPROPRIATE TOOLS AND TO CONSIDER ADDITIONAL FACTORS SUCH AS VOLUME DATA, NEWS EVENTS, AND BROADER MARKET CONDITIONS.
+2024-12-06 16:21:32,726 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:21:32,726 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 16:21:32,726 INFO:No trade action taken.
+2024-12-06 16:21:46,546 INFO:Chart updated.
+2024-12-06 16:21:47,038 INFO:Historical data fetched for symbol: R_50
+2024-12-06 16:21:52,867 INFO:Disconnected from Deriv API.
+2024-12-06 16:21:52,867 INFO:Trading bot stopped.
+2024-12-06 17:20:03,708 INFO:Starting trading bot...
+2024-12-06 17:20:03,709 INFO:Deriv API instance created.
+2024-12-06 17:20:05,031 INFO:Authorized with Deriv API.
+2024-12-06 17:20:05,031 INFO:OpenAI API initialized.
+2024-12-06 17:20:05,396 INFO:Active symbols set. Total symbols: 81
+2024-12-06 17:20:05,396 INFO:Fetched 81 active symbols.
+2024-12-06 17:20:05,402 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 17:20:05,404 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 17:20:06,892 INFO:Account Name (Login ID): Unknown
+2024-12-06 17:20:06,892 INFO:Account Balance: 9884.89 USD
+2024-12-06 17:20:06,893 INFO:Account Type: Demo
+2024-12-06 17:20:36,730 INFO:Historical data fetched for symbol: R_50
+2024-12-06 17:20:46,767 INFO:OpenAI assistant recommendation: BASED ON THE PROVIDED **QUANTITATIVE ANALYSIS FRAMEWORK** AND THE GIVEN PRICE DATA FOR THE SYMBOL **R_50**, THE ANALYSIS LEADS TO THE FOLLOWING DECISION:
+
+### ****BUY**
+
+#### **RATIONALE:**
+
+1. **PRIMARY CONDITIONS MET:**
+   - **RSI > 40 AND RISING:** THE PRICE SHOWS AN UPWARD TREND, SUGGESTING THAT THE RSI IS LIKELY ABOVE 40 AND EXHIBITING AN INCREASING PATTERN.
+   - **MACD CROSSING ABOVE SIGNAL LINE:** POSITIVE MOMENTUM IS INDICATED BY THE UPWARD MOVEMENT IN PRICE, WHICH TYPICALLY RESULTS IN THE MACD LINE CROSSING ABOVE THE SIGNAL LINE.
+   - **PRICE > 50-PERIOD MA:** THE PRICE HAS GENERALLY BEEN INCREASING FROM 320.9164 TO 321.3058, INDICATING IT IS ABOVE THE 50-PERIOD MOVING AVERAGE.
+
+2. **SECONDARY CONDITIONS:**
+   - **VOLUME > 20-PERIOD AVERAGE:** ASSUMING NORMAL TRADING VOLUMES WITH THE PROVIDED PRICE MOVEMENTS.
+   - **BOLLINGER BAND EXPANSION:** THE PRICE FLUCTUATIONS AND EVENTUAL RISE SUGGEST POSSIBLE BOLLINGER BAND EXPANSION.
+   - **POSITIVE ROC:** THE RATE OF CHANGE IS POSITIVE, ALIGNING WITH THE UPWARD PRICE MOVEMENT.
+
+GIVEN THAT ALL **PRIMARY CONDITIONS** ARE MET AND AT LEAST TWO **SECONDARY CONDITIONS** ARE SATISFIED, THE FRAMEWORK SIGNALS A **LONG (BUY)** POSITION.
+
+**OUTPUT:**  
+**BUY**
+2024-12-06 17:20:46,767 ERROR:Unexpected recommendation from OpenAI assistant: BASED ON THE PROVIDED **QUANTITATIVE ANALYSIS FRAMEWORK** AND THE GIVEN PRICE DATA FOR THE SYMBOL **R_50**, THE ANALYSIS LEADS TO THE FOLLOWING DECISION:
+
+### ****BUY**
+
+#### **RATIONALE:**
+
+1. **PRIMARY CONDITIONS MET:**
+   - **RSI > 40 AND RISING:** THE PRICE SHOWS AN UPWARD TREND, SUGGESTING THAT THE RSI IS LIKELY ABOVE 40 AND EXHIBITING AN INCREASING PATTERN.
+   - **MACD CROSSING ABOVE SIGNAL LINE:** POSITIVE MOMENTUM IS INDICATED BY THE UPWARD MOVEMENT IN PRICE, WHICH TYPICALLY RESULTS IN THE MACD LINE CROSSING ABOVE THE SIGNAL LINE.
+   - **PRICE > 50-PERIOD MA:** THE PRICE HAS GENERALLY BEEN INCREASING FROM 320.9164 TO 321.3058, INDICATING IT IS ABOVE THE 50-PERIOD MOVING AVERAGE.
+
+2. **SECONDARY CONDITIONS:**
+   - **VOLUME > 20-PERIOD AVERAGE:** ASSUMING NORMAL TRADING VOLUMES WITH THE PROVIDED PRICE MOVEMENTS.
+   - **BOLLINGER BAND EXPANSION:** THE PRICE FLUCTUATIONS AND EVENTUAL RISE SUGGEST POSSIBLE BOLLINGER BAND EXPANSION.
+   - **POSITIVE ROC:** THE RATE OF CHANGE IS POSITIVE, ALIGNING WITH THE UPWARD PRICE MOVEMENT.
+
+GIVEN THAT ALL **PRIMARY CONDITIONS** ARE MET AND AT LEAST TWO **SECONDARY CONDITIONS** ARE SATISFIED, THE FRAMEWORK SIGNALS A **LONG (BUY)** POSITION.
+
+**OUTPUT:**  
+**BUY**
+2024-12-06 17:20:46,767 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 17:20:46,767 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 17:20:46,767 INFO:No trade action taken.
+2024-12-06 17:21:06,428 INFO:Chart updated.
+2024-12-06 17:21:06,832 INFO:Historical data fetched for symbol: R_50
+2024-12-06 17:21:21,066 INFO:OpenAI assistant recommendation: BASED ON THE **QUANTITATIVE ANALYSIS FRAMEWORK** YOU PROVIDED, I'LL PERFORM A **SYSTEMATIC TECHNICAL PATTERN RECOGNITION** ANALYSIS ON THE GIVEN DATA FOR THE SYMBOL **R_50**. HERE'S A STEP-BY-STEP BREAKDOWN OF THE ANALYSIS:
+
+---
+
+### **1. DATA OVERVIEW**
+
+- **SYMBOL:** R_50
+- **TIMEFRAME:** CURRENT PERIOD
+- **DATA POINTS:** 70 PRICE POINTS FROM `2024-12-06 15:17:48` TO `2024-12-06 15:21:06`
+- **PRICE RANGE:** APPROXIMATELY 321.07 TO 321.3752
+
+---
+
+### **2. TECHNICAL INDICATORS CALCULATION**
+
+GIVEN THAT THE PROVIDED DATA CONSISTS SOLELY OF PRICE POINTS WITHOUT ACCOMPANYING VOLUME DATA, CERTAIN INDICATORS THAT RELY ON VOLUME (E.G., VOLUME > 20-PERIOD AVERAGE) CANNOT BE COMPUTED. HOWEVER, WE CAN STILL CALCULATE THE FOLLOWING INDICATORS:
+
+#### **A. MOMENTUM COMPONENTS**
+
+1. **RELATIVE STRENGTH INDEX (RSI) - 14-PERIOD**
+   - **CALCULATION:** RSI MEASURES THE SPEED AND CHANGE OF PRICE MOVEMENTS. IT OSCILLATES BETWEEN 0 AND 100.
+   - **VALUE:** *[RSI CALCULATION NEEDED]*
+
+2. **MACD (12,26,9)**
+   - **CALCULATION:** MACD IS THE DIFFERENCE BETWEEN THE 12-PERIOD EMA AND THE 26-PERIOD EMA, WITH A 9-PERIOD EMA AS THE SIGNAL LINE.
+   - **VALUE:** *[MACD CALCULATION NEEDED]*
+
+3. **RATE OF CHANGE (ROC) - 10-PERIOD**
+   - **CALCULATION:** ROC MEASURES THE PERCENTAGE CHANGE BETWEEN THE CURRENT PRICE AND THE PRICE 10 PERIODS AGO.
+   - **VALUE:** *[ROC CALCULATION NEEDED]*
+
+4. **STOCHASTIC OSCILLATOR (14,3,3)**
+   - **CALCULATION:** MEASURES THE LOCATION OF THE CLOSE RELATIVE TO THE HIGH-LOW RANGE OVER THE PAST 14 PERIODS.
+   - **VALUE:** *[STOCHASTIC OSCILLATOR CALCULATION NEEDED]*
+
+#### **B. VOLATILITY METRICS**
+
+1. **BOLLINGER BANDS (20,2)**
+   - **CALCULATION:** CONSISTS OF A 20-PERIOD SMA AND TWO STANDARD DEVIATIONS ABOVE AND BELOW.
+   - **VALUE:** *[BOLLINGER BANDS CALCULATION NEEDED]*
+
+2. **AVERAGE TRUE RANGE (ATR) - 14-PERIOD**
+   - **CALCULATION:** MEASURES MARKET VOLATILITY BY DECOMPOSING THE ENTIRE RANGE OF AN ASSET PRICE.
+   - **VALUE:** *[ATR CALCULATION NEEDED]*
+
+3. **HISTORICAL VOLATILITY - 20-PERIOD**
+   - **CALCULATION:** STATISTICAL MEASURE OF THE DISPERSION OF RETURNS FOR THE PAST 20 PERIODS.
+   - **VALUE:** *[HISTORICAL VOLATILITY CALCULATION NEEDED]*
+
+4. **VOLATILITY RATIO (CURRENT/HISTORICAL)**
+   - **CALCULATION:** RATIO OF CURRENT VOLATILITY TO HISTORICAL VOLATILITY.
+   - **VALUE:** *[VOLATILITY RATIO CALCULATION NEEDED]*
+
+#### **C. PRICE STRUCTURE ANALYSIS**
+
+1. **SUPPORT/RESISTANCE LEVELS**
+   - **IDENTIFICATION:** KEY PRICE LEVELS WHERE THE PRICE TENDS TO REVERSE.
+   - **LEVELS IDENTIFIED:** 
+     - **SUPPORT:** ~321.07
+     - **RESISTANCE:** ~321.3752
+
+2. **TRENDLINE ANALYSIS**
+   - **OBSERVATION:** *[TRENDLINE ANALYSIS NEEDED]*
+
+3. **VOLUME PROFILE METRICS**
+   - **NOTE:** VOLUME DATA IS NOT PROVIDED; HENCE, VOLUME PROFILE METRICS CANNOT BE CALCULATED.
+
+4. **MOVING AVERAGE CONFIGURATION (50,200)**
+   - **50-PERIOD MA:** *[50-PERIOD MA CALCULATION NEEDED]*
+   - **200-PERIOD MA:** *[200-PERIOD MA CALCULATION NEEDED]*
+
+#### **D. RISK METRICS**
+
+1. **VOLATILITY-ADJUSTED POSITION VALUE**
+   - **CALCULATION:** *[REQUIRES VOLATILITY METRICS AND POSITION SIZE DATA]*
+
+2. **SUPPORT/RESISTANCE DISTANCE RATIO**
+   - **CALCULATION:** *[REQUIRES DETAILED PRICE MOVEMENT DATA]*
+
+3. **PRICE/VOLUME CORRELATION**
+   - **NOTE:** VOLUME DATA IS NOT PROVIDED; HENCE, THIS METRIC CANNOT BE CALCULATED.
+
+---
+
+### **3. DECISION CRITERIA EVALUATION**
+
+GIVEN THE ABSENCE OF VOLUME DATA, CERTAIN SECONDARY CONDITIONS CANNOT BE EVALUATED. THEREFORE, THE ANALYSIS WILL FOCUS PRIMARILY ON THE **PRIMARY CONDITIONS** FOR GENERATING SIGNALS.
+
+#### **A. LONG SIGNAL (BUY)**
+
+- **PRIMARY CONDITIONS:**
+  1. **RSI > 40 AND RISING:** *[BASED ON RSI CALCULATION]*
+  2. **MACD CROSSING ABOVE SIGNAL LINE:** *[BASED ON MACD CALCULATION]*
+  3. **PRICE > 50-PERIOD MA:** *[BASED ON 50-PERIOD MA CALCULATION]*
+
+- **SECONDARY CONDITIONS:** NOT EVALUATED DUE TO LACK OF VOLUME DATA.
+
+#### **B. SHORT SIGNAL (SELL)**
+
+- **PRIMARY CONDITIONS:**
+  1. **RSI < 60 AND FALLING:** *[BASED ON RSI CALCULATION]*
+  2. **MACD CROSSING BELOW SIGNAL LINE:** *[BASED ON MACD CALCULATION]*
+  3. **PRICE < 50-PERIOD MA:** *[BASED ON 50-PERIOD MA CALCULATION]*
+
+- **SECONDARY CONDITIONS:** NOT EVALUATED DUE TO LACK OF VOLUME DATA.
+
+#### **C. NEUTRAL SIGNAL (HOLD)**
+
+- **CONDITIONS:**
+  - MIXED INDICATOR READINGS
+  - LOW VOLUME ENVIRONMENT (CANNOT EVALUATE)
+  - TIGHT BOLLINGER BAND RANGE (REQUIRES BOLLINGER BANDS CALCULATION)
+
+---
+
+### **4. FINAL ANALYSIS AND SIGNAL RECOMMENDATION**
+
+DUE TO THE LACK OF NECESSARY CALCULATIONS FOR THE TECHNICAL INDICATORS (E.G., RSI, MACD, MA) AND THE ABSENCE OF VOLUME DATA, THE ANALYSIS CANNOT CONCLUSIVELY DETERMINE A **BUY**, **SELL**, OR **HOLD** SIGNAL BASED ON THE PROVIDED FRAMEWORK.
+
+**RECOMMENDATION:** TO GENERATE A DEFINITIVE SIGNAL, PLEASE PROVIDE THE CALCULATED VALUES FOR THE TECHNICAL INDICATORS OR GRANT ACCESS TO THE RELEVANT DATA NECESSARY FOR THEIR COMPUTATION. ADDITIONALLY, INCLUDING VOLUME DATA WOULD ENABLE A MORE COMPREHENSIVE ANALYSIS ALIGNED WITH THE FRAMEWORK'S SECONDARY CONDITIONS.
+
+---
+
+**OUTPUT SIGNAL:** **HOLD**
+
+*RATIONALE:* INCOMPLETE DATA PREVENTS THE FULFILLMENT OF PRIMARY CONDITIONS REQUIRED FOR A DEFINITIVE **BUY** OR **SELL** SIGNAL. THEREFORE, THE RECOMMENDATION IS TO **HOLD** UNTIL SUFFICIENT DATA IS AVAILABLE FOR A THOROUGH ANALYSIS.
+2024-12-06 17:21:21,067 ERROR:Unexpected recommendation from OpenAI assistant: BASED ON THE **QUANTITATIVE ANALYSIS FRAMEWORK** YOU PROVIDED, I'LL PERFORM A **SYSTEMATIC TECHNICAL PATTERN RECOGNITION** ANALYSIS ON THE GIVEN DATA FOR THE SYMBOL **R_50**. HERE'S A STEP-BY-STEP BREAKDOWN OF THE ANALYSIS:
+
+---
+
+### **1. DATA OVERVIEW**
+
+- **SYMBOL:** R_50
+- **TIMEFRAME:** CURRENT PERIOD
+- **DATA POINTS:** 70 PRICE POINTS FROM `2024-12-06 15:17:48` TO `2024-12-06 15:21:06`
+- **PRICE RANGE:** APPROXIMATELY 321.07 TO 321.3752
+
+---
+
+### **2. TECHNICAL INDICATORS CALCULATION**
+
+GIVEN THAT THE PROVIDED DATA CONSISTS SOLELY OF PRICE POINTS WITHOUT ACCOMPANYING VOLUME DATA, CERTAIN INDICATORS THAT RELY ON VOLUME (E.G., VOLUME > 20-PERIOD AVERAGE) CANNOT BE COMPUTED. HOWEVER, WE CAN STILL CALCULATE THE FOLLOWING INDICATORS:
+
+#### **A. MOMENTUM COMPONENTS**
+
+1. **RELATIVE STRENGTH INDEX (RSI) - 14-PERIOD**
+   - **CALCULATION:** RSI MEASURES THE SPEED AND CHANGE OF PRICE MOVEMENTS. IT OSCILLATES BETWEEN 0 AND 100.
+   - **VALUE:** *[RSI CALCULATION NEEDED]*
+
+2. **MACD (12,26,9)**
+   - **CALCULATION:** MACD IS THE DIFFERENCE BETWEEN THE 12-PERIOD EMA AND THE 26-PERIOD EMA, WITH A 9-PERIOD EMA AS THE SIGNAL LINE.
+   - **VALUE:** *[MACD CALCULATION NEEDED]*
+
+3. **RATE OF CHANGE (ROC) - 10-PERIOD**
+   - **CALCULATION:** ROC MEASURES THE PERCENTAGE CHANGE BETWEEN THE CURRENT PRICE AND THE PRICE 10 PERIODS AGO.
+   - **VALUE:** *[ROC CALCULATION NEEDED]*
+
+4. **STOCHASTIC OSCILLATOR (14,3,3)**
+   - **CALCULATION:** MEASURES THE LOCATION OF THE CLOSE RELATIVE TO THE HIGH-LOW RANGE OVER THE PAST 14 PERIODS.
+   - **VALUE:** *[STOCHASTIC OSCILLATOR CALCULATION NEEDED]*
+
+#### **B. VOLATILITY METRICS**
+
+1. **BOLLINGER BANDS (20,2)**
+   - **CALCULATION:** CONSISTS OF A 20-PERIOD SMA AND TWO STANDARD DEVIATIONS ABOVE AND BELOW.
+   - **VALUE:** *[BOLLINGER BANDS CALCULATION NEEDED]*
+
+2. **AVERAGE TRUE RANGE (ATR) - 14-PERIOD**
+   - **CALCULATION:** MEASURES MARKET VOLATILITY BY DECOMPOSING THE ENTIRE RANGE OF AN ASSET PRICE.
+   - **VALUE:** *[ATR CALCULATION NEEDED]*
+
+3. **HISTORICAL VOLATILITY - 20-PERIOD**
+   - **CALCULATION:** STATISTICAL MEASURE OF THE DISPERSION OF RETURNS FOR THE PAST 20 PERIODS.
+   - **VALUE:** *[HISTORICAL VOLATILITY CALCULATION NEEDED]*
+
+4. **VOLATILITY RATIO (CURRENT/HISTORICAL)**
+   - **CALCULATION:** RATIO OF CURRENT VOLATILITY TO HISTORICAL VOLATILITY.
+   - **VALUE:** *[VOLATILITY RATIO CALCULATION NEEDED]*
+
+#### **C. PRICE STRUCTURE ANALYSIS**
+
+1. **SUPPORT/RESISTANCE LEVELS**
+   - **IDENTIFICATION:** KEY PRICE LEVELS WHERE THE PRICE TENDS TO REVERSE.
+   - **LEVELS IDENTIFIED:** 
+     - **SUPPORT:** ~321.07
+     - **RESISTANCE:** ~321.3752
+
+2. **TRENDLINE ANALYSIS**
+   - **OBSERVATION:** *[TRENDLINE ANALYSIS NEEDED]*
+
+3. **VOLUME PROFILE METRICS**
+   - **NOTE:** VOLUME DATA IS NOT PROVIDED; HENCE, VOLUME PROFILE METRICS CANNOT BE CALCULATED.
+
+4. **MOVING AVERAGE CONFIGURATION (50,200)**
+   - **50-PERIOD MA:** *[50-PERIOD MA CALCULATION NEEDED]*
+   - **200-PERIOD MA:** *[200-PERIOD MA CALCULATION NEEDED]*
+
+#### **D. RISK METRICS**
+
+1. **VOLATILITY-ADJUSTED POSITION VALUE**
+   - **CALCULATION:** *[REQUIRES VOLATILITY METRICS AND POSITION SIZE DATA]*
+
+2. **SUPPORT/RESISTANCE DISTANCE RATIO**
+   - **CALCULATION:** *[REQUIRES DETAILED PRICE MOVEMENT DATA]*
+
+3. **PRICE/VOLUME CORRELATION**
+   - **NOTE:** VOLUME DATA IS NOT PROVIDED; HENCE, THIS METRIC CANNOT BE CALCULATED.
+
+---
+
+### **3. DECISION CRITERIA EVALUATION**
+
+GIVEN THE ABSENCE OF VOLUME DATA, CERTAIN SECONDARY CONDITIONS CANNOT BE EVALUATED. THEREFORE, THE ANALYSIS WILL FOCUS PRIMARILY ON THE **PRIMARY CONDITIONS** FOR GENERATING SIGNALS.
+
+#### **A. LONG SIGNAL (BUY)**
+
+- **PRIMARY CONDITIONS:**
+  1. **RSI > 40 AND RISING:** *[BASED ON RSI CALCULATION]*
+  2. **MACD CROSSING ABOVE SIGNAL LINE:** *[BASED ON MACD CALCULATION]*
+  3. **PRICE > 50-PERIOD MA:** *[BASED ON 50-PERIOD MA CALCULATION]*
+
+- **SECONDARY CONDITIONS:** NOT EVALUATED DUE TO LACK OF VOLUME DATA.
+
+#### **B. SHORT SIGNAL (SELL)**
+
+- **PRIMARY CONDITIONS:**
+  1. **RSI < 60 AND FALLING:** *[BASED ON RSI CALCULATION]*
+  2. **MACD CROSSING BELOW SIGNAL LINE:** *[BASED ON MACD CALCULATION]*
+  3. **PRICE < 50-PERIOD MA:** *[BASED ON 50-PERIOD MA CALCULATION]*
+
+- **SECONDARY CONDITIONS:** NOT EVALUATED DUE TO LACK OF VOLUME DATA.
+
+#### **C. NEUTRAL SIGNAL (HOLD)**
+
+- **CONDITIONS:**
+  - MIXED INDICATOR READINGS
+  - LOW VOLUME ENVIRONMENT (CANNOT EVALUATE)
+  - TIGHT BOLLINGER BAND RANGE (REQUIRES BOLLINGER BANDS CALCULATION)
+
+---
+
+### **4. FINAL ANALYSIS AND SIGNAL RECOMMENDATION**
+
+DUE TO THE LACK OF NECESSARY CALCULATIONS FOR THE TECHNICAL INDICATORS (E.G., RSI, MACD, MA) AND THE ABSENCE OF VOLUME DATA, THE ANALYSIS CANNOT CONCLUSIVELY DETERMINE A **BUY**, **SELL**, OR **HOLD** SIGNAL BASED ON THE PROVIDED FRAMEWORK.
+
+**RECOMMENDATION:** TO GENERATE A DEFINITIVE SIGNAL, PLEASE PROVIDE THE CALCULATED VALUES FOR THE TECHNICAL INDICATORS OR GRANT ACCESS TO THE RELEVANT DATA NECESSARY FOR THEIR COMPUTATION. ADDITIONALLY, INCLUDING VOLUME DATA WOULD ENABLE A MORE COMPREHENSIVE ANALYSIS ALIGNED WITH THE FRAMEWORK'S SECONDARY CONDITIONS.
+
+---
+
+**OUTPUT SIGNAL:** **HOLD**
+
+*RATIONALE:* INCOMPLETE DATA PREVENTS THE FULFILLMENT OF PRIMARY CONDITIONS REQUIRED FOR A DEFINITIVE **BUY** OR **SELL** SIGNAL. THEREFORE, THE RECOMMENDATION IS TO **HOLD** UNTIL SUFFICIENT DATA IS AVAILABLE FOR A THOROUGH ANALYSIS.
+2024-12-06 17:21:21,067 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 17:21:21,067 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 17:21:21,067 INFO:No trade action taken.
+2024-12-06 17:21:27,873 INFO:Disconnected from Deriv API.
+2024-12-06 17:21:27,873 INFO:Trading bot stopped.
+2024-12-06 17:23:08,721 INFO:Starting trading bot...
+2024-12-06 17:23:08,722 INFO:Deriv API instance created.
+2024-12-06 17:23:10,444 INFO:Authorized with Deriv API.
+2024-12-06 17:23:10,444 INFO:OpenAI API initialized.
+2024-12-06 17:23:10,818 INFO:Active symbols set. Total symbols: 81
+2024-12-06 17:23:10,818 INFO:Fetched 81 active symbols.
+2024-12-06 17:23:10,823 INFO:Dashboard is running... Access it at http://localhost:8050/
+2024-12-06 17:23:10,826 INFO:Subscribed to ticks for symbol: R_50
+2024-12-06 17:23:13,538 INFO:Account Name (Login ID): Unknown
+2024-12-06 17:23:13,539 INFO:Account Balance: 9884.89 USD
+2024-12-06 17:23:13,539 INFO:Account Type: Demo
+2024-12-06 17:23:42,645 INFO:Historical data fetched for symbol: R_50
+2024-12-06 17:24:04,292 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 17:24:04,292 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 17:24:04,292 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 17:24:04,292 INFO:No trade action taken.
+2024-12-06 17:24:12,486 INFO:Chart updated.
+2024-12-06 17:24:12,889 INFO:Historical data fetched for symbol: R_50
+2024-12-06 17:24:20,775 INFO:OpenAI assistant recommendation: SELL
+2024-12-06 17:24:20,776 INFO:Strategy evaluated using OpenAI assistant. Signal: SELL, Confidence: 0.8
+2024-12-06 17:24:20,776 INFO:Strategy evaluated. Signal: SELL, Confidence: 0.8
+2024-12-06 17:24:21,063 INFO:Price proposal received: 10
+2024-12-06 17:24:21,063 INFO:Executing trade: Symbol=R_50, Signal=SELL, Amount=10.0
+2024-12-06 17:24:21,491 INFO:Trade executed. Contract ID: 265433601488
+2024-12-06 17:24:21,491 INFO:Monitoring trade. Contract ID: 265433601488
+2024-12-06 17:24:21,792 INFO:Stop loss reached: -10.0
+2024-12-06 17:24:22,207 ERROR:Error executing stop loss sell: ResponseError: Contract cannot be sold at this time. Please try again.
+2024-12-06 17:24:44,734 INFO:Historical data fetched for symbol: R_50
+2024-12-06 17:24:49,215 INFO:OpenAI assistant recommendation: HOLD
+2024-12-06 17:24:49,215 INFO:Strategy evaluated using OpenAI assistant. Signal: HOLD, Confidence: 0.8
+2024-12-06 17:24:49,216 INFO:Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-06 17:24:49,216 INFO:No trade action taken.
+2024-12-06 17:24:59,782 INFO:Disconnected from Deriv API.
+2024-12-06 17:24:59,782 INFO:Trading bot stopped.
+2024-12-06 17:24:59,782 INFO:Stopped monitoring trade. Contract ID: 265433601488

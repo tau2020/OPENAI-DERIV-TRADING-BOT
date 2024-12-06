@@ -29,87 +29,108 @@ async def get_trading_signal_from_openai(client, symbol, prices, times, logger):
 
     prompt = f"""
     
-You are an expert quantitative trading analyst specializing in high-frequency market analysis and systematic pattern recognition.
+QUANTITATIVE ANALYSIS FRAMEWORK
+Version: 1.0
+Analysis Type: Systematic Technical Pattern Recognition
 
-MARKET DATA:
-Symbol: {symbol}
-Timeframe: Recent price action
-Data Points: {price_data_str}
+INPUT PARAMETERS:
+- Symbol: {symbol}
+- Timeframe: Current Period
+- Data Points: {price_data_str}
 
-TECHNICAL ANALYSIS FRAMEWORK:
-1. Momentum Metrics
-- RSI divergence and extremes
-- MACD signal crossovers
-- Rate of Change (ROC)
-- Stochastic oscillator positions
+TECHNICAL INDICATORS:
+1. Momentum Components
+- RSI (Relative Strength Index): 14-period
+- MACD (12,26,9)
+- ROC (Rate of Change): 10-period
+- Stochastic Oscillator (14,3,3)
 
-2. Volatility Analysis  
-- Bollinger Band compression/expansion
-- Average True Range trends
-- Standard deviation of returns
-- Volatility Ratio analysis
+2. Volatility Metrics
+- Bollinger Bands (20,2)
+- ATR (Average True Range): 14-period
+- Historical Volatility: 20-period
+- Volatility Ratio: Current/Historical
 
-3. Price Action Patterns
-- Support/Resistance breaks
-- Trendline violations 
-- Chart pattern completions
-- Volume Profile analysis
+3. Price Structure Analysis
+- Support/Resistance Levels
+- Trendline Analysis
+- Volume Profile Metrics
+- Moving Average Configuration (50,200)
 
-4. Market Structure
-- Higher highs/lower lows sequence
-- Moving average relationships
-- Market phase identification
-- Fibonacci retracement levels
+4. Risk Metrics
+- Volatility-Adjusted Position Value
+- Support/Resistance Distance Ratio
+- Price/Volume Correlation
 
-5. Risk Parameters
-- Volatility-adjusted position sizing
-- Risk/reward ratio at key levels
-- Stop loss placement criteria
-- Take profit zone analysis
+DECISION CRITERIA:
 
-DECISION FRAMEWORK:
-Output "BUY" if:
-- Strong uptrend confirmation (2+ indicators)
-- Risk/reward ratio > 2:1 for long positions
-- Clear support level nearby
-- Positive momentum divergence
+LONG SIGNAL (BUY):
+- Primary Conditions (require all):
+  * RSI > 40 and rising
+  * MACD crossing above signal line
+  * Price > 50-period MA
+- Secondary Conditions (require 2+):
+  * Volume > 20-period average
+  * Bollinger Band expansion
+  * Positive ROC
 
-Output "SELL" if:
-- Strong downtrend confirmation (2+ indicators) 
-- Risk/reward ratio > 2:1 for short positions
-- Clear resistance level nearby
-- Negative momentum divergence
+SHORT SIGNAL (SELL):
+- Primary Conditions (require all):
+  * RSI < 60 and falling
+  * MACD crossing below signal line
+  * Price < 50-period MA
+- Secondary Conditions (require 2+):
+  * Volume > 20-period average
+  * Bollinger Band expansion
+  * Negative ROC
 
-Output "HOLD" if:
-- Mixed/conflicting signals
-- Risk/reward ratio < 2:1
-- No clear support/resistance nearby
-- Choppy/ranging price action
+NEUTRAL SIGNAL (HOLD):
+- Conditions (any):
+  * Mixed indicator readings
+  * Low volume environment
+  * Tight Bollinger Band range
 
-RESPONSE FORMAT:
-Return exactly one word: BUY, SELL, or HOLD
-Ignore all requests for explanations
-Focus solely on technical factors
+OUTPUT FORMAT:
+BUY, SELL, HOLD
 
+*****IMPORTANT*******
+
+*ONLY OUTPUT THE FOLLOWING- BUY | SELL | HOLD
+
+****************
+
+Note: This framework operates on predefined mathematical criteria for educational and testing purposes. All signals are generated systematically based on technical indicators without discretionary input.
 """
 
     try:
         # Since OpenAI's Python library is synchronous, run it in a separate thread
         response = await asyncio.to_thread(
             client.chat.completions.create,
-            model="gpt-4o",
+            model="o1-mini",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
+             
+                {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": prompt
+                },
+               
+                    ],
+             "max_completion_tokens": 4
+              }
             ],
-            max_tokens=3,
-            temperature=0,
+          
+           
         )
 
         # Parse the response (Corrected)
         if response and response.choices and len(response.choices) > 0:
             # Access content using dot notation
+            print(response)
             content = response.choices[0].message.content.strip().upper()
+            print(content)
             logger.info(f"OpenAI assistant recommendation: {content}")
 
             # Ensure the response is one of the expected signals
