@@ -22,7 +22,7 @@ class TradingStrategy:
         self.tick_times = []
         self.tick_prices = []
         self.lock = threading.Lock()
-        self.last_chart_update = datetime.now()
+        
         self.last_strategy_evaluation = datetime.now()
         self.account_info_logged = False
         self.active_symbols = []
@@ -51,7 +51,7 @@ class TradingStrategy:
         price = float(tick_data.get('quote', 0.0))
         epoch = tick_data.get('epoch')
         timestamp = datetime.fromtimestamp(epoch)
-        self.logger.debug(f"Received tick: {tick_data}")
+      
 
         # Append tick data
         self.append_tick_data(timestamp, price)
@@ -61,10 +61,8 @@ class TradingStrategy:
             await self.log_account_info()
             self.account_info_logged = True
 
-        # Update chart if necessary
-        if self.should_update_chart():
-            self.update_chart(symbol)
-
+     
+        
         # Evaluate strategy if necessary
         if self.should_evaluate_strategy():
             asyncio.create_task(self.evaluate_and_execute_trade(symbol))
@@ -79,7 +77,7 @@ class TradingStrategy:
             if len(self.tick_prices) > config.MAX_TICK_DATA_POINTS:
                 self.tick_times = self.tick_times[-config.MAX_TICK_DATA_POINTS:]
                 self.tick_prices = self.tick_prices[-config.MAX_TICK_DATA_POINTS:]
-        self.logger.debug(f"Tick data appended: {timestamp}, {price}")
+        
 
     async def log_account_info(self):
         """
@@ -125,48 +123,6 @@ class TradingStrategy:
                     self.logger.error("Failed to retrieve account balance.")
             except Exception as e:
                 self.logger.error(f"Error fetching balance: {e}")
-
-
-    def should_update_chart(self):
-        """
-        Determines if it's time to update the price and P/L chart.
-        """
-        elapsed = (datetime.now() - self.last_chart_update).total_seconds()
-        return elapsed >= config.CHART_UPDATE_INTERVAL
-
-    def update_chart(self, symbol):
-        """
-        Updates the price and P/L charts with the latest data.
-        """
-        with self.lock:
-            fig, ax1 = plt.subplots(figsize=(10, 5))
-
-            # Plot Price
-            color = 'tab:blue'
-            ax1.set_xlabel('Time')
-            ax1.set_ylabel('Price', color=color)
-            ax1.plot(self.tick_times, self.tick_prices, label='Price', color=color)
-            ax1.tick_params(axis='y', labelcolor=color)
-
-            # Plot Net Cumulative P/L
-            ax2 = ax1.twinx()  # Instantiate a second axes that shares the same x-axis
-            color = 'tab:red'
-            ax2.set_ylabel('Net Cumulative P/L', color=color)
-            ax2.plot(self.pl_times, self.pl_values, label='Net P/L', color=color)
-            ax2.tick_params(axis='y', labelcolor=color)
-
-            fig.tight_layout()  # Otherwise the right y-label is slightly clipped
-            plt.title(f'{symbol} Price and Net Cumulative P/L Chart')
-            plt.legend(loc='upper left')
-
-            # Save chart to an in-memory buffer or file
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png')
-            buf.seek(0)
-            plt.close()
-
-            self.last_chart_update = datetime.now()
-            self.logger.info("Chart updated.")
 
     def should_evaluate_strategy(self):
         """
@@ -230,7 +186,7 @@ class TradingStrategy:
     def fetch_polygon_data(self, symbol):
         
         end_date = datetime.utcnow().strftime("%Y-%m-%d")  # Correct usage
-        url = f"https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/2020-01-01/{end_date}"
+        url = f"https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/2024-01-01/{end_date}"
         params = {
             "apiKey": config.POLYGONIO_API_KEY
         }

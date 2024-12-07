@@ -48,12 +48,7 @@ async def main():
             logger.error("Failed to retrieve active symbols.")
             return
 
-        # Initialize and start the Dashboard in a separate thread
-        dashboard = Dashboard(trading_strategy=strategy, host='0.0.0.0', port=8050)
-        dashboard_thread = threading.Thread(target=dashboard.run, daemon=True)
-        dashboard_thread.start()
-        logger.info("Dashboard is running... Access it at http://localhost:8050/")
-
+       
         # Start receiving ticks
         tick_stream = await deriv_api.subscribe({"ticks": config.SYMBOL})
 

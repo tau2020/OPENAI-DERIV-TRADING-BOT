@@ -63,6 +63,10 @@ DATA:
 - Market Sentiment Score: {sentiment_score} (-1 to 1)
 - Recent Trades Win/Loss Ratio: {recent_trades_win_loss_ratio}
 - Current Account Balance: {account_balance}
+- f"Recent volume data points:{volume_str}
+- f"Market sentiment score: {sentiment_str}
+- f"Recent price volatility measure (annualized):{volatility_str}
+- f"Recent volume data points:{performance_str}
 
 
 
@@ -133,7 +137,7 @@ Note: This framework operates on predefined mathematical criteria for educationa
 
         if response and response.choices and len(response.choices) > 0:
             content = response.choices[0].message.content.strip()
-            logger.debug(f"Raw AI Response: {content}")
+          
 
             import json
             try:
