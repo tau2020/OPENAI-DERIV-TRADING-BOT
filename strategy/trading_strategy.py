@@ -3,21 +3,22 @@
 import logging
 from datetime import datetime
 import asyncio
+import statistics
 import threading
 import matplotlib.pyplot as plt
 import io
+
+import requests
 from config import config
 from utils.openai_utils import initialize_openai, get_trading_signal_from_openai
 
 class TradingStrategy:
-    """
-    Implements the trading strategy logic, including indicator calculations,
-    decision-making, and risk management.
-    """
 
     def __init__(self, logger, deriv_api, openai_api_key):
         self.logger = logger
         self.deriv_api = deriv_api
+        self.total_wins = 0
+        self.total_losses = 0
         self.tick_times = []
         self.tick_prices = []
         self.lock = threading.Lock()
@@ -27,6 +28,9 @@ class TradingStrategy:
         self.active_symbols = []
         self.current_symbol = config.SYMBOL
         self.latest_balance = 0.0
+        self.dynamic_stop_loss = config.STOP_LOSS  # Default from config, will be overridden
+        self.dynamic_take_profit = config.TAKE_PROFIT
+        self.dynamic_confidence = 0.0
         self.currency = 'USD'  # Default currency, will be updated
 
         # Initialize OpenAI client
@@ -219,36 +223,174 @@ class TradingStrategy:
                 self.logger.error(f"Failed to fetch historical data for symbol: {symbol}")
         except Exception as e:
             self.logger.error(f"Error fetching historical data: {e}")
+            
+               
+        
 
-    async def evaluate_strategy(self):
-        """
-        Evaluates the trading strategy using OpenAI assistant.
-        """
-        with self.lock:
-            if len(self.tick_prices) < config.MIN_DATA_POINTS_FOR_STRATEGY:
-                self.logger.debug("Insufficient data for strategy evaluation.")
-                return "HOLD", 0.0
-
-            prices = self.tick_prices.copy()
-            times = self.tick_times.copy()
+    def fetch_polygon_data(self, symbol):
+        
+        end_date = datetime.utcnow().strftime("%Y-%m-%d")  # Correct usage
+        url = f"https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/2020-01-01/{end_date}"
+        params = {
+            "apiKey": config.POLYGONIO_API_KEY
+        }
 
         try:
-            # Use OpenAI assistant to get trading signal
-            signal = await get_trading_signal_from_openai(
-                self.openai_client,
-                self.current_symbol,
-                prices,
-                times,
-                self.logger
-            )
-            confidence = 0.8  # Adjust confidence as needed
+            response = requests.get(url, params=params)
+            data = response.json()
+            results = data.get("results", [])
+            if not results:
+                return "No Polygon data available."
 
-            self.logger.info(f"Strategy evaluated using OpenAI assistant. Signal: {signal}, Confidence: {confidence}")
-
-            return signal, confidence
+            # Take the most recent day's data
+            recent_data = results[-1]
+            o, h, l, c, v = recent_data["o"], recent_data["h"], recent_data["l"], recent_data["c"], recent_data["v"]
+            polygon_summary = f"Recent OHLC: O={o}, H={h}, L={l}, C={c}, Volume={v}"
+            return polygon_summary
         except Exception as e:
-            self.logger.error(f"Error evaluating strategy: {e}")
-            return "HOLD", 0.0
+            self.logger.error(f"Error fetching Polygon data: {e}")
+            return "No Polygon data available."
+
+    async def evaluate_strategy(self):
+            with self.lock:
+                if len(self.tick_prices) < config.MIN_DATA_POINTS_FOR_STRATEGY:
+                    self.logger.debug("Insufficient data for strategy evaluation.")
+                    return "HOLD", 0.0
+
+                prices = self.tick_prices.copy()
+                times = self.tick_times.copy()
+
+            recent_volume_data = self.calculate_recent_volume()
+            recent_volatility = self.calculate_volatility(prices)
+            sentiment_score = self.get_market_sentiment()
+            recent_trades_win_loss_ratio = self.calculate_win_loss_ratio()
+            account_balance = self.latest_balance
+
+            # For now, still no actual fundamentals or polygon data
+           
+            polygon_data = "No Polygon data available."
+            news_headlines = []
+
+            try:
+                result = await get_trading_signal_from_openai(
+                    self.openai_client,
+                    self.current_symbol,
+                    prices,
+                    times,
+                    self.logger,
+                    recent_volume=recent_volume_data,
+                    recent_volatility=recent_volatility,
+                    sentiment_score=sentiment_score,
+                    recent_trades_win_loss_ratio=recent_trades_win_loss_ratio,
+                    account_balance=account_balance,
+                    news_headlines=news_headlines,
+                    
+                    polygon_data=polygon_data
+                )
+
+                signal = result["signal"]
+                self.dynamic_stop_loss = result["stop_loss"]
+                self.dynamic_take_profit = result["take_profit"]
+                confidence = result["confidence"]
+
+                self.logger.info(
+                    f"Enhanced strategy evaluation: {signal}, SL={self.dynamic_stop_loss}, "
+                    f"TP={self.dynamic_take_profit}, Confidence={confidence}"
+                )
+
+                return signal, confidence
+            except Exception as e:
+                self.logger.error(f"Error evaluating strategy: {e}")
+                return "HOLD", 0.0
+        
+        
+        
+    def calculate_recent_volume(self, lookback=50):
+         
+            with self.lock:
+                recent_ticks = self.tick_prices[-lookback:]
+                # The 'volume' is just the number of ticks. We can also scale it by some factor if we want.
+                approx_volume = len(recent_ticks)
+
+            # Return a simple list with one volume data point or generate a series
+            # For demonstration, let's just return a series showing some variation.
+            # If we wanted multiple data points, we could take multiple smaller segments and count ticks in each.
+            return [approx_volume for _ in range(5)]  # Just replicate it 5 times as an example
+
+
+    def calculate_volatility(self, prices, annualize=False):
+            """
+            Calculate volatility as the standard deviation of log returns or percentage returns.
+            Here we will use a simple percentage change between consecutive ticks.
+            If annualize=True, we can scale it, but since this is tick data, scaling might be arbitrary.
+
+            volatility = stddev of returns
+            returns = (price[i] - price[i-1]) / price[i-1]
+            """
+            if len(prices) < 2:
+                return 0.0
+
+            returns = []
+            for i in range(1, len(prices)):
+                if prices[i-1] != 0:
+                    ret = (prices[i] - prices[i-1]) / prices[i-1]
+                    returns.append(ret)
+
+            if not returns:
+                return 0.0
+
+            vol = statistics.pstdev(returns)  # population std dev
+            # If desired, annualize or scale by sqrt of periods, etc.
+            # Without time context, we just return raw std dev.
+            return vol
+
+    def get_market_sentiment(self, window=20):
+            """
+            Approximate sentiment from recent price action.
+            If the latest price is above the average of the last `window` prices, sentiment is positive.
+            If below, sentiment is negative.
+            Scale sentiment between -1 and 1 depending on how far from the mean the price is.
+
+            sentiment = (current_price - avg_price) / (avg_price) clipped to [-1,1].
+            """
+            with self.lock:
+                if len(self.tick_prices) < window:
+                    window_prices = self.tick_prices
+                else:
+                    window_prices = self.tick_prices[-window:]
+
+            if not window_prices:
+                return 0.0
+
+            avg_price = sum(window_prices) / len(window_prices)
+            current_price = window_prices[-1]
+
+            if avg_price == 0:
+                return 0.0
+
+            raw_sentiment = (current_price - avg_price) / avg_price
+            # Clip sentiment to range [-1,1]
+            sentiment = max(-1.0, min(1.0, raw_sentiment))
+            return sentiment
+
+    def calculate_win_loss_ratio(self):
+            """
+            Compute the ratio of total wins to total losses.
+            If no losses, and we have wins, ratio can be high.
+            If no trades at all, return 1.0 as neutral.
+            """
+            wins = self.total_wins
+            losses = self.total_losses
+
+            if wins == 0 and losses == 0:
+                return 1.0  # neutral if no trades
+
+            if losses == 0:
+                # If we never lost, ratio is very high, let's cap it at something
+                return float(wins)  # Could also return a large number like 10.0
+
+            return wins / losses   
+
 
     async def get_price_proposal(self, symbol, signal):
         """
@@ -349,9 +491,6 @@ class TradingStrategy:
             self.logger.info(f"Stopped monitoring trade. Contract ID: {contract_id}")
 
     async def handle_poc_update(self, poc_update, contract_id):
-        """
-        Handles updates from the proposal_open_contract stream.
-        """
         poc_data = poc_update.get('proposal_open_contract', {})
         is_sold = poc_data.get('is_sold', False)
         profit = float(poc_data.get('profit', 0.0))
@@ -359,17 +498,18 @@ class TradingStrategy:
         if is_sold:
             self.logger.info(f"Contract {contract_id} has been sold or expired.")
             self.logger.info(f"Profit/Loss for Contract {contract_id}: {profit}")
-            
+
             if profit > 0:
                 self.cumulative_profit += profit
+                self.total_wins += 1
                 self.logger.info(f"Cumulative Profit: {self.cumulative_profit}")
             elif profit < 0:
                 self.cumulative_loss += abs(profit)
+                self.total_losses += 1
                 self.logger.info(f"Cumulative Loss: {self.cumulative_loss}")
             else:
                 self.logger.info("No profit or loss for this contract.")
 
-            # Record P/L for charting
             current_time = datetime.now()
             net_pl = self.cumulative_profit - self.cumulative_loss
             self.pl_times.append(current_time)
@@ -378,24 +518,46 @@ class TradingStrategy:
             await self.log_current_balance()
             return
 
-        self.logger.debug(f"Current profit: {profit}")
-
-        if profit >= config.TAKE_PROFIT:
-            self.logger.info(f"Take profit reached: {profit}")
-            try:
-                await self.deriv_api.sell({"sell": contract_id, "price": 0})
-            except Exception as e:
-                self.logger.error(f"Error executing take profit sell: {e}")
-        elif profit <= -config.STOP_LOSS:
-            self.logger.info(f"Stop loss reached: {profit}")
-            try:
-                await self.deriv_api.sell({"sell": contract_id, "price": 0})
-            except Exception as e:
-                self.logger.error(f"Error executing stop loss sell: {e}")
-
     def set_active_symbols(self, symbols):
         """
         Sets the list of active symbols available for trading.
         """
         self.active_symbols = symbols
         self.logger.info(f"Active symbols set. Total symbols: {len(symbols)}")
+ 
+ 
+    def fetch_recent_news(self, symbol):
+        """
+        Fetch recent market news related to the provided symbol using the News API.
+        """
+        url = "https://newsapi.org/v2/everything"
+        params = {
+            "q": symbol,
+            "sortBy": "publishedAt",
+            "language": "en",
+            "apiKey": config.NEWS_API_KEY,
+            "pageSize": 5
+        }
+
+        try:
+            response = requests.get(url, params=params)
+            data = response.json()
+            articles = data.get("articles", [])
+            news_list = []
+            for article in articles:
+                title = article.get("title", "")
+                description = article.get("description", "")
+                news_list.append(f"{title}: {description}")
+            return news_list
+        except Exception as e:
+            self.logger.error(f"Error fetching news: {e}")
+            return []
+        
+        
+        
+        
+
+        
+        
+        
+        

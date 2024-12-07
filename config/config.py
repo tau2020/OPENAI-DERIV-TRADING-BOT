@@ -45,3 +45,7 @@ LOG_FILE = os.getenv("LOG_FILE", "logs/trading_bot.log")
 # API rate limiting
 MAX_API_CALLS_PER_SECOND = int(os.getenv("MAX_API_CALLS_PER_SECOND", "5"))
 
+
+NEWS_API_KEY= os.getenv("NEWS_API_KEY")
+EODHD_API_KEY= os.getenv("EODHD_API_KEY")
+POLYGONIO_API_KEY= os.getenv("POLYGONIO_API_KEY")

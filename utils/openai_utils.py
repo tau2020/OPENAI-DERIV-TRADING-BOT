@@ -12,98 +12,105 @@ def initialize_openai(api_key, logger):
     logger.info("OpenAI API initialized.")
     return openai  # Return the OpenAI client for use in TradingStrategy
 
-async def get_trading_signal_from_openai(client, symbol, prices, times, logger):
-    """
-    Uses OpenAI to analyze price data and provide a trading signal.
-    """
-    # Prepare the prompt
-    max_data_points = 100  # Limit data points to stay within token limits
+async def get_trading_signal_from_openai(client, symbol, prices, times, logger,
+    recent_volume=None,
+    recent_volatility=None,
+    sentiment_score=None,
+    recent_trades_win_loss_ratio=None,
+    account_balance=None,
+    news_headlines=None,
+    polygon_data=None):
+
+    # Limit data points for tokens
+    max_data_points = 150
     if len(prices) > max_data_points:
         prices = prices[-max_data_points:]
         times = times[-max_data_points:]
 
-    # Format the price data
     price_data_str = "\n".join(
         [f"{t.strftime('%Y-%m-%d %H:%M:%S')}, {p}" for t, p in zip(times, prices)]
     )
 
-    prompt = f"""
+    # Provide defaults if None
+    recent_volume = recent_volume if recent_volume is not None else []
+    recent_volatility = recent_volatility if recent_volatility is not None else 0.0
+    sentiment_score = sentiment_score if sentiment_score is not None else 0.0
+    recent_trades_win_loss_ratio = recent_trades_win_loss_ratio if recent_trades_win_loss_ratio is not None else 1.0
+    account_balance = account_balance if account_balance is not None else 1000.0
     
+    news_headlines = news_headlines or []
+   
+    polygon_data = polygon_data or "No additional market data."
+
+    # Include additional data
+    volume_str = f"Recent volume data points: {recent_volume}"
+    sentiment_str = f"Market sentiment score: {sentiment_score} (-1 to 1, negative to positive)"
+    volatility_str = f"Recent price volatility measure (annualized): {recent_volatility}"
+    performance_str = f"Recent trades win/loss ratio: {recent_trades_win_loss_ratio}, Current account balance: {account_balance}"
+
+    news_str = "\n".join(news_headlines[:3]) 
+
+    prompt = f"""
 QUANTITATIVE ANALYSIS FRAMEWORK
 Version: 1.0
 Analysis Type: Systematic Technical Pattern Recognition
 
-INPUT PARAMETERS:
+DATA:
 - Symbol: {symbol}
-- Timeframe: Current Period
-- Data Points: {price_data_str}
+- Historical Price Data (Time, Price):{price_data_str}
+- Recent Volume Data: {recent_volume}
+- Volatility: {recent_volatility}
+- Market Sentiment Score: {sentiment_score} (-1 to 1)
+- Recent Trades Win/Loss Ratio: {recent_trades_win_loss_ratio}
+- Current Account Balance: {account_balance}
 
-TECHNICAL INDICATORS:
-1. Momentum Components
-- RSI (Relative Strength Index): 14-period
-- MACD (12,26,9)
-- ROC (Rate of Change): 10-period
-- Stochastic Oscillator (14,3,3)
 
-2. Volatility Metrics
-- Bollinger Bands (20,2)
-- ATR (Average True Range): 14-period
-- Historical Volatility: 20-period
-- Volatility Ratio: Current/Historical
 
-3. Price Structure Analysis
-- Support/Resistance Levels
-- Trendline Analysis
-- Volume Profile Metrics
-- Moving Average Configuration (50,200)
 
-4. Risk Metrics
-- Volatility-Adjusted Position Value
-- Support/Resistance Distance Ratio
-- Price/Volume Correlation
+MARKET DATA (From Polygon.io):
+{polygon_data}
 
-DECISION CRITERIA:
+NEWS HEADLINES (From NewsAPI):
+{news_str}
 
-LONG SIGNAL (BUY):
-- Primary Conditions (require all):
-  * RSI > 40 and rising
-  * MACD crossing above signal line
-  * Price > 50-period MA
-- Secondary Conditions (require 2+):
-  * Volume > 20-period average
-  * Bollinger Band expansion
-  * Positive ROC
 
-SHORT SIGNAL (SELL):
-- Primary Conditions (require all):
-  * RSI < 60 and falling
-  * MACD crossing below signal line
-  * Price < 50-period MA
-- Secondary Conditions (require 2+):
-  * Volume > 20-period average
-  * Bollinger Band expansion
-  * Negative ROC
 
-NEUTRAL SIGNAL (HOLD):
-- Conditions (any):
-  * Mixed indicator readings
-  * Low volume environment
-  * Tight Bollinger Band range
+GOAL:
+- Maximize risk-adjusted returns
+- Prioritize profitability over frequency of trades
+- Provide a high-confidence signal only if conditions strongly favor a profitable outcome
+
+TECHNICAL & FUNDAMENTAL CONSIDERATIONS:
+- Identify trending vs ranging market conditions
+- Evaluate momentum and mean-reversion indicators
+- Consider sentiment score: a positive sentiment might support buying dips or continuing to hold longs, negative sentiment might justify shorting or selling rallies
+- Use volatility metrics to set appropriate stop loss and take profit levels (tighter if low volatility, wider if high volatility)
+- Consider recent performance: If the recent win/loss ratio is high, slightly more aggressive take profits; if low, focus on capital preservation and tighter stops
 
 OUTPUT FORMAT:
-BUY, SELL, HOLD
 
 *****IMPORTANT*******
+- Use all provided data (fundamentals, news, sentiment, volatility) to make a high-confidence decision.
+Emphasize 
+    profitability and risk-adjusted returns
+You must return a JSON object with the following keys:
+- "signal": string, one of "BUY", "SELL", or "HOLD"
+- "stop_loss": float, a recommended stop loss level relative to the current price
+- "take_profit": float, a recommended take profit level relative to the current price
+- "confidence": float, a value between 0 and 1 indicating your confidence in this signal
 
-*ONLY OUTPUT THE FOLLOWING- BUY | SELL | HOLD
+Do not include any additional text or explanation. Do not include code blocks. Only return a valid JSON object.
+
+Example JSON:
+{{"signal": "BUY", "stop_loss": 1.2345, "take_profit": 1.2500, "confidence": 0.85}}
+
 
 ****************
 
 Note: This framework operates on predefined mathematical criteria for educational and testing purposes. All signals are generated systematically based on technical indicators without discretionary input.
-"""
+    """
 
     try:
-        # Since OpenAI's Python library is synchronous, run it in a separate thread
         response = await asyncio.to_thread(
             client.chat.completions.create,
             model="o1-mini",
@@ -118,30 +125,50 @@ Note: This framework operates on predefined mathematical criteria for educationa
                 },
                
                     ],
-             "max_completion_tokens": 4
+             "max_completion_tokens": 150
               }
-            ],
-          
-           
+            ]
+            
         )
 
-        # Parse the response (Corrected)
         if response and response.choices and len(response.choices) > 0:
-            # Access content using dot notation
-            print(response)
-            content = response.choices[0].message.content.strip().upper()
-            print(content)
-            logger.info(f"OpenAI assistant recommendation: {content}")
+            content = response.choices[0].message.content.strip()
+            logger.debug(f"Raw AI Response: {content}")
 
-            # Ensure the response is one of the expected signals
-            if content in ["BUY", "SELL", "HOLD"]:
-                return content
-            else:
-                logger.error(f"Unexpected recommendation from OpenAI assistant: {content}")
-                return "HOLD"
+            import json
+            try:
+                result = json.loads(content)
+                required_keys = ["signal", "stop_loss", "take_profit", "confidence"]
+                for k in required_keys:
+                    if k not in result:
+                        logger.error(f"Missing key '{k}' in the assistant response.")
+                        return {"signal": "HOLD", "stop_loss": 0.0, "take_profit": 0.0, "confidence": 0.0}
+
+                signal = result["signal"].upper()
+                if signal not in ["BUY", "SELL", "HOLD"]:
+                    logger.error(f"Invalid signal: {signal}. Defaulting to HOLD.")
+                    signal = "HOLD"
+
+                stop_loss = float(result["stop_loss"])
+                take_profit = float(result["take_profit"])
+                confidence = float(result["confidence"])
+
+                logger.info(
+                    f"OpenAI assistant recommendation: Signal={signal}, SL={stop_loss}, TP={take_profit}, Confidence={confidence}"
+                )
+                return {
+                    "signal": signal,
+                    "stop_loss": stop_loss,
+                    "take_profit": take_profit,
+                    "confidence": confidence
+                }
+
+            except json.JSONDecodeError:
+                logger.error("Unable to parse JSON from the assistant response.")
+                return {"signal": "HOLD", "stop_loss": 0.0, "take_profit": 0.0, "confidence": 0.0}
         else:
             logger.error("OpenAI assistant did not return a recommendation.")
-            return "HOLD"
+            return {"signal": "HOLD", "stop_loss": 0.0, "take_profit": 0.0, "confidence": 0.0}
     except Exception as e:
         logger.error(f"Error calling OpenAI API: {e}")
-        return "HOLD"
+        return {"signal": "HOLD", "stop_loss": 0.0, "take_profit": 0.0, "confidence": 0.0}
