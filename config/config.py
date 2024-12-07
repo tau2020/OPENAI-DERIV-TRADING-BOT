@@ -20,7 +20,7 @@ if DERIV_APP_ID is None or DERIV_API_TOKEN is None:
 DERIV_API_URL = f"wss://ws.binaryws.com/websockets/v3?app_id={DERIV_APP_ID}"
 
 # Trading parameters
-SYMBOL = os.getenv("SYMBOL", "R_50")
+SYMBOL = os.getenv("SYMBOL", "frxBTCUSD")
 AMOUNT = float(os.getenv("AMOUNT", "10"))
 DURATION = int(os.getenv("DURATION", "5"))
 CURRENCY = os.getenv("CURRENCY", "USD")

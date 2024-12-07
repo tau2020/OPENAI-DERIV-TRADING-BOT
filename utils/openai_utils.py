@@ -117,7 +117,7 @@ Note: This framework operates on predefined mathematical criteria for educationa
     try:
         response = await asyncio.to_thread(
             client.chat.completions.create,
-            model="o1-mini",
+            model="o1-preview",
             messages=[
              
                 {

@@ -225,3 +225,871 @@
 2024-12-08 00:06:59,427 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.5
 2024-12-08 00:06:59,427 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.5
 2024-12-08 00:06:59,427 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:07:24,546 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:07:35,928 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1130.38, TP=1130.38, Confidence=0.9
+2024-12-08 00:07:35,928 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1130.38, TP=1130.38, Confidence=0.9
+2024-12-08 00:07:35,928 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.9
+2024-12-08 00:07:35,928 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:07:54,606 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:08:04,148 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1128.5, TP=1132.5, Confidence=0.75
+2024-12-08 00:08:04,148 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1128.5, TP=1132.5, Confidence=0.75
+2024-12-08 00:08:04,148 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:08:04,552 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:08:04,552 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:08:04,962 - DEBUG - INFO - Trade executed. Contract ID: 265560961608
+2024-12-08 00:08:04,962 - DEBUG - INFO - Monitoring trade. Contract ID: 265560961608
+2024-12-08 00:08:24,669 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:08:32,921 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1129.6, TP=1130.35, Confidence=0.85
+2024-12-08 00:08:32,921 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1129.6, TP=1130.35, Confidence=0.85
+2024-12-08 00:08:32,921 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.85
+2024-12-08 00:08:33,291 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:08:33,291 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:08:33,681 - DEBUG - INFO - Trade executed. Contract ID: 265560989588
+2024-12-08 00:08:33,681 - DEBUG - INFO - Monitoring trade. Contract ID: 265560989588
+2024-12-08 00:08:56,573 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:09:09,171 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.8, TP=1130.5, Confidence=0.7
+2024-12-08 00:09:09,171 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.8, TP=1130.5, Confidence=0.7
+2024-12-08 00:09:09,171 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.7
+2024-12-08 00:09:09,171 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:09:28,462 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:09:35,938 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1128.5, TP=1127.9, Confidence=0.7
+2024-12-08 00:09:35,938 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1128.5, TP=1127.9, Confidence=0.7
+2024-12-08 00:09:35,938 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.7
+2024-12-08 00:09:36,204 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:09:36,204 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:09:36,614 - DEBUG - INFO - Trade executed. Contract ID: 265561050928
+2024-12-08 00:09:36,614 - DEBUG - INFO - Monitoring trade. Contract ID: 265561050928
+2024-12-08 00:09:58,720 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:10:07,849 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.8, TP=1130.3, Confidence=0.65
+2024-12-08 00:10:07,849 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.8, TP=1130.3, Confidence=0.65
+2024-12-08 00:10:07,849 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 00:10:07,849 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:10:30,545 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:10:37,553 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.0, TP=1131.5, Confidence=0.65
+2024-12-08 00:10:37,553 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.0, TP=1131.5, Confidence=0.65
+2024-12-08 00:10:37,553 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 00:10:37,553 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:11:02,498 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:11:09,353 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.0, TP=1131.0, Confidence=0.65
+2024-12-08 00:11:09,353 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.0, TP=1131.0, Confidence=0.65
+2024-12-08 00:11:09,353 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 00:11:09,354 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:11:32,315 - DEBUG - INFO - Contract 265560867748 has been sold or expired.
+2024-12-08 00:11:32,315 - DEBUG - INFO - Profit/Loss for Contract 265560867748: 954.58
+2024-12-08 00:11:32,315 - DEBUG - INFO - Cumulative Profit: 954.58
+2024-12-08 00:11:32,514 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:11:32,540 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:11:41,682 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.06, TP=1129.06, Confidence=0.5
+2024-12-08 00:11:41,682 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.06, TP=1129.06, Confidence=0.5
+2024-12-08 00:11:41,682 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.5
+2024-12-08 00:11:41,683 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:12:02,745 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:12:12,052 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.0, TP=1133.0, Confidence=0.7
+2024-12-08 00:12:12,052 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.0, TP=1133.0, Confidence=0.7
+2024-12-08 00:12:12,052 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.7
+2024-12-08 00:12:12,052 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:12:34,543 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:12:45,549 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 00:12:45,550 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 00:12:45,550 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 00:12:45,550 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:13:04,614 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:13:06,374 - DEBUG - INFO - Contract 265560961608 has been sold or expired.
+2024-12-08 00:13:06,374 - DEBUG - INFO - Profit/Loss for Contract 265560961608: 954.58
+2024-12-08 00:13:06,374 - DEBUG - INFO - Cumulative Profit: 1909.16
+2024-12-08 00:13:06,746 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:13:13,609 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1.0, TP=1.0, Confidence=0.6
+2024-12-08 00:13:13,609 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1.0, TP=1.0, Confidence=0.6
+2024-12-08 00:13:13,609 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:13:13,609 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:13:36,355 - DEBUG - INFO - Contract 265560989588 has been sold or expired.
+2024-12-08 00:13:36,356 - DEBUG - INFO - Profit/Loss for Contract 265560989588: 954.58
+2024-12-08 00:13:36,356 - DEBUG - INFO - Cumulative Profit: 2863.7400000000002
+2024-12-08 00:13:36,686 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:13:36,690 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:13:49,404 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.95, TP=1130.67, Confidence=0.85
+2024-12-08 00:13:49,404 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.95, TP=1130.67, Confidence=0.85
+2024-12-08 00:13:49,404 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.85
+2024-12-08 00:13:49,404 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:14:08,598 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:14:17,201 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.5, TP=1131.5, Confidence=0.6
+2024-12-08 00:14:17,201 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.5, TP=1131.5, Confidence=0.6
+2024-12-08 00:14:17,201 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:14:17,201 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:14:38,400 - DEBUG - INFO - Contract 265561050928 has been sold or expired.
+2024-12-08 00:14:38,401 - DEBUG - INFO - Profit/Loss for Contract 265561050928: -1000.0
+2024-12-08 00:14:38,401 - DEBUG - INFO - Cumulative Loss: 1000.0
+2024-12-08 00:14:38,725 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:14:39,659 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:14:54,545 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1130.0, TP=1131.0, Confidence=0.85
+2024-12-08 00:14:54,545 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1130.0, TP=1131.0, Confidence=0.85
+2024-12-08 00:14:54,545 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.85
+2024-12-08 00:14:54,988 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:14:54,988 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:14:55,429 - DEBUG - INFO - Trade executed. Contract ID: 265561366588
+2024-12-08 00:14:55,429 - DEBUG - INFO - Monitoring trade. Contract ID: 265561366588
+2024-12-08 00:15:08,812 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:15:17,823 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=0.995, TP=1.005, Confidence=0.6
+2024-12-08 00:15:17,823 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.995, TP=1.005, Confidence=0.6
+2024-12-08 00:15:17,823 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:15:17,823 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:15:38,575 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:15:49,773 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1.0, TP=0.98, Confidence=0.75
+2024-12-08 00:15:49,773 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1.0, TP=0.98, Confidence=0.75
+2024-12-08 00:15:49,773 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.75
+2024-12-08 00:15:50,058 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:15:50,058 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:15:50,496 - DEBUG - INFO - Trade executed. Contract ID: 265561420768
+2024-12-08 00:15:50,497 - DEBUG - INFO - Monitoring trade. Contract ID: 265561420768
+2024-12-08 00:16:08,671 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:16:19,465 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1129.5, TP=1131.5, Confidence=0.85
+2024-12-08 00:16:19,466 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1129.5, TP=1131.5, Confidence=0.85
+2024-12-08 00:16:19,466 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.85
+2024-12-08 00:16:19,776 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:16:19,776 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:16:20,187 - DEBUG - INFO - Trade executed. Contract ID: 265561448748
+2024-12-08 00:16:20,187 - DEBUG - INFO - Monitoring trade. Contract ID: 265561448748
+2024-12-08 00:16:40,713 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:16:48,055 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 00:16:48,055 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 00:16:48,055 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 00:16:48,055 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:17:10,692 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:17:20,092 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1130.37, TP=1134.91, Confidence=0.8
+2024-12-08 00:17:20,092 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1130.37, TP=1134.91, Confidence=0.8
+2024-12-08 00:17:20,092 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-08 00:17:20,372 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:17:20,372 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:17:20,705 - DEBUG - INFO - Trade executed. Contract ID: 265561508628
+2024-12-08 00:17:20,705 - DEBUG - INFO - Monitoring trade. Contract ID: 265561508628
+2024-12-08 00:17:42,619 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:17:48,992 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1130.5, TP=1132.0, Confidence=0.75
+2024-12-08 00:17:48,992 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1130.5, TP=1132.0, Confidence=0.75
+2024-12-08 00:17:48,993 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.75
+2024-12-08 00:17:48,993 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:18:14,555 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:18:23,786 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1136.75, TP=1125.53, Confidence=0.65
+2024-12-08 00:18:23,786 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1136.75, TP=1125.53, Confidence=0.65
+2024-12-08 00:18:23,786 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.65
+2024-12-08 00:18:24,063 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:18:24,063 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:18:24,480 - DEBUG - INFO - Trade executed. Contract ID: 265561569208
+2024-12-08 00:18:24,480 - DEBUG - INFO - Monitoring trade. Contract ID: 265561569208
+2024-12-08 00:18:44,998 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:18:57,368 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1130.9, TP=1131.48, Confidence=0.8
+2024-12-08 00:18:57,368 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1130.9, TP=1131.48, Confidence=0.8
+2024-12-08 00:18:57,368 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.8
+2024-12-08 00:18:57,368 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:19:16,610 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:19:24,715 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=-0.2, TP=0.2, Confidence=0.6
+2024-12-08 00:19:24,715 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=-0.2, TP=0.2, Confidence=0.6
+2024-12-08 00:19:24,715 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:19:24,715 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:19:49,087 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:19:58,414 - DEBUG - INFO - Contract 265561366588 has been sold or expired.
+2024-12-08 00:19:58,414 - DEBUG - INFO - Profit/Loss for Contract 265561366588: 954.58
+2024-12-08 00:19:58,414 - DEBUG - INFO - Cumulative Profit: 3818.32
+2024-12-08 00:19:58,857 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:20:00,868 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1131.48, TP=1130.33, Confidence=0.85
+2024-12-08 00:20:00,869 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1131.48, TP=1130.33, Confidence=0.85
+2024-12-08 00:20:00,869 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.85
+2024-12-08 00:20:01,374 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:20:01,375 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:20:01,860 - DEBUG - INFO - Trade executed. Contract ID: 265561664188
+2024-12-08 00:20:01,860 - DEBUG - INFO - Monitoring trade. Contract ID: 265561664188
+2024-12-08 00:20:20,493 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:20:32,365 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.5, TP=1131.5, Confidence=0.7
+2024-12-08 00:20:32,365 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.5, TP=1131.5, Confidence=0.7
+2024-12-08 00:20:32,365 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.7
+2024-12-08 00:20:32,365 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:20:50,733 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:20:54,380 - DEBUG - INFO - Contract 265561420768 has been sold or expired.
+2024-12-08 00:20:54,380 - DEBUG - INFO - Profit/Loss for Contract 265561420768: -1000.0
+2024-12-08 00:20:54,380 - DEBUG - INFO - Cumulative Loss: 2000.0
+2024-12-08 00:20:54,705 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:20:58,368 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1130.0, TP=1131.0, Confidence=0.65
+2024-12-08 00:20:58,368 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1130.0, TP=1131.0, Confidence=0.65
+2024-12-08 00:20:58,368 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 00:20:58,368 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:21:20,781 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:21:22,438 - DEBUG - INFO - Contract 265561448748 has been sold or expired.
+2024-12-08 00:21:22,438 - DEBUG - INFO - Profit/Loss for Contract 265561448748: 954.58
+2024-12-08 00:21:22,438 - DEBUG - INFO - Cumulative Profit: 4772.900000000001
+2024-12-08 00:21:22,877 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:21:27,436 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1128.0, TP=1131.0, Confidence=0.65
+2024-12-08 00:21:27,436 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1128.0, TP=1131.0, Confidence=0.65
+2024-12-08 00:21:27,436 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 00:21:27,436 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:21:52,686 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:21:58,626 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 00:21:58,626 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 00:21:58,626 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 00:21:58,626 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:22:22,587 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:22:24,338 - DEBUG - INFO - Contract 265561508628 has been sold or expired.
+2024-12-08 00:22:24,338 - DEBUG - INFO - Profit/Loss for Contract 265561508628: 954.58
+2024-12-08 00:22:24,338 - DEBUG - INFO - Cumulative Profit: 5727.4800000000005
+2024-12-08 00:22:24,550 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:22:29,142 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.9, TP=1130.1, Confidence=0.6
+2024-12-08 00:22:29,143 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.9, TP=1130.1, Confidence=0.6
+2024-12-08 00:22:29,143 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:22:29,143 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:22:52,809 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:23:03,488 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1130.03, TP=1130.03, Confidence=0.6
+2024-12-08 00:23:03,488 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1130.03, TP=1130.03, Confidence=0.6
+2024-12-08 00:23:03,488 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:23:03,488 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:23:24,721 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:23:28,403 - DEBUG - INFO - Contract 265561569208 has been sold or expired.
+2024-12-08 00:23:28,403 - DEBUG - INFO - Profit/Loss for Contract 265561569208: -1000.0
+2024-12-08 00:23:28,403 - DEBUG - INFO - Cumulative Loss: 3000.0
+2024-12-08 00:23:28,764 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:23:32,836 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1130.0, TP=1130.0, Confidence=0.5
+2024-12-08 00:23:32,836 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1130.0, TP=1130.0, Confidence=0.5
+2024-12-08 00:23:32,836 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.5
+2024-12-08 00:23:32,836 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:23:54,735 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:24:03,147 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.0, TP=1132.5, Confidence=0.65
+2024-12-08 00:24:03,147 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.0, TP=1132.5, Confidence=0.65
+2024-12-08 00:24:03,147 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 00:24:03,147 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:24:24,982 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:24:32,084 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 00:24:32,084 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 00:24:32,084 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 00:24:32,084 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:24:56,718 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:25:04,448 - DEBUG - INFO - Contract 265561664188 has been sold or expired.
+2024-12-08 00:25:04,448 - DEBUG - INFO - Profit/Loss for Contract 265561664188: 949.9
+2024-12-08 00:25:04,448 - DEBUG - INFO - Cumulative Profit: 6677.38
+2024-12-08 00:25:04,906 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:25:05,009 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1131.24, TP=1133.24, Confidence=0.75
+2024-12-08 00:25:05,009 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1131.24, TP=1133.24, Confidence=0.75
+2024-12-08 00:25:05,009 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:25:05,487 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:25:05,488 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:25:06,079 - DEBUG - INFO - Trade executed. Contract ID: 265561944068
+2024-12-08 00:25:06,079 - DEBUG - INFO - Monitoring trade. Contract ID: 265561944068
+2024-12-08 00:25:28,496 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:25:38,176 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=0.0, TP=0.0, Confidence=0.6
+2024-12-08 00:25:38,176 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.6
+2024-12-08 00:25:38,177 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:25:38,177 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:25:58,661 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:26:05,738 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1131.4, TP=1130.8, Confidence=0.75
+2024-12-08 00:26:05,739 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1131.4, TP=1130.8, Confidence=0.75
+2024-12-08 00:26:05,739 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.75
+2024-12-08 00:26:06,145 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:26:06,145 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:26:06,643 - DEBUG - INFO - Trade executed. Contract ID: 265561998148
+2024-12-08 00:26:06,643 - DEBUG - INFO - Monitoring trade. Contract ID: 265561998148
+2024-12-08 00:26:28,762 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:26:37,159 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=0.99, TP=1.02, Confidence=0.8
+2024-12-08 00:26:37,159 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=0.99, TP=1.02, Confidence=0.8
+2024-12-08 00:26:37,159 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-08 00:26:37,423 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:26:37,423 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:26:37,774 - DEBUG - INFO - Trade executed. Contract ID: 265562027528
+2024-12-08 00:26:37,774 - DEBUG - INFO - Monitoring trade. Contract ID: 265562027528
+2024-12-08 00:27:00,536 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:27:10,937 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1135.69, TP=1131.15, Confidence=0.6
+2024-12-08 00:27:10,937 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1135.69, TP=1131.15, Confidence=0.6
+2024-12-08 00:27:10,937 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.6
+2024-12-08 00:27:11,267 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:27:11,267 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:27:11,668 - DEBUG - INFO - Trade executed. Contract ID: 265562059568
+2024-12-08 00:27:11,668 - DEBUG - INFO - Monitoring trade. Contract ID: 265562059568
+2024-12-08 00:27:30,613 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:27:37,431 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1132.5, TP=1135.0, Confidence=0.8
+2024-12-08 00:27:37,431 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1132.5, TP=1135.0, Confidence=0.8
+2024-12-08 00:27:37,431 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-08 00:27:37,781 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:27:37,781 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:27:38,089 - DEBUG - INFO - Trade executed. Contract ID: 265562082248
+2024-12-08 00:27:38,089 - DEBUG - INFO - Monitoring trade. Contract ID: 265562082248
+2024-12-08 00:28:00,570 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:28:06,348 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1135.0, TP=1136.0, Confidence=0.65
+2024-12-08 00:28:06,348 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1135.0, TP=1136.0, Confidence=0.65
+2024-12-08 00:28:06,348 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 00:28:06,348 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:28:30,747 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:28:41,680 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1133.7, TP=1136.5, Confidence=0.75
+2024-12-08 00:28:41,680 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1133.7, TP=1136.5, Confidence=0.75
+2024-12-08 00:28:41,681 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:28:42,078 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:28:42,078 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:28:42,569 - DEBUG - INFO - Trade executed. Contract ID: 265562139668
+2024-12-08 00:28:42,569 - DEBUG - INFO - Monitoring trade. Contract ID: 265562139668
+2024-12-08 00:29:00,586 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:29:08,342 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1135.0, TP=1132.5, Confidence=0.85
+2024-12-08 00:29:08,342 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1135.0, TP=1132.5, Confidence=0.85
+2024-12-08 00:29:08,342 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.85
+2024-12-08 00:29:08,557 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:29:08,557 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:29:08,834 - DEBUG - INFO - Trade executed. Contract ID: 265562165088
+2024-12-08 00:29:08,834 - DEBUG - INFO - Monitoring trade. Contract ID: 265562165088
+2024-12-08 00:29:31,274 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:29:44,424 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=0.002, TP=0.004, Confidence=0.75
+2024-12-08 00:29:44,424 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.002, TP=0.004, Confidence=0.75
+2024-12-08 00:29:44,424 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.75
+2024-12-08 00:29:44,424 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:30:02,899 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:30:08,380 - DEBUG - INFO - Contract 265561944068 has been sold or expired.
+2024-12-08 00:30:08,380 - DEBUG - INFO - Profit/Loss for Contract 265561944068: -1000.0
+2024-12-08 00:30:08,380 - DEBUG - INFO - Cumulative Loss: 4000.0
+2024-12-08 00:30:08,663 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:30:10,258 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1134.55, TP=1135.09, Confidence=0.65
+2024-12-08 00:30:10,258 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1134.55, TP=1135.09, Confidence=0.65
+2024-12-08 00:30:10,258 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 00:30:10,258 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:30:34,601 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:30:43,775 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1134.36, TP=1133.47, Confidence=0.6
+2024-12-08 00:30:43,775 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1134.36, TP=1133.47, Confidence=0.6
+2024-12-08 00:30:43,775 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.6
+2024-12-08 00:30:44,152 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:30:44,152 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:30:44,532 - DEBUG - INFO - Trade executed. Contract ID: 265562254128
+2024-12-08 00:30:44,532 - DEBUG - INFO - Monitoring trade. Contract ID: 265562254128
+2024-12-08 00:31:04,837 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:31:10,486 - DEBUG - INFO - Contract 265561998148 has been sold or expired.
+2024-12-08 00:31:10,486 - DEBUG - INFO - Profit/Loss for Contract 265561998148: 949.9
+2024-12-08 00:31:10,486 - DEBUG - INFO - Cumulative Profit: 7627.28
+2024-12-08 00:31:11,508 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:31:12,948 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1134.0, TP=1136.5, Confidence=0.75
+2024-12-08 00:31:12,948 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1134.0, TP=1136.5, Confidence=0.75
+2024-12-08 00:31:12,948 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:31:13,367 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:31:13,368 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:31:13,816 - DEBUG - INFO - Trade executed. Contract ID: 265562283428
+2024-12-08 00:31:13,816 - DEBUG - INFO - Monitoring trade. Contract ID: 265562283428
+2024-12-08 00:31:36,469 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:31:40,353 - DEBUG - INFO - Contract 265562027528 has been sold or expired.
+2024-12-08 00:31:40,353 - DEBUG - INFO - Profit/Loss for Contract 265562027528: -1000.0
+2024-12-08 00:31:40,353 - DEBUG - INFO - Cumulative Loss: 5000.0
+2024-12-08 00:31:40,588 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:31:43,341 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1133.0, TP=1135.0, Confidence=0.75
+2024-12-08 00:31:43,341 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1133.0, TP=1135.0, Confidence=0.75
+2024-12-08 00:31:43,341 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.75
+2024-12-08 00:31:43,341 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:32:08,489 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:32:14,377 - DEBUG - INFO - Contract 265562059568 has been sold or expired.
+2024-12-08 00:32:14,377 - DEBUG - INFO - Profit/Loss for Contract 265562059568: 949.9
+2024-12-08 00:32:14,377 - DEBUG - INFO - Cumulative Profit: 8577.18
+2024-12-08 00:32:14,669 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:32:20,323 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=0.005, TP=0.01, Confidence=0.6
+2024-12-08 00:32:20,323 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.005, TP=0.01, Confidence=0.6
+2024-12-08 00:32:20,323 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:32:20,323 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:32:38,606 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:32:40,362 - DEBUG - INFO - Contract 265562082248 has been sold or expired.
+2024-12-08 00:32:40,362 - DEBUG - INFO - Profit/Loss for Contract 265562082248: -1000.0
+2024-12-08 00:32:40,362 - DEBUG - INFO - Cumulative Loss: 6000.0
+2024-12-08 00:32:40,633 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:32:46,319 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1133.88, TP=1133.37, Confidence=0.6
+2024-12-08 00:32:46,319 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1133.88, TP=1133.37, Confidence=0.6
+2024-12-08 00:32:46,319 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.6
+2024-12-08 00:32:46,625 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:32:46,626 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:32:46,979 - DEBUG - INFO - Trade executed. Contract ID: 265562373188
+2024-12-08 00:32:46,979 - DEBUG - INFO - Monitoring trade. Contract ID: 265562373188
+2024-12-08 00:33:08,733 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:33:17,306 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1133.5, TP=1134.0, Confidence=0.7
+2024-12-08 00:33:17,306 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1133.5, TP=1134.0, Confidence=0.7
+2024-12-08 00:33:17,306 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.7
+2024-12-08 00:33:17,306 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:33:40,737 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:33:46,339 - DEBUG - INFO - Contract 265562139668 has been sold or expired.
+2024-12-08 00:33:46,339 - DEBUG - INFO - Profit/Loss for Contract 265562139668: -1000.0
+2024-12-08 00:33:46,339 - DEBUG - INFO - Cumulative Loss: 7000.0
+2024-12-08 00:33:46,568 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:33:51,540 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1137.55, TP=1119.57, Confidence=0.7
+2024-12-08 00:33:51,540 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1137.55, TP=1119.57, Confidence=0.7
+2024-12-08 00:33:51,540 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.7
+2024-12-08 00:33:51,758 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:33:51,758 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=SELL, Amount=1000.0
+2024-12-08 00:33:52,056 - DEBUG - INFO - Trade executed. Contract ID: 265562434008
+2024-12-08 00:33:52,057 - DEBUG - INFO - Monitoring trade. Contract ID: 265562434008
+2024-12-08 00:34:12,417 - DEBUG - INFO - Contract 265562165088 has been sold or expired.
+2024-12-08 00:34:12,417 - DEBUG - INFO - Profit/Loss for Contract 265562165088: 949.9
+2024-12-08 00:34:12,417 - DEBUG - INFO - Cumulative Profit: 9527.08
+2024-12-08 00:34:12,740 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:34:12,790 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:34:20,077 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1131.0, TP=1132.0, Confidence=0.85
+2024-12-08 00:34:20,077 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1131.0, TP=1132.0, Confidence=0.85
+2024-12-08 00:34:20,077 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.85
+2024-12-08 00:34:20,077 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:34:42,725 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:34:52,061 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1132.2, TP=1133.2, Confidence=0.6
+2024-12-08 00:34:52,061 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1132.2, TP=1133.2, Confidence=0.6
+2024-12-08 00:34:52,061 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:34:52,061 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:35:14,500 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:35:24,416 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 00:35:24,416 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 00:35:24,416 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 00:35:24,416 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:35:44,796 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:35:48,425 - DEBUG - INFO - Contract 265562254128 has been sold or expired.
+2024-12-08 00:35:48,425 - DEBUG - INFO - Profit/Loss for Contract 265562254128: -1000.0
+2024-12-08 00:35:48,425 - DEBUG - INFO - Cumulative Loss: 8000.0
+2024-12-08 00:35:48,822 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:35:52,409 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=0.0, TP=0.0, Confidence=0.9
+2024-12-08 00:35:52,409 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.9
+2024-12-08 00:35:52,409 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.9
+2024-12-08 00:35:52,409 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:36:16,333 - DEBUG - INFO - Contract 265562283428 has been sold or expired.
+2024-12-08 00:36:16,333 - DEBUG - INFO - Profit/Loss for Contract 265562283428: 954.58
+2024-12-08 00:36:16,334 - DEBUG - INFO - Cumulative Profit: 10481.66
+2024-12-08 00:36:16,533 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:36:16,659 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:36:26,875 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1131.0, TP=1135.0, Confidence=0.6
+2024-12-08 00:36:26,875 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1131.0, TP=1135.0, Confidence=0.6
+2024-12-08 00:36:26,875 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:36:26,875 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:36:48,605 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:36:54,415 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 00:36:54,415 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 00:36:54,415 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 00:36:54,415 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:37:18,837 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:37:24,854 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1130.0, TP=1135.0, Confidence=0.7
+2024-12-08 00:37:24,854 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1130.0, TP=1135.0, Confidence=0.7
+2024-12-08 00:37:24,854 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.7
+2024-12-08 00:37:24,854 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:37:48,800 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:37:50,407 - DEBUG - INFO - Contract 265562373188 has been sold or expired.
+2024-12-08 00:37:50,407 - DEBUG - INFO - Profit/Loss for Contract 265562373188: -1000.0
+2024-12-08 00:37:50,407 - DEBUG - INFO - Cumulative Loss: 9000.0
+2024-12-08 00:37:50,755 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:37:58,236 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1130.0, TP=1131.0, Confidence=0.95
+2024-12-08 00:37:58,236 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1130.0, TP=1131.0, Confidence=0.95
+2024-12-08 00:37:58,236 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.95
+2024-12-08 00:37:58,236 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:38:20,487 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:38:26,997 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1129.5, TP=1133.5, Confidence=0.6
+2024-12-08 00:38:26,997 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1129.5, TP=1133.5, Confidence=0.6
+2024-12-08 00:38:26,997 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:38:26,997 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:38:50,538 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:38:54,346 - DEBUG - INFO - Contract 265562434008 has been sold or expired.
+2024-12-08 00:38:54,346 - DEBUG - INFO - Profit/Loss for Contract 265562434008: 949.9
+2024-12-08 00:38:54,346 - DEBUG - INFO - Cumulative Profit: 11431.56
+2024-12-08 00:38:54,591 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:39:02,037 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 00:39:02,037 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 00:39:02,037 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 00:39:02,037 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:39:22,548 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:39:29,401 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1128.75, TP=1130.75, Confidence=0.6
+2024-12-08 00:39:29,401 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1128.75, TP=1130.75, Confidence=0.6
+2024-12-08 00:39:29,401 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:39:29,401 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:39:52,755 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:39:57,912 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 00:39:57,912 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 00:39:57,912 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 00:39:57,912 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:40:24,498 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:40:43,563 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1127.65, TP=1132.17, Confidence=0.7
+2024-12-08 00:40:43,563 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1127.65, TP=1132.17, Confidence=0.7
+2024-12-08 00:40:43,563 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.7
+2024-12-08 00:40:43,563 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:40:54,720 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:41:04,144 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1129.8, TP=1135.0, Confidence=0.75
+2024-12-08 00:41:04,145 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1129.8, TP=1135.0, Confidence=0.75
+2024-12-08 00:41:04,145 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:41:04,384 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:41:04,384 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:41:04,699 - DEBUG - INFO - Trade executed. Contract ID: 265562849588
+2024-12-08 00:41:04,699 - DEBUG - INFO - Monitoring trade. Contract ID: 265562849588
+2024-12-08 00:41:24,844 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:41:33,591 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1129.0, TP=1135.0, Confidence=0.75
+2024-12-08 00:41:33,591 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1129.0, TP=1135.0, Confidence=0.75
+2024-12-08 00:41:33,591 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:41:33,810 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:41:33,810 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:41:34,181 - DEBUG - INFO - Trade executed. Contract ID: 265562879748
+2024-12-08 00:41:34,181 - DEBUG - INFO - Monitoring trade. Contract ID: 265562879748
+2024-12-08 00:41:54,778 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:42:00,695 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1135.0, TP=1137.5, Confidence=0.75
+2024-12-08 00:42:00,695 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1135.0, TP=1137.5, Confidence=0.75
+2024-12-08 00:42:00,695 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:42:01,016 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:42:01,016 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:42:01,382 - DEBUG - INFO - Trade executed. Contract ID: 265562906488
+2024-12-08 00:42:01,382 - DEBUG - INFO - Monitoring trade. Contract ID: 265562906488
+2024-12-08 00:42:26,726 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:42:39,586 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1130.97, TP=1148.02, Confidence=0.75
+2024-12-08 00:42:39,586 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1130.97, TP=1148.02, Confidence=0.75
+2024-12-08 00:42:39,586 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:42:39,991 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:42:39,991 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:42:40,502 - DEBUG - INFO - Trade executed. Contract ID: 265562941868
+2024-12-08 00:42:40,502 - DEBUG - INFO - Monitoring trade. Contract ID: 265562941868
+2024-12-08 00:42:58,819 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:43:08,499 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1129.0, TP=1145.0, Confidence=0.8
+2024-12-08 00:43:08,500 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1129.0, TP=1145.0, Confidence=0.8
+2024-12-08 00:43:08,500 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-08 00:43:08,957 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:43:08,957 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:43:09,496 - DEBUG - INFO - Trade executed. Contract ID: 265562970168
+2024-12-08 00:43:09,496 - DEBUG - INFO - Monitoring trade. Contract ID: 265562970168
+2024-12-08 00:43:30,474 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:43:37,997 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=0.99, TP=1.02, Confidence=0.85
+2024-12-08 00:43:37,997 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=0.99, TP=1.02, Confidence=0.85
+2024-12-08 00:43:37,997 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.85
+2024-12-08 00:43:38,282 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:43:38,282 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:43:38,596 - DEBUG - INFO - Trade executed. Contract ID: 265562995608
+2024-12-08 00:43:38,596 - DEBUG - INFO - Monitoring trade. Contract ID: 265562995608
+2024-12-08 00:44:00,570 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:44:07,167 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 00:44:07,167 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 00:44:07,167 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 00:44:07,167 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:44:30,618 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:44:41,165 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=0.25, TP=0.75, Confidence=0.85
+2024-12-08 00:44:41,165 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=0.25, TP=0.75, Confidence=0.85
+2024-12-08 00:44:41,165 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.85
+2024-12-08 00:44:41,379 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:44:41,380 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:44:41,638 - DEBUG - INFO - Trade executed. Contract ID: 265563054508
+2024-12-08 00:44:41,639 - DEBUG - INFO - Monitoring trade. Contract ID: 265563054508
+2024-12-08 00:45:00,721 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:45:09,631 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1137.62, TP=1137.62, Confidence=0.75
+2024-12-08 00:45:09,631 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1137.62, TP=1137.62, Confidence=0.75
+2024-12-08 00:45:09,631 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.75
+2024-12-08 00:45:09,631 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:45:30,571 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:45:37,483 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1138.5, TP=1139.2, Confidence=0.8
+2024-12-08 00:45:37,483 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1138.5, TP=1139.2, Confidence=0.8
+2024-12-08 00:45:37,483 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-08 00:45:37,790 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:45:37,790 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:45:38,097 - DEBUG - INFO - Trade executed. Contract ID: 265563109628
+2024-12-08 00:45:38,097 - DEBUG - INFO - Monitoring trade. Contract ID: 265563109628
+2024-12-08 00:46:00,728 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:46:08,366 - DEBUG - INFO - Contract 265562849588 has been sold or expired.
+2024-12-08 00:46:08,366 - DEBUG - INFO - Profit/Loss for Contract 265562849588: 954.58
+2024-12-08 00:46:08,366 - DEBUG - INFO - Cumulative Profit: 12386.14
+2024-12-08 00:46:08,649 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:46:09,467 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1137.0, TP=1142.0, Confidence=0.75
+2024-12-08 00:46:09,467 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1137.0, TP=1142.0, Confidence=0.75
+2024-12-08 00:46:09,467 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:46:09,841 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:46:09,841 - DEBUG - INFO - Executing trade: Symbol=R_100, Signal=BUY, Amount=1000.0
+2024-12-08 00:46:10,209 - DEBUG - INFO - Trade executed. Contract ID: 265563140948
+2024-12-08 00:46:10,209 - DEBUG - INFO - Monitoring trade. Contract ID: 265563140948
+2024-12-08 00:46:32,763 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:46:36,389 - DEBUG - INFO - Contract 265562879748 has been sold or expired.
+2024-12-08 00:46:36,389 - DEBUG - INFO - Profit/Loss for Contract 265562879748: 954.58
+2024-12-08 00:46:36,389 - DEBUG - INFO - Cumulative Profit: 13340.72
+2024-12-08 00:46:36,742 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:46:44,224 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1136.54, TP=1141.1, Confidence=0.6
+2024-12-08 00:46:44,225 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1136.54, TP=1141.1, Confidence=0.6
+2024-12-08 00:46:44,225 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:46:44,225 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:47:04,337 - DEBUG - INFO - Contract 265562906488 has been sold or expired.
+2024-12-08 00:47:04,337 - DEBUG - INFO - Profit/Loss for Contract 265562906488: 954.58
+2024-12-08 00:47:04,337 - DEBUG - INFO - Cumulative Profit: 14295.3
+2024-12-08 00:47:04,504 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:47:04,568 - DEBUG - ERROR - Error fetching balance: float() argument must be a string or a real number, not 'dict'
+2024-12-08 00:47:10,259 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1135.0, TP=1140.0, Confidence=0.65
+2024-12-08 00:47:10,259 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1135.0, TP=1140.0, Confidence=0.65
+2024-12-08 00:47:10,259 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 00:47:10,259 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:47:26,027 - DEBUG - INFO - Disconnected from Deriv API.
+2024-12-08 00:47:26,027 - DEBUG - INFO - Trading bot stopped.
+2024-12-08 00:47:26,027 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562879748
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562059568
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562849588
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562434008
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562254128
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562995608
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265560867748
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562373188
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265561569208
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265561508628
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562906488
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562941868
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265561050928
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265561664188
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265563109628
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265563054508
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265563140948
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562165088
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265561944068
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265560961608
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562027528
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562082248
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265561998148
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265561448748
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265560989588
+2024-12-08 00:47:26,028 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265561420768
+2024-12-08 00:47:26,029 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562139668
+2024-12-08 00:47:26,029 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562283428
+2024-12-08 00:47:26,029 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265562970168
+2024-12-08 00:47:26,029 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265561366588
+2024-12-08 00:47:52,081 - DEBUG - INFO - Starting trading bot...
+2024-12-08 00:47:52,081 - DEBUG - INFO - Deriv API instance created.
+2024-12-08 00:47:53,675 - DEBUG - INFO - Authorized with Deriv API.
+2024-12-08 00:47:53,675 - DEBUG - INFO - OpenAI API initialized.
+2024-12-08 00:47:53,970 - DEBUG - INFO - Active symbols set. Total symbols: 81
+2024-12-08 00:47:53,970 - DEBUG - INFO - Fetched 81 active symbols.
+2024-12-08 00:47:53,971 - DEBUG - INFO - Subscribed to ticks for symbol: R_100
+2024-12-08 00:47:57,158 - DEBUG - INFO - Account Name (Login ID): Unknown
+2024-12-08 00:47:57,158 - DEBUG - INFO - Account Balance: 16097.71 USD
+2024-12-08 00:47:57,158 - DEBUG - INFO - Account Type: Demo
+2024-12-08 00:48:24,586 - DEBUG - INFO - Historical data fetched for symbol: R_100
+2024-12-08 00:48:30,130 - DEBUG - INFO - Disconnected from Deriv API.
+2024-12-08 00:48:30,130 - DEBUG - INFO - Trading bot stopped.
+2024-12-08 00:49:13,674 - DEBUG - INFO - Starting trading bot...
+2024-12-08 00:49:13,675 - DEBUG - INFO - Deriv API instance created.
+2024-12-08 00:49:14,711 - DEBUG - INFO - Authorized with Deriv API.
+2024-12-08 00:49:14,712 - DEBUG - INFO - OpenAI API initialized.
+2024-12-08 00:49:15,048 - DEBUG - INFO - Active symbols set. Total symbols: 81
+2024-12-08 00:49:15,048 - DEBUG - INFO - Fetched 81 active symbols.
+2024-12-08 00:49:15,049 - DEBUG - INFO - Subscribed to ticks for symbol: frxBTCUSD
+2024-12-08 00:52:22,206 - DEBUG - INFO - Disconnected from Deriv API.
+2024-12-08 00:52:22,206 - DEBUG - INFO - Trading bot stopped.
+2024-12-08 00:54:16,345 - DEBUG - INFO - Starting trading bot...
+2024-12-08 00:54:16,346 - DEBUG - INFO - Deriv API instance created.
+2024-12-08 00:54:17,681 - DEBUG - INFO - Authorized with Deriv API.
+2024-12-08 00:54:17,681 - DEBUG - INFO - OpenAI API initialized.
+2024-12-08 00:54:18,010 - DEBUG - INFO - Active symbols set. Total symbols: 81
+2024-12-08 00:54:18,010 - DEBUG - INFO - Fetched 81 active symbols.
+2024-12-08 00:54:18,011 - DEBUG - INFO - Subscribed to ticks for symbol: R_250
+2024-12-08 00:54:46,729 - DEBUG - INFO - Disconnected from Deriv API.
+2024-12-08 00:54:46,729 - DEBUG - INFO - Trading bot stopped.
+2024-12-08 00:54:56,272 - DEBUG - INFO - Starting trading bot...
+2024-12-08 00:54:56,273 - DEBUG - INFO - Deriv API instance created.
+2024-12-08 00:54:58,428 - DEBUG - INFO - Authorized with Deriv API.
+2024-12-08 00:54:58,428 - DEBUG - INFO - OpenAI API initialized.
+2024-12-08 00:54:58,852 - DEBUG - INFO - Active symbols set. Total symbols: 81
+2024-12-08 00:54:58,852 - DEBUG - INFO - Fetched 81 active symbols.
+2024-12-08 00:54:58,853 - DEBUG - INFO - Subscribed to ticks for symbol: R_75
+2024-12-08 00:55:01,412 - DEBUG - INFO - Account Name (Login ID): Unknown
+2024-12-08 00:55:01,412 - DEBUG - INFO - Account Balance: 18052.29 USD
+2024-12-08 00:55:01,412 - DEBUG - INFO - Account Type: Demo
+2024-12-08 00:55:30,560 - DEBUG - INFO - Historical data fetched for symbol: R_75
+2024-12-08 00:55:39,805 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=0.995, TP=1.01, Confidence=0.75
+2024-12-08 00:55:39,806 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=0.995, TP=1.01, Confidence=0.75
+2024-12-08 00:55:39,806 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:55:40,091 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:55:40,091 - DEBUG - INFO - Executing trade: Symbol=R_75, Signal=BUY, Amount=1000.0
+2024-12-08 00:55:40,463 - DEBUG - INFO - Trade executed. Contract ID: 265563669508
+2024-12-08 00:55:40,463 - DEBUG - INFO - Monitoring trade. Contract ID: 265563669508
+2024-12-08 00:56:00,686 - DEBUG - INFO - Historical data fetched for symbol: R_75
+2024-12-08 00:56:15,100 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=101836.28, TP=103107.58, Confidence=0.5
+2024-12-08 00:56:15,100 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=101836.28, TP=103107.58, Confidence=0.5
+2024-12-08 00:56:15,100 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.5
+2024-12-08 00:56:15,100 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:56:30,670 - DEBUG - INFO - Historical data fetched for symbol: R_75
+2024-12-08 00:56:42,768 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=0.99, TP=1.02, Confidence=0.7
+2024-12-08 00:56:42,768 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=0.99, TP=1.02, Confidence=0.7
+2024-12-08 00:56:42,768 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.7
+2024-12-08 00:56:43,201 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:56:43,201 - DEBUG - INFO - Executing trade: Symbol=R_75, Signal=BUY, Amount=1000.0
+2024-12-08 00:56:43,669 - DEBUG - INFO - Trade executed. Contract ID: 265563726748
+2024-12-08 00:56:43,669 - DEBUG - INFO - Monitoring trade. Contract ID: 265563726748
+2024-12-08 00:57:00,891 - DEBUG - INFO - Historical data fetched for symbol: R_75
+2024-12-08 00:57:10,325 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=0.98, TP=1.02, Confidence=0.75
+2024-12-08 00:57:10,325 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=0.98, TP=1.02, Confidence=0.75
+2024-12-08 00:57:10,325 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 00:57:10,775 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 00:57:10,776 - DEBUG - INFO - Executing trade: Symbol=R_75, Signal=BUY, Amount=1000.0
+2024-12-08 00:57:11,298 - DEBUG - INFO - Trade executed. Contract ID: 265563751828
+2024-12-08 00:57:11,298 - DEBUG - INFO - Monitoring trade. Contract ID: 265563751828
+2024-12-08 00:57:32,546 - DEBUG - INFO - Historical data fetched for symbol: R_75
+2024-12-08 00:57:43,197 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=102175.0, TP=102213.0, Confidence=0.6
+2024-12-08 00:57:43,197 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=102175.0, TP=102213.0, Confidence=0.6
+2024-12-08 00:57:43,197 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:57:43,197 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:57:50,592 - DEBUG - INFO - Disconnected from Deriv API.
+2024-12-08 00:57:50,592 - DEBUG - INFO - Trading bot stopped.
+2024-12-08 00:57:50,592 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265563751828
+2024-12-08 00:57:50,592 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265563726748
+2024-12-08 00:57:50,593 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265563669508
+2024-12-08 00:58:10,574 - DEBUG - INFO - Starting trading bot...
+2024-12-08 00:58:10,574 - DEBUG - INFO - Deriv API instance created.
+2024-12-08 00:58:12,409 - DEBUG - INFO - Authorized with Deriv API.
+2024-12-08 00:58:12,409 - DEBUG - INFO - OpenAI API initialized.
+2024-12-08 00:58:12,838 - DEBUG - INFO - Active symbols set. Total symbols: 81
+2024-12-08 00:58:12,838 - DEBUG - INFO - Fetched 81 active symbols.
+2024-12-08 00:58:12,839 - DEBUG - INFO - Subscribed to ticks for symbol: cryBTCUSD
+2024-12-08 00:58:14,184 - DEBUG - INFO - Account Name (Login ID): Unknown
+2024-12-08 00:58:14,185 - DEBUG - INFO - Account Balance: 15052.29 USD
+2024-12-08 00:58:14,185 - DEBUG - INFO - Account Type: Demo
+2024-12-08 00:58:43,693 - DEBUG - INFO - Historical data fetched for symbol: cryBTCUSD
+2024-12-08 00:58:49,862 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=100333.35, TP=100333.35, Confidence=0.6
+2024-12-08 00:58:49,862 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=100333.35, TP=100333.35, Confidence=0.6
+2024-12-08 00:58:49,862 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 00:58:49,862 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:59:14,741 - DEBUG - INFO - Historical data fetched for symbol: cryBTCUSD
+2024-12-08 00:59:28,259 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=100340.0, TP=100340.0, Confidence=0.2
+2024-12-08 00:59:28,259 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=100340.0, TP=100340.0, Confidence=0.2
+2024-12-08 00:59:28,259 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.2
+2024-12-08 00:59:28,259 - DEBUG - INFO - No trade action taken.
+2024-12-08 00:59:45,514 - DEBUG - INFO - Historical data fetched for symbol: cryBTCUSD
+2024-12-08 00:59:53,670 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=100325.0, TP=100375.0, Confidence=0.85
+2024-12-08 00:59:53,670 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=100325.0, TP=100375.0, Confidence=0.85
+2024-12-08 00:59:53,670 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.85
+2024-12-08 00:59:53,874 - DEBUG - ERROR - Error getting price proposal: ResponseError: Trading is not offered for this asset.
+2024-12-08 00:59:53,874 - DEBUG - ERROR - Failed to get price proposal. Trade not executed.
+2024-12-08 01:00:15,762 - DEBUG - INFO - Historical data fetched for symbol: cryBTCUSD
+2024-12-08 01:00:28,690 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=100360.0, TP=100380.0, Confidence=0.65
+2024-12-08 01:00:28,690 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=100360.0, TP=100380.0, Confidence=0.65
+2024-12-08 01:00:28,690 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 01:00:28,690 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:00:45,651 - DEBUG - INFO - Historical data fetched for symbol: cryBTCUSD
+2024-12-08 01:00:54,449 - DEBUG - ERROR - Unable to parse JSON from the assistant response.
+2024-12-08 01:00:54,449 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 01:00:54,449 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 01:00:54,449 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:01:16,803 - DEBUG - INFO - Historical data fetched for symbol: cryBTCUSD
+2024-12-08 01:01:26,327 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=100400.0, TP=100420.0, Confidence=0.85
+2024-12-08 01:01:26,328 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=100400.0, TP=100420.0, Confidence=0.85
+2024-12-08 01:01:26,328 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.85
+2024-12-08 01:01:26,663 - DEBUG - ERROR - Error getting price proposal: ResponseError: Trading is not offered for this asset.
+2024-12-08 01:01:26,663 - DEBUG - ERROR - Failed to get price proposal. Trade not executed.
+2024-12-08 01:01:34,229 - DEBUG - INFO - Disconnected from Deriv API.
+2024-12-08 01:01:34,229 - DEBUG - INFO - Trading bot stopped.
+2024-12-08 01:03:35,206 - DEBUG - INFO - Starting trading bot...
+2024-12-08 01:03:35,207 - DEBUG - INFO - Deriv API instance created.
+2024-12-08 01:03:36,547 - DEBUG - INFO - Authorized with Deriv API.
+2024-12-08 01:03:36,547 - DEBUG - INFO - OpenAI API initialized.
+2024-12-08 01:03:36,888 - DEBUG - INFO - Active symbols set. Total symbols: 81
+2024-12-08 01:03:36,888 - DEBUG - INFO - Fetched 81 active symbols.
+2024-12-08 01:03:36,889 - DEBUG - INFO - Subscribed to ticks for symbol: cryETHUSD
+2024-12-08 01:03:37,967 - DEBUG - INFO - Account Name (Login ID): Unknown
+2024-12-08 01:03:37,967 - DEBUG - INFO - Account Balance: 17006.12 USD
+2024-12-08 01:03:37,968 - DEBUG - INFO - Account Type: Demo
+2024-12-08 01:04:07,711 - DEBUG - INFO - Historical data fetched for symbol: cryETHUSD
+2024-12-08 01:04:17,852 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=4020.0, TP=4024.0, Confidence=0.5
+2024-12-08 01:04:17,852 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=4020.0, TP=4024.0, Confidence=0.5
+2024-12-08 01:04:17,852 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.5
+2024-12-08 01:04:17,852 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:04:37,804 - DEBUG - INFO - Historical data fetched for symbol: cryETHUSD
+2024-12-08 01:04:47,353 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=4020.0, TP=4030.0, Confidence=0.8
+2024-12-08 01:04:47,353 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=4020.0, TP=4030.0, Confidence=0.8
+2024-12-08 01:04:47,353 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.8
+2024-12-08 01:04:47,973 - DEBUG - ERROR - Error getting price proposal: ResponseError: Trading is not offered for this asset.
+2024-12-08 01:04:47,973 - DEBUG - ERROR - Failed to get price proposal. Trade not executed.
+2024-12-08 01:05:08,164 - DEBUG - INFO - Disconnected from Deriv API.
+2024-12-08 01:05:08,164 - DEBUG - INFO - Trading bot stopped.
+2024-12-08 01:06:34,333 - DEBUG - INFO - Starting trading bot...
+2024-12-08 01:06:34,334 - DEBUG - INFO - Deriv API instance created.
+2024-12-08 01:06:35,609 - DEBUG - INFO - Authorized with Deriv API.
+2024-12-08 01:06:35,609 - DEBUG - INFO - OpenAI API initialized.
+2024-12-08 01:06:35,907 - DEBUG - INFO - Active symbols set. Total symbols: 81
+2024-12-08 01:06:35,907 - DEBUG - INFO - Fetched 81 active symbols.
+2024-12-08 01:06:35,909 - DEBUG - INFO - Subscribed to ticks for symbol: JD100
+2024-12-08 01:06:36,982 - DEBUG - INFO - Account Name (Login ID): Unknown
+2024-12-08 01:06:36,982 - DEBUG - INFO - Account Balance: 17006.12 USD
+2024-12-08 01:06:36,982 - DEBUG - INFO - Account Type: Demo
+2024-12-08 01:07:06,707 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:07:19,372 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1.0, TP=1.0, Confidence=0.5
+2024-12-08 01:07:19,372 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1.0, TP=1.0, Confidence=0.5
+2024-12-08 01:07:19,372 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.5
+2024-12-08 01:07:19,372 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:07:36,709 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:07:44,185 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1727.5, TP=1722.0, Confidence=0.75
+2024-12-08 01:07:44,185 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1727.5, TP=1722.0, Confidence=0.75
+2024-12-08 01:07:44,185 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.75
+2024-12-08 01:07:44,592 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 01:07:44,592 - DEBUG - INFO - Executing trade: Symbol=JD100, Signal=SELL, Amount=1000.0
+2024-12-08 01:07:45,105 - DEBUG - INFO - Trade executed. Contract ID: 265564307768
+2024-12-08 01:07:45,105 - DEBUG - INFO - Monitoring trade. Contract ID: 265564307768
+2024-12-08 01:08:06,711 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:08:16,521 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1723.0, TP=1728.0, Confidence=0.65
+2024-12-08 01:08:16,521 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1723.0, TP=1728.0, Confidence=0.65
+2024-12-08 01:08:16,521 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 01:08:16,521 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:08:37,634 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:08:42,960 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1725.0, TP=1728.0, Confidence=0.65
+2024-12-08 01:08:42,961 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1725.0, TP=1728.0, Confidence=0.65
+2024-12-08 01:08:42,961 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.65
+2024-12-08 01:08:42,961 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:09:08,866 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:09:20,054 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1.0, TP=1.0, Confidence=0.9
+2024-12-08 01:09:20,054 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1.0, TP=1.0, Confidence=0.9
+2024-12-08 01:09:20,054 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.9
+2024-12-08 01:09:20,054 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:09:38,760 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:09:48,187 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1731.8, TP=1733.0, Confidence=0.75
+2024-12-08 01:09:48,188 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1731.8, TP=1733.0, Confidence=0.75
+2024-12-08 01:09:48,188 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 01:09:48,596 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 01:09:48,596 - DEBUG - INFO - Executing trade: Symbol=JD100, Signal=BUY, Amount=1000.0
+2024-12-08 01:09:48,979 - DEBUG - INFO - Trade executed. Contract ID: 265564414048
+2024-12-08 01:09:48,979 - DEBUG - INFO - Monitoring trade. Contract ID: 265564414048
+2024-12-08 01:10:08,772 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:10:17,169 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1725.0, TP=1730.0, Confidence=0.75
+2024-12-08 01:10:17,169 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1725.0, TP=1730.0, Confidence=0.75
+2024-12-08 01:10:17,169 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.75
+2024-12-08 01:10:17,170 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:10:39,708 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:10:47,733 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1731.0, TP=1732.0, Confidence=0.4
+2024-12-08 01:10:47,733 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1731.0, TP=1732.0, Confidence=0.4
+2024-12-08 01:10:47,733 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.4
+2024-12-08 01:10:47,733 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:11:10,698 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:11:19,833 - DEBUG - INFO - OpenAI assistant recommendation: Signal=HOLD, SL=1729.0, TP=1739.0, Confidence=0.6
+2024-12-08 01:11:19,833 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=1729.0, TP=1739.0, Confidence=0.6
+2024-12-08 01:11:19,833 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.6
+2024-12-08 01:11:19,833 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:11:32,385 - DEBUG - INFO - Disconnected from Deriv API.
+2024-12-08 01:11:32,385 - DEBUG - INFO - Trading bot stopped.
+2024-12-08 01:11:32,385 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265564307768
+2024-12-08 01:11:32,385 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265564414048
+2024-12-08 01:12:22,651 - DEBUG - INFO - Starting trading bot...
+2024-12-08 01:12:22,651 - DEBUG - INFO - Deriv API instance created.
+2024-12-08 01:12:23,934 - DEBUG - INFO - Authorized with Deriv API.
+2024-12-08 01:12:23,934 - DEBUG - INFO - OpenAI API initialized.
+2024-12-08 01:12:24,242 - DEBUG - INFO - Active symbols set. Total symbols: 81
+2024-12-08 01:12:24,242 - DEBUG - INFO - Fetched 81 active symbols.
+2024-12-08 01:12:24,243 - DEBUG - INFO - Subscribed to ticks for symbol: JD100
+2024-12-08 01:12:25,777 - DEBUG - INFO - Account Name (Login ID): Unknown
+2024-12-08 01:12:25,777 - DEBUG - INFO - Account Balance: 15006.12 USD
+2024-12-08 01:12:25,777 - DEBUG - INFO - Account Type: Demo
+2024-12-08 01:12:54,631 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:13:25,276 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1735.48, TP=1745.91, Confidence=0.9
+2024-12-08 01:13:25,276 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1735.48, TP=1745.91, Confidence=0.9
+2024-12-08 01:13:25,276 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.9
+2024-12-08 01:13:25,505 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 01:13:25,505 - DEBUG - INFO - Executing trade: Symbol=JD100, Signal=BUY, Amount=1000.0
+2024-12-08 01:13:25,544 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:13:25,767 - DEBUG - INFO - Trade executed. Contract ID: 265564604748
+2024-12-08 01:13:25,767 - DEBUG - INFO - Monitoring trade. Contract ID: 265564604748
+2024-12-08 01:13:50,769 - DEBUG - INFO - OpenAI assistant recommendation: Signal=SELL, SL=1736.3, TP=1735.8, Confidence=0.6
+2024-12-08 01:13:50,769 - DEBUG - INFO - Enhanced strategy evaluation: SELL, SL=1736.3, TP=1735.8, Confidence=0.6
+2024-12-08 01:13:50,769 - DEBUG - INFO - Strategy evaluated. Signal: SELL, Confidence: 0.6
+2024-12-08 01:13:50,986 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 01:13:50,986 - DEBUG - INFO - Executing trade: Symbol=JD100, Signal=SELL, Amount=1000.0
+2024-12-08 01:13:51,295 - DEBUG - INFO - Trade executed. Contract ID: 265564626048
+2024-12-08 01:13:51,295 - DEBUG - INFO - Monitoring trade. Contract ID: 265564626048
+2024-12-08 01:13:56,707 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:14:26,812 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:14:48,317 - DEBUG - INFO - OpenAI assistant recommendation: Signal=BUY, SL=1736.59, TP=1739.2, Confidence=0.75
+2024-12-08 01:14:48,317 - DEBUG - INFO - Enhanced strategy evaluation: BUY, SL=1736.59, TP=1739.2, Confidence=0.75
+2024-12-08 01:14:48,317 - DEBUG - INFO - Strategy evaluated. Signal: BUY, Confidence: 0.75
+2024-12-08 01:14:48,622 - DEBUG - INFO - Price proposal received: 1000
+2024-12-08 01:14:48,622 - DEBUG - INFO - Executing trade: Symbol=JD100, Signal=BUY, Amount=1000.0
+2024-12-08 01:14:48,919 - DEBUG - INFO - Trade executed. Contract ID: 265564674948
+2024-12-08 01:14:48,919 - DEBUG - INFO - Monitoring trade. Contract ID: 265564674948
+2024-12-08 01:14:57,593 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:14:57,663 - DEBUG - ERROR - Error calling OpenAI API: float() argument must be a string or a real number, not 'NoneType'
+2024-12-08 01:14:57,663 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 01:14:57,663 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 01:14:57,663 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:15:27,843 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:15:39,721 - DEBUG - ERROR - Error calling OpenAI API: float() argument must be a string or a real number, not 'NoneType'
+2024-12-08 01:15:39,721 - DEBUG - INFO - Enhanced strategy evaluation: HOLD, SL=0.0, TP=0.0, Confidence=0.0
+2024-12-08 01:15:39,721 - DEBUG - INFO - Strategy evaluated. Signal: HOLD, Confidence: 0.0
+2024-12-08 01:15:39,721 - DEBUG - INFO - No trade action taken.
+2024-12-08 01:15:58,664 - DEBUG - INFO - Historical data fetched for symbol: JD100
+2024-12-08 01:16:07,628 - DEBUG - INFO - Disconnected from Deriv API.
+2024-12-08 01:16:07,628 - DEBUG - INFO - Trading bot stopped.
+2024-12-08 01:16:07,628 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265564604748
+2024-12-08 01:16:07,628 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265564626048
+2024-12-08 01:16:07,628 - DEBUG - INFO - Stopped monitoring trade. Contract ID: 265564674948
