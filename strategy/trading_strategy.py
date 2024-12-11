@@ -11,6 +11,7 @@ import io
 import requests
 from config import config
 from utils.openai_utils import initialize_openai, get_trading_signal_from_openai
+from utils.risk_manager import RiskManager
 
 class TradingStrategy:
 
@@ -41,6 +42,7 @@ class TradingStrategy:
         self.cumulative_loss = 0.0
         self.pl_times = []
         self.pl_values = []
+        self.risk_manager = RiskManager(logger)
 
     async def tick_callback(self, tick):
         """
@@ -173,8 +175,12 @@ class TradingStrategy:
             if history:
                 self.logger.info(f"Historical data fetched for symbol: {symbol}")
                 with self.lock:
-                    self.tick_times = [datetime.fromtimestamp(int(ts)) for ts in history.get('times', [])]
-                    self.tick_prices = [float(price) for price in history.get('prices', [])]
+                    times = [datetime.fromtimestamp(int(ts)) for ts in history.get('times', [])]
+                    prices = [float(price) for price in history.get('prices', [])]
+                    self.tick_times.clear()
+                    self.tick_prices.clear()
+                    self.tick_times.extend(times)
+                    self.tick_prices.extend(prices)
             else:
                 self.logger.error(f"Failed to fetch historical data for symbol: {symbol}")
         except Exception as e:
@@ -221,9 +227,6 @@ class TradingStrategy:
             sentiment_score = self.get_market_sentiment()
             recent_trades_win_loss_ratio = self.calculate_win_loss_ratio()
             account_balance = self.latest_balance
-
-            # For now, still no actual fundamentals or polygon data
-           
             polygon_data = "No Polygon data available."
             news_headlines = []
 
@@ -239,22 +242,28 @@ class TradingStrategy:
                     sentiment_score=sentiment_score,
                     recent_trades_win_loss_ratio=recent_trades_win_loss_ratio,
                     account_balance=account_balance,
-                    news_headlines=news_headlines,
-                    
+                    news_headlines=news_headlines,                   
                     polygon_data=polygon_data
                 )
 
+                
                 signal = result["signal"]
                 self.dynamic_stop_loss = result["stop_loss"]
                 self.dynamic_take_profit = result["take_profit"]
-                confidence = result["confidence"]
+                self.dynamic_confidence = result["confidence"]
+                self.dynamic_position_size = result["position_size"] if result["position_size"] > 0 else config.AMOUNT
+                self.dynamic_max_holding_time = result["max_holding_time"]
+                self.dynamic_trailing_stop = result["trailing_stop"]
+                self.confidence = result["confidence"]
 
                 self.logger.info(
-                    f"Enhanced strategy evaluation: {signal}, SL={self.dynamic_stop_loss}, "
-                    f"TP={self.dynamic_take_profit}, Confidence={confidence}"
+                f"Enhanced strategy evaluation: {signal}, SL={self.dynamic_stop_loss}, "
+                f"TP={self.dynamic_take_profit}, Confidence={self.dynamic_confidence}, "
+                f"PositionSize={self.dynamic_position_size}, MaxHoldingTime={self.dynamic_max_holding_time}, "
+                f"TrailingStop={self.dynamic_trailing_stop}"
                 )
 
-                return signal, confidence
+                return signal, self.confidence
             except Exception as e:
                 self.logger.error(f"Error evaluating strategy: {e}")
                 return "HOLD", 0.0
@@ -262,72 +271,36 @@ class TradingStrategy:
         
         
     def calculate_recent_volume(self, lookback=50):
-         
-            with self.lock:
-                recent_ticks = self.tick_prices[-lookback:]
-                # The 'volume' is just the number of ticks. We can also scale it by some factor if we want.
-                approx_volume = len(recent_ticks)
-
-            # Return a simple list with one volume data point or generate a series
-            # For demonstration, let's just return a series showing some variation.
-            # If we wanted multiple data points, we could take multiple smaller segments and count ticks in each.
-            return [approx_volume for _ in range(5)]  # Just replicate it 5 times as an example
+        with self.lock:
+            approx_volume = min(len(self.tick_prices), lookback)
+        return [approx_volume for _ in range(5)] # Just replicate it 5 times as an example
 
 
-    def calculate_volatility(self, prices, annualize=False):
-            """
-            Calculate volatility as the standard deviation of log returns or percentage returns.
-            Here we will use a simple percentage change between consecutive ticks.
-            If annualize=True, we can scale it, but since this is tick data, scaling might be arbitrary.
-
-            volatility = stddev of returns
-            returns = (price[i] - price[i-1]) / price[i-1]
-            """
-            if len(prices) < 2:
-                return 0.0
-
-            returns = []
-            for i in range(1, len(prices)):
-                if prices[i-1] != 0:
-                    ret = (prices[i] - prices[i-1]) / prices[i-1]
-                    returns.append(ret)
-
-            if not returns:
-                return 0.0
-
-            vol = statistics.pstdev(returns)  # population std dev
-            # If desired, annualize or scale by sqrt of periods, etc.
-            # Without time context, we just return raw std dev.
-            return vol
+    def calculate_volatility(self, prices):
+        if len(prices) < 2:
+            return 0.0
+        returns = []
+        for i in range(1, len(prices)):
+            if prices[i-1] != 0:
+                ret = (prices[i] - prices[i-1]) / prices[i-1]
+                returns.append(ret)
+        if not returns:
+            return 0.0
+        vol = statistics.pstdev(returns)
+        return vol
 
     def get_market_sentiment(self, window=20):
-            """
-            Approximate sentiment from recent price action.
-            If the latest price is above the average of the last `window` prices, sentiment is positive.
-            If below, sentiment is negative.
-            Scale sentiment between -1 and 1 depending on how far from the mean the price is.
-
-            sentiment = (current_price - avg_price) / (avg_price) clipped to [-1,1].
-            """
-            with self.lock:
-                if len(self.tick_prices) < window:
-                    window_prices = self.tick_prices
-                else:
-                    window_prices = self.tick_prices[-window:]
-
-            if not window_prices:
-                return 0.0
-
-            avg_price = sum(window_prices) / len(window_prices)
-            current_price = window_prices[-1]
-
-            if avg_price == 0:
-                return 0.0
-
-            raw_sentiment = (current_price - avg_price) / avg_price
-            # Clip sentiment to range [-1,1]
-            sentiment = max(-1.0, min(1.0, raw_sentiment))
-            return sentiment
+        with self.lock:
+            window_prices = list(self.tick_prices)[-window:] if len(self.tick_prices) >= window else list(self.tick_prices)
+        if not window_prices:
+            return 0.0
+        avg_price = sum(window_prices) / len(window_prices)
+        current_price = window_prices[-1]
+        if avg_price == 0:
+            return 0.0
+        raw_sentiment = (current_price - avg_price) / avg_price
+        sentiment = max(-1.0, min(1.0, raw_sentiment))
+        return sentiment
 
     def calculate_win_loss_ratio(self):
             """
@@ -356,7 +329,7 @@ class TradingStrategy:
             contract_type = "CALL" if signal == "BUY" else "PUT"
             proposal_request = {
                 "proposal": 1,
-                "amount": config.AMOUNT,
+                "amount": self.dynamic_position_size,
                 "basis": "stake",
                 "contract_type": contract_type,
                 "currency": config.CURRENCY,
@@ -380,7 +353,7 @@ class TradingStrategy:
         Executes a trade based on the provided price proposal.
         """
         proposal_id = price_proposal['id']
-        self.logger.info(f"Executing trade: Symbol={symbol}, Signal={signal}, Amount={config.AMOUNT}")
+        self.logger.info(f"Executing trade: Symbol={symbol}, Signal={signal}, Amount={self.dynamic_position_size}")
 
         try:
             response = await self.deriv_api.buy({"buy": proposal_id, "price": price_proposal['ask_price']})
@@ -399,6 +372,7 @@ class TradingStrategy:
         Monitors the open trade for stop-loss and take-profit conditions.
         """
         self.logger.info(f"Monitoring trade. Contract ID: {contract_id}")
+        start_time = datetime.now()
         
         try:
             # Subscribe to proposal_open_contract stream

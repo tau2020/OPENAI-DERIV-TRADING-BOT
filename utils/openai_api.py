@@ -17,7 +17,7 @@ def analyze_sentiment(text):
     
     try:
         response = openai.chat.completions.create(
-            model="gpt-4o",  # Use a valid and accessible model
+            model="01-mini",  # Use a valid and accessible model
             messages=[{
                 "role": "user",
                 "content": prompt
