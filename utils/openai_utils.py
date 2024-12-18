@@ -59,105 +59,58 @@ DATA INPUTS:
 1. Price Action:
 - Symbol: {symbol}
 - Historical Price Data (Time, Price): {price_data_str}
-- Price Trends: 
-  * 20-period EMA
-  * 50-period EMA
-  * 200-period EMA crossing patterns
 
 2. Volume Analysis:
 - Recent Volume Data: {recent_volume}
-- Volume Profile:
-  * Volume-Weighted Average Price (VWAP)
-  * Volume Trend Analysis
-  * Relative Volume Ratio
+
 
 3. Volatility Metrics:
 - Historical Volatility: {recent_volatility}
-- Implied Volatility (if available)
-- ATR (Average True Range)
-- Bollinger Bands Width
+
 
 4. Market Context:
 - Market Sentiment Score: {sentiment_score} (-1 to 1)
-- Market Phase Identification:
-  * Trending/Ranging/Reversing
-  * Support/Resistance Levels
-  * Key Price Levels
+
 
 5. Performance Metrics:
 - Recent Trades Win/Loss Ratio: {recent_trades_win_loss_ratio}
-- Risk-Adjusted Returns (Sharpe Ratio)
-- Maximum Drawdown
 - Current Account Balance: {account_balance}
 
 6. External Data:
 - Market Data (Polygon.io): {polygon_data}
 - News Sentiment Analysis: {news_str}
-  * Headline Impact Score
-  * News Volume
-  * Sentiment Trend
 
-RISK MANAGEMENT FRAMEWORK:
-1. Position Sizing:
-- Account Balance-Based Scaling
-- Volatility-Adjusted Position Sizes
-- Maximum Position Size Limits
 
-2. Stop Loss Calculation:
-- ATR-Based Stops
-- Support/Resistance Levels
-- Volatility-Adjusted Stops
-- Time-Based Stops
+Analysis Focus:
 
-3. Take Profit Targets:
-- Risk/Reward Ratio (Minimum 1:1.5)
-- Technical Resistance Levels
-- Volatility-Based Targets
-- Trailing Stop Implementation
+Evaluate short- and long-term trend direction via EMAs (20/50/200) and confirm with VWAP & relative volume.
+Use ATR and Bollinger Band width to gauge volatility; prefer stable/moderate volatility environments.
+Consider sentiment (overall > 0) and confirm alignment with price trends and volume.
+Prioritize entries near clear support/resistance levels and when recent performance metrics (win/loss ratio) are positive.
+Risk Management Guidelines:
 
-DECISION CRITERIA:
+Size positions based on account balance and volatility; ensure stops and targets reflect ATR and key technical levels.
+Maintain minimum 1:1.5 risk/reward and use trailing stops to lock in profits when trends persist.
+Avoid trades if volatility is excessively high or if conflicting signals arise (e.g., negative news, unclear trend).
+Decision & Execution Criteria:
 
-1. Entry Conditions (Must Meet 3+ Criteria):
-- Price Action Confirmation
-- Volume Support
-- Trend Alignment
-- Sentiment Confirmation
-- Risk/Reward Threshold
-- News Impact Assessment
+Enter only when ≥3 technical and sentiment factors align:
+Trend confirmation (strong EMA alignment),
+Positive volume cues (above-average volume, VWAP support),
+Favorable sentiment (score >0, supportive news),
+Acceptable risk/reward (≥1:1.5).
+Exit if stop loss, take profit, or a clear reversal signal triggers.
+Confidence Scoring (>0.7 Target):
 
-2. Exit Conditions (Any 1 Criterion):
-- Stop Loss Hit
-- Take Profit Reached
-- Technical Reversal
-- Sentiment Shift
-- Time-Based Exit
+Base: 0.5
+Add +0.1 each for: strong trend, volume confirmation, positive sentiment, and clear S/R levels, and recent positive performance.
+Deduct 0.1 each for: high volatility, conflicting signals, negative news, poor risk/reward, or uncertain market conditions.
+Aim to structure trades so final confidence score ≥0.7 before execution.
+Validation Steps:
 
-3. Confidence Scoring (0-1):
-Base Score (0.5) + Modifiers:
-- Strong Trend (+0.1)
-- Volume Confirmation (+0.1)
-- Positive Sentiment (+0.1)
-- Clear Support/Resistance (+0.1)
-- Recent Success Rate (+0.1)
-Deductions:
-- High Volatility (-0.1)
-- Conflicting Signals (-0.1)
-- Negative News (-0.1)
-- Poor Risk/Reward (-0.1)
-- Market Uncertainty (-0.1)
-
-SIGNAL VALIDATION:
-1. Pre-Signal Checks:
-- Minimum Volume Requirements
-- Spread Analysis
-- Market Hours Verification
-- News Event Buffer
-
-2. Post-Signal Validation:
-- Risk/Reward Ratio Check
-- Position Size Validation
-- Account Risk Limit Check
-- Maximum Open Position Check
+Pre-Trade: Check volumes, spreads, and avoid trading right before major news events.
+Post-Trade Setup: Ensure risk/reward, position size, and overall account risk are within set limits.
+Only execute if all criteria lead to a final confidence >0.7.
 
 Note: This quantitative framework combines multiple factors for robust decision-making. All signals are generated through systematic analysis of technical, fundamental, and sentiment indicators for educational and testing purposes.
 OUTPUT FORMAT:
@@ -190,7 +143,7 @@ Note: This framework operates on predefined mathematical criteria for educationa
     try:
         response = await asyncio.to_thread(
             client.chat.completions.create,
-            model="o1-preview",
+            model="o1-mini",
             messages=[
              
                 {
@@ -200,6 +153,7 @@ Note: This framework operates on predefined mathematical criteria for educationa
                     "type": "text",
                     "text": prompt
                 },
+               
                
                     ],
              "max_completion_tokens": 150

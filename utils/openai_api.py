@@ -22,8 +22,8 @@ def analyze_sentiment(text):
                 "role": "user",
                 "content": prompt
             }],
-            max_tokens=5,              # Limit tokens to ensure concise output
-            temperature=0,             # Set temperature to 0 for deterministic results
+            max_completion_tokens=60,              # Limit tokens to ensure concise output
+                     # Set temperature to 0 for deterministic results
         )
         
         # Log the full response for debugging

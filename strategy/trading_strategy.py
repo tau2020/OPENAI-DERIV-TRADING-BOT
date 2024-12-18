@@ -29,9 +29,14 @@ class TradingStrategy:
         self.active_symbols = []
         self.current_symbol = config.SYMBOL
         self.latest_balance = 0.0
-        self.dynamic_stop_loss = config.STOP_LOSS  # Default from config, will be overridden
+        self.dynamic_stop_loss = config.STOP_LOSS  # Default from config, will be overridden by AI
         self.dynamic_take_profit = config.TAKE_PROFIT
         self.dynamic_confidence = 0.0
+        self.dynamic_position_size = config.AMOUNT
+        self.dynamic_max_holding_time = 5
+        self.dynamic_trailing_stop = 0.0
+        self.dynamic_contract_type = "CALL"
+        self.dynamic_duration = config.DURATION
         self.currency = 'USD'  # Default currency, will be updated
 
         # Initialize OpenAI client
@@ -54,7 +59,6 @@ class TradingStrategy:
         epoch = tick_data.get('epoch')
         timestamp = datetime.fromtimestamp(epoch)
       
-
         # Append tick data
         self.append_tick_data(timestamp, price)
 
@@ -63,8 +67,6 @@ class TradingStrategy:
             await self.log_account_info()
             self.account_info_logged = True
 
-     
-        
         # Evaluate strategy if necessary
         if self.should_evaluate_strategy():
             asyncio.create_task(self.evaluate_and_execute_trade(symbol))
@@ -109,22 +111,22 @@ class TradingStrategy:
             self.logger.error(f"Error fetching account info: {e}")
 
     async def log_current_balance(self):
-            """
-            Logs the current account balance.
-            """
-            try:
-                balance_response = await self.deriv_api.balance()
-                if balance_response and 'balance' in balance_response:
-                    balance = float(balance_response['balance'])
-                    currency = balance_response.get('currency', 'USD')
-                    with self.lock:
-                        self.latest_balance = balance
-                        self.currency = currency
-                    self.logger.info(f"Updated Account Balance: {balance} {currency}")
-                else:
-                    self.logger.error("Failed to retrieve account balance.")
-            except Exception as e:
-                self.logger.error(f"Error fetching balance: {e}")
+        """
+        Logs the current account balance.
+        """
+        try:
+            balance_response = await self.deriv_api.balance()
+            if balance_response and 'balance' in balance_response:
+                balance = float(balance_response['balance'])
+                currency = balance_response.get('currency', 'USD')
+                with self.lock:
+                    self.latest_balance = balance
+                    self.currency = currency
+                self.logger.info(f"Updated Account Balance: {balance} {currency}")
+            else:
+                self.logger.error("Failed to retrieve account balance.")
+        except Exception as e:
+            self.logger.error(f"Error fetching balance: {e}")
 
     def should_evaluate_strategy(self):
         """
@@ -185,13 +187,9 @@ class TradingStrategy:
                 self.logger.error(f"Failed to fetch historical data for symbol: {symbol}")
         except Exception as e:
             self.logger.error(f"Error fetching historical data: {e}")
-            
-               
-        
 
     def fetch_polygon_data(self, symbol):
-        
-        end_date = datetime.utcnow().strftime("%Y-%m-%d")  # Correct usage
+        end_date = datetime.utcnow().strftime("%Y-%m-%d")
         url = f"https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/2024-01-01/{end_date}"
         params = {
             "apiKey": config.POLYGONIO_API_KEY
@@ -214,67 +212,68 @@ class TradingStrategy:
             return "No Polygon data available."
 
     async def evaluate_strategy(self):
-            with self.lock:
-                if len(self.tick_prices) < config.MIN_DATA_POINTS_FOR_STRATEGY:
-                    self.logger.debug("Insufficient data for strategy evaluation.")
-                    return "HOLD", 0.0
+        with self.lock:
+            if len(self.tick_prices) < config.MIN_DATA_POINTS_FOR_STRATEGY:
+                self.logger.debug("Insufficient data for strategy evaluation.")
+                return "HOLD", 0.0
 
-                prices = self.tick_prices.copy()
-                times = self.tick_times.copy()
+            prices = self.tick_prices.copy()
+            times = self.tick_times.copy()
 
-            recent_volume_data = self.calculate_recent_volume()
-            recent_volatility = self.calculate_volatility(prices)
-            sentiment_score = self.get_market_sentiment()
-            recent_trades_win_loss_ratio = self.calculate_win_loss_ratio()
-            account_balance = self.latest_balance
-            polygon_data = "No Polygon data available."
-            news_headlines = []
+        recent_volume_data = self.calculate_recent_volume()
+        recent_volatility = self.calculate_volatility(prices)
+        sentiment_score = self.get_market_sentiment()
+        recent_trades_win_loss_ratio = self.calculate_win_loss_ratio()
+        account_balance = self.latest_balance
+        polygon_data = "No Polygon data available."
+        news_headlines = []
 
-            try:
-                result = await get_trading_signal_from_openai(
-                    self.openai_client,
-                    self.current_symbol,
-                    prices,
-                    times,
-                    self.logger,
-                    recent_volume=recent_volume_data,
-                    recent_volatility=recent_volatility,
-                    sentiment_score=sentiment_score,
-                    recent_trades_win_loss_ratio=recent_trades_win_loss_ratio,
-                    account_balance=account_balance,
-                    news_headlines=news_headlines,                   
-                    polygon_data=polygon_data
-                )
+        try:
+            result = await get_trading_signal_from_openai(
+                self.openai_client,
+                self.current_symbol,
+                prices,
+                times,
+                self.logger,
+                recent_volume=recent_volume_data,
+                recent_volatility=recent_volatility,
+                sentiment_score=sentiment_score,
+                recent_trades_win_loss_ratio=recent_trades_win_loss_ratio,
+                account_balance=account_balance,
+                news_headlines=news_headlines,                   
+                polygon_data=polygon_data
+            )
 
-                
-                signal = result["signal"]
-                self.dynamic_stop_loss = result["stop_loss"]
-                self.dynamic_take_profit = result["take_profit"]
-                self.dynamic_confidence = result["confidence"]
-                self.dynamic_position_size = result["position_size"] if result["position_size"] > 0 else config.AMOUNT
-                self.dynamic_max_holding_time = result["max_holding_time"]
-                self.dynamic_trailing_stop = result["trailing_stop"]
-                self.confidence = result["confidence"]
+            signal = result["signal"]
+            self.dynamic_stop_loss = result["stop_loss"]
+            self.dynamic_take_profit = result["take_profit"]
+            self.dynamic_confidence = result["confidence"]
+            self.dynamic_position_size = result["position_size"] if result["position_size"] > 0 else config.AMOUNT
+            self.dynamic_max_holding_time = result["max_holding_time"]
+            self.dynamic_trailing_stop = result["trailing_stop"]
+            self.confidence = result["confidence"]
 
-                self.logger.info(
+            # New dynamic fields
+            self.dynamic_contract_type = result.get("contract_type", "CALL")  
+            self.dynamic_duration = result.get("duration", config.DURATION)
+
+            self.logger.info(
                 f"Enhanced strategy evaluation: {signal}, SL={self.dynamic_stop_loss}, "
                 f"TP={self.dynamic_take_profit}, Confidence={self.dynamic_confidence}, "
                 f"PositionSize={self.dynamic_position_size}, MaxHoldingTime={self.dynamic_max_holding_time}, "
-                f"TrailingStop={self.dynamic_trailing_stop}"
-                )
+                f"TrailingStop={self.dynamic_trailing_stop}, ContractType={self.dynamic_contract_type}, "
+                f"Duration={self.dynamic_duration}"
+            )
 
-                return signal, self.confidence
-            except Exception as e:
-                self.logger.error(f"Error evaluating strategy: {e}")
-                return "HOLD", 0.0
-        
-        
-        
+            return signal, self.confidence
+        except Exception as e:
+            self.logger.error(f"Error evaluating strategy: {e}")
+            return "HOLD", 0.0
+
     def calculate_recent_volume(self, lookback=50):
         with self.lock:
             approx_volume = min(len(self.tick_prices), lookback)
         return [approx_volume for _ in range(5)] # Just replicate it 5 times as an example
-
 
     def calculate_volatility(self, prices):
         if len(prices) < 2:
@@ -303,37 +302,36 @@ class TradingStrategy:
         return sentiment
 
     def calculate_win_loss_ratio(self):
-            """
-            Compute the ratio of total wins to total losses.
-            If no losses, and we have wins, ratio can be high.
-            If no trades at all, return 1.0 as neutral.
-            """
-            wins = self.total_wins
-            losses = self.total_losses
+        """
+        Compute the ratio of total wins to total losses.
+        If no losses, and we have wins, ratio can be high.
+        If no trades at all, return 1.0 as neutral.
+        """
+        wins = self.total_wins
+        losses = self.total_losses
 
-            if wins == 0 and losses == 0:
-                return 1.0  # neutral if no trades
+        if wins == 0 and losses == 0:
+            return 1.0  # neutral if no trades
 
-            if losses == 0:
-                # If we never lost, ratio is very high, let's cap it at something
-                return float(wins)  # Could also return a large number like 10.0
+        if losses == 0:
+            # If we never lost, ratio is very high, just return wins
+            return float(wins) 
 
-            return wins / losses   
-
+        return wins / losses
 
     async def get_price_proposal(self, symbol, signal):
         """
         Retrieves a price proposal for a contract before executing a trade.
+        Uses the dynamically set contract_type and duration.
         """
         try:
-            contract_type = "CALL" if signal == "BUY" else "PUT"
             proposal_request = {
                 "proposal": 1,
                 "amount": self.dynamic_position_size,
                 "basis": "stake",
-                "contract_type": contract_type,
+                "contract_type": self.dynamic_contract_type,  # Using dynamic contract type
                 "currency": config.CURRENCY,
-                "duration": config.DURATION,
+                "duration": self.dynamic_duration,  # Using dynamic duration
                 "duration_unit": "m",
                 "symbol": symbol
             }
@@ -353,7 +351,7 @@ class TradingStrategy:
         Executes a trade based on the provided price proposal.
         """
         proposal_id = price_proposal['id']
-        self.logger.info(f"Executing trade: Symbol={symbol}, Signal={signal}, Amount={self.dynamic_position_size}")
+        self.logger.info(f"Executing trade: Symbol={symbol}, Signal={signal}, Amount={self.dynamic_position_size}, ContractType={self.dynamic_contract_type}, Duration={self.dynamic_duration}")
 
         try:
             response = await self.deriv_api.buy({"buy": proposal_id, "price": price_proposal['ask_price']})
@@ -454,8 +452,7 @@ class TradingStrategy:
         """
         self.active_symbols = symbols
         self.logger.info(f"Active symbols set. Total symbols: {len(symbols)}")
- 
- 
+
     def fetch_recent_news(self, symbol):
         """
         Fetch recent market news related to the provided symbol using the News API.
@@ -482,12 +479,3 @@ class TradingStrategy:
         except Exception as e:
             self.logger.error(f"Error fetching news: {e}")
             return []
-        
-        
-        
-        
-
-        
-        
-        
-        
