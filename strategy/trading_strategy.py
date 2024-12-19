@@ -370,14 +370,6 @@ class TradingStrategy:
             await self.sell_contract(contract_id, future)
             
             
-            
-        if profit > self.best_profit:
-           self.best_profit = profit
-
-        # Apply trailing stop only if we've locked in at least some meaningful profit
-        if self.best_profit > abs(self.dynamic_trailing_stop) and (self.best_profit - profit) >= abs(self.dynamic_trailing_stop) and not is_sold:
-            self.logger.info(f"Trailing stop triggered for contract {contract_id}. Selling contract.")
-            await self.sell_contract(contract_id, future)
                     
 
         if is_sold:

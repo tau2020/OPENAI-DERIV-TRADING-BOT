@@ -64,9 +64,9 @@ Activate the trailing stop only after the position is in profit beyond a certain
 Avoid trades if volatility is too high or if signals conflict (negative news or unclear trend).
 Enter trades only if at least three criteria align: strong trend, volume confirmation, positive sentiment, and acceptable risk/reward.
 Confidence scoring: start at 0.5; add +0.1 for each positive factor (trend, volume, sentiment, clear S/R, positive performance), subtract 0.1 for negatives (high volatility, conflicting signals, negative news, poor R/R, uncertain markets).
-Aim for final confidence ≥0.8.
+Aim for final confidence ≥0.7.
 Validate conditions pre-trade (volume, spreads, no major news events) and ensure position sizing and account risk are within limits.
-Execute only if final confidence ≥0.8.
+Execute only if final confidence ≥0.7.
 
 Inputs Provided Separately:
 Symbol: {symbol}
