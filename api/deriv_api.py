@@ -225,6 +225,7 @@ class DerivAPI:
             self.logger.error("Failed to retrieve active symbols.")
             return None
 
+
     async def get_contracts_for_symbol(self, symbol):
         request = {"contracts_for": symbol}
         response = await self.send_request(request)
