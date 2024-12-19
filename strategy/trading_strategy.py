@@ -205,38 +205,17 @@ class TradingStrategy:
             polygon_data=polygon_data
         )
 
-        claude_result = await self.claude_client.get_trading_signal(
-            symbol=self.current_symbol,
-            prices=prices,
-            times=times,
-            recent_volume=recent_volume_data,
-            recent_volatility=recent_volatility,
-            sentiment_score=sentiment_score,
-            recent_trades_win_loss_ratio=recent_trades_win_loss_ratio,
-            account_balance=account_balance,
-            news_headlines=news_headlines,
-            polygon_data=polygon_data
-        )
+       
 
         openai_signal = openai_result["signal"]
         openai_confidence = openai_result["confidence"]
-        claude_signal = claude_result["signal"]
-        claude_confidence = claude_result["confidence"]
+       
 
         self.logger.info(f"OpenAI recommendation: {openai_result}")
-        self.logger.info(f"Claude recommendation: {claude_result}")
+     
 
-        if openai_signal == claude_signal:
-            final_result = openai_result
-            self.logger.info(f"Consensus reached: {openai_signal}.")
-        else:
-            if openai_confidence > claude_confidence:
-                final_result = openai_result
-                self.logger.info(f"Conflict resolved: Using OpenAI signal {openai_signal} due to higher confidence.")
-            else:
-                final_result = claude_result
-                self.logger.info(f"Conflict resolved: Using Claude signal {claude_signal} due to higher confidence.")
-
+        
+        final_result = openai_result
         signal = final_result["signal"]
         self.dynamic_stop_loss = final_result["stop_loss"]
         self.dynamic_take_profit = final_result["take_profit"]
@@ -389,10 +368,17 @@ class TradingStrategy:
         if profit >= self.dynamic_take_profit and not is_sold:
             self.logger.info(f"Take profit reached for contract {contract_id}. Selling contract.")
             await self.sell_contract(contract_id, future)
+            
+            
+            
+        if profit > self.best_profit:
+           self.best_profit = profit
 
-        if (self.best_profit - profit) >= abs(self.dynamic_trailing_stop) and not is_sold:
+        # Apply trailing stop only if we've locked in at least some meaningful profit
+        if self.best_profit > abs(self.dynamic_trailing_stop) and (self.best_profit - profit) >= abs(self.dynamic_trailing_stop) and not is_sold:
             self.logger.info(f"Trailing stop triggered for contract {contract_id}. Selling contract.")
             await self.sell_contract(contract_id, future)
+                    
 
         if is_sold:
             self.logger.info(f"Contract {contract_id} settled. Profit: {profit}")

@@ -46,93 +46,48 @@ async def get_trading_signal_from_openai(client, symbol, prices, times, logger,
     news_str = "\n".join(news_headlines[:3])
 
     prompt = f"""
-        QUANTITATIVE ANALYSIS FRAMEWORK
-        Version: 2.0
-        Analysis Type: Multi-Factor Technical & Fundamental Pattern Recognition
+QUANTITATIVE ANALYSIS FRAMEWORK
+Version: 3.1
 
-        DATA INPUTS:
-        1. Price Action:
-        - Symbol: {symbol}
-        - Historical Price Data (Time, Price): {price_data_str}
+You are given a quantitative analysis framework and market data.
+Follow the framework to produce a single, valid JSON object as output.
+Do not include any code blocks or additional explanations. Only return the JSON object.
 
-        2. Volume Analysis:
-        - Recent Volume Data: {recent_volume}
+Framework Summary:
 
+Evaluate trends using EMAs (20/50/200), confirm with VWAP & relative volume.
+Use ATR and Bollinger Band width to judge volatility; favor moderate volatility.
+Confirm positive sentiment (score > 0) aligns with technical and volume signals.
+Prioritize entries near clear support/resistance with a favorable recent win/loss ratio.
+Maintain ≥1:1.5 risk/reward ratio; use ATR-based stops, and ensure trailing stops are not too tight.
+Activate the trailing stop only after the position is in profit beyond a certain threshold, or after a set time interval has passed. Adjust the trailing stop distance based on volatility (e.g., a multiple of ATR), providing sufficient room for the trade to develop.
+Avoid trades if volatility is too high or if signals conflict (negative news or unclear trend).
+Enter trades only if at least three criteria align: strong trend, volume confirmation, positive sentiment, and acceptable risk/reward.
+Confidence scoring: start at 0.5; add +0.1 for each positive factor (trend, volume, sentiment, clear S/R, positive performance), subtract 0.1 for negatives (high volatility, conflicting signals, negative news, poor R/R, uncertain markets).
+Aim for final confidence ≥0.8.
+Validate conditions pre-trade (volume, spreads, no major news events) and ensure position sizing and account risk are within limits.
+Execute only if final confidence ≥0.8.
 
-        3. Volatility Metrics:
-        - Historical Volatility: {recent_volatility}
+Inputs Provided Separately:
+Symbol: {symbol}
+Historical Price Data: {price_data_str}
+Recent Volume Data: {recent_volume}
+Volatility Metrics: {recent_volatility}
+Market Sentiment Score (-1 to 1): {sentiment_score}
+Recent Trades Win/Loss Ratio: {recent_trades_win_loss_ratio}
+Current Account Balance: {account_balance}
+Market Data: {polygon_data}
+News Sentiment Analysis: {news_str}
 
+Required JSON Output Format (no code blocks, no extra text):
+{{ "signal": "BUY" or "SELL" or "HOLD", "stop_loss": float, "take_profit": float, "confidence": float (0 to 1), "position_size": float, "max_holding_time": int (in seconds or minutes), "trailing_stop": float }}
 
-        4. Market Context:
-        - Market Sentiment Score: {sentiment_score} (-1 to 1)
+Example:
+{{ "signal": "BUY", "stop_loss": 1.2345, "take_profit": 1.2500, "confidence": 0.85, "position_size": 12.23, "max_holding_time": 3600, "trailing_stop": 3.2 }}
 
+No additional formatting or explanations. Return only a valid JSON object.
 
-        5. Performance Metrics:
-        - Recent Trades Win/Loss Ratio: {recent_trades_win_loss_ratio}
-        - Current Account Balance: {account_balance}
-
-        6. External Data:
-        - Market Data (Polygon.io): {polygon_data}
-        - News Sentiment Analysis: {news_str}
-
-
-        Analysis Focus:
-
-        Evaluate short- and long-term trend direction via EMAs (20/50/200) and confirm with VWAP & relative volume.
-        Use ATR and Bollinger Band width to gauge volatility; prefer stable/moderate volatility environments.
-        Consider sentiment (overall > 0) and confirm alignment with price trends and volume.
-        Prioritize entries near clear support/resistance levels and when recent performance metrics (win/loss ratio) are positive.
-        Risk Management Guidelines:
-
-        Size positions based on account balance and volatility; ensure stops and targets reflect ATR and key technical levels.
-        Maintain minimum 1:1.5 risk/reward and use trailing stops to lock in profits when trends persist.
-        Avoid trades if volatility is excessively high or if conflicting signals arise (e.g., negative news, unclear trend).
-        Decision & Execution Criteria:
-
-        Enter only when ≥3 technical and sentiment factors align:
-        Trend confirmation (strong EMA alignment),
-        Positive volume cues (above-average volume, VWAP support),
-        Favorable sentiment (score >0, supportive news),
-        Acceptable risk/reward (≥1:1.5).
-        Exit if stop loss, take profit, or a clear reversal signal triggers.
-        Confidence Scoring (>0.7 Target):
-
-        Base: 0.5
-        Add +0.1 each for: strong trend, volume confirmation, positive sentiment, and clear S/R levels, and recent positive performance.
-        Deduct 0.1 each for: high volatility, conflicting signals, negative news, poor risk/reward, or uncertain market conditions.
-        Aim to structure trades so final confidence score ≥0.7 before execution.
-        Validation Steps:
-
-        Pre-Trade: Check volumes, spreads, and avoid trading right before major news events.
-        Post-Trade Setup: Ensure risk/reward, position size, and overall account risk are within set limits.
-        Only execute if all criteria lead to a final confidence >0.7.
-
-        Note: This quantitative framework combines multiple factors for robust decision-making. All signals are generated through systematic analysis of technical, fundamental, and sentiment indicators for educational and testing purposes.
-        OUTPUT FORMAT:
-
-        *****IMPORTANT*******
-        - Use all provided data (fundamentals, news, sentiment, volatility) to make a high-confidence decision.
-        Emphasize 
-            profitability and risk-adjusted returns
-        You must return a JSON object with the following keys:
-        - "signal": string, one of "BUY", "SELL", or "HOLD"
-
-
-        - "stop_loss": float, a recommended stop loss level relative to the current price
-        - "take_profit": float, a recommended take profit level relative to the current price
-        - "confidence": float, a value between 0 and 1 indicating your confidence in this signal
-        - "position_size": float, the recommended fraction or quantity of the position to open
-        - "max_holding_time": int, the maximum recommended holding time in seconds or minutes
-        - "trailing_stop": float, the recommended trailing stop value to dynamically adjust the stop loss
-        - Do not include any additional text or explanation. Do not include code blocks. Only return a valid JSON object
-
-        Example JSON:
-        {{"signal": "BUY", "stop_loss": 1.2345, "take_profit": 1.2500, "confidence": 0.85, "position_size": 12.23, "max_holding_time": 3600, "trailing_stop", 3.2}}
-
-
-        ****************
-
-        Note: This framework operates on predefined mathematical criteria for educational and testing purposes. All signals are generated systematically based on technical indicators without discretionary input.
+Note: This framework operates on predefined mathematical criteria for educational and testing purposes. All signals are generated systematically based on technical indicators without discretionary input.
             """
 
     try:
