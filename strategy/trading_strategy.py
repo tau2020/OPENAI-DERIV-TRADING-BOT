@@ -46,6 +46,7 @@ class TradingStrategy:
         self.dynamic_max_holding_time = 5
         self.dynamic_trailing_stop = 0.0
         self.dynamic_contract_type = "CALL"
+        self.last_signal = "HOLD"
         self.dynamic_duration = config.DURATION
         self.currency = 'USD'
 
@@ -131,14 +132,49 @@ class TradingStrategy:
         elapsed = (datetime.now() - self.last_strategy_evaluation).total_seconds()
         return elapsed >= config.STRATEGY_EVALUATION_INTERVAL
 
-    async def evaluate_and_execute_trade(self, symbol):
+    async def evaluate_and_execute_trade(self, symbol: str):
         self.last_strategy_evaluation = datetime.now()
         await self.fetch_historical_data(symbol)
 
-        signal, confidence = await self.evaluate_strategy()
+        # This method sets self.dynamic_stop_loss, self.dynamic_take_profit, etc.
+        signal, confidence = await self.evaluate_strategy()  
         self.logger.info(f"Strategy evaluated. Final Signal: {signal}, Confidence: {confidence}")
 
+        # Set contract type based on signal
+        if signal == "BUY":
+            self.dynamic_contract_type = "CALL"
+        elif signal == "SELL":
+            self.dynamic_contract_type = "PUT"
+        else:
+            self.dynamic_contract_type = "CALL"  # default if HOLD
+
+        # Ensure minimum position size
+        if self.dynamic_position_size < 1:
+            self.logger.info(f"Position size {self.dynamic_position_size} is below 1. Setting to 1.")
+            self.dynamic_position_size = 1
+
+        # Validate and adjust levels only if we have a BUY/SELL and sufficient tick data
+        if signal in ["BUY", "SELL"] and self.tick_prices:
+            entry_price = self.tick_prices[-1]
+            if entry_price > 0:
+                adjusted_sl, adjusted_tp, valid = self.validate_and_adjust_levels(
+                    signal,
+                    entry_price,
+                    self.dynamic_stop_loss,
+                    self.dynamic_take_profit
+                )
+
+                if not valid:
+                    self.logger.warning("Cannot ensure positive initial risk. Defaulting to HOLD.")
+                    signal = "HOLD"
+                else:
+                    self.dynamic_stop_loss = adjusted_sl
+                    self.dynamic_take_profit = adjusted_tp
+
+        self.last_signal = signal  # Store the chosen signal for reference in handle_poc_update
+
         if signal in ["BUY", "SELL"]:
+            self.logger.info(f"Requesting price proposal with amount: {self.dynamic_position_size}")
             price_proposal = await self.get_price_proposal(symbol, signal)
             if price_proposal:
                 await self.execute_trade(symbol, signal, price_proposal)
@@ -146,6 +182,7 @@ class TradingStrategy:
                 self.logger.error("Failed to get price proposal. Trade not executed.")
         else:
             self.logger.info("No trade action taken.")
+
 
     async def fetch_historical_data(self, symbol):
         try:
@@ -213,14 +250,29 @@ class TradingStrategy:
 
         self.logger.info(f"OpenAI recommendation: {openai_result}")
      
-
+        
         
         final_result = openai_result
+        
+        if final_result["position_size"] < 0.35:
+            final_result["position_size"] = 0.35
+        
+        
+        
+        
         signal = final_result["signal"]
         self.dynamic_stop_loss = final_result["stop_loss"]
         self.dynamic_take_profit = final_result["take_profit"]
         self.dynamic_confidence = final_result["confidence"]
-        self.dynamic_position_size = final_result["position_size"] if final_result["position_size"] > 0 else config.AMOUNT
+       
+       
+        self.dynamic_position_size = final_result["position_size"]
+      
+      
+       
+       
+       
+       
         self.dynamic_max_holding_time = final_result["max_holding_time"]
         self.dynamic_trailing_stop = final_result["trailing_stop"]
         self.confidence = final_result["confidence"]
@@ -293,6 +345,59 @@ class TradingStrategy:
         except Exception as e:
             self.logger.error(f"Error getting price proposal: {e}")
             return None
+        
+        
+        
+        
+    def validate_and_adjust_levels(self, signal, entry_price, stop_loss, take_profit):
+        """
+        Validate and adjust stop loss and take profit to ensure positive initial risk.
+        BUY: ensure stop_loss < entry_price < take_profit
+        SELL: ensure take_profit < entry_price < stop_loss
+
+        Returns (stop_loss, take_profit, valid)
+        """
+        original_sl, original_tp = stop_loss, take_profit
+        adjustment_factor = 0.005  # Adjust as needed for more aggressive changes
+
+        if signal == "BUY":
+            if stop_loss >= entry_price:
+                stop_loss = entry_price - abs(entry_price * adjustment_factor)
+                self.logger.warning(f"Adjusted stop loss from {original_sl} to {stop_loss} for BUY.")
+            if take_profit <= entry_price:
+                take_profit = entry_price + abs(entry_price * adjustment_factor * 2)
+                self.logger.warning(f"Adjusted take profit from {original_tp} to {take_profit} for BUY.")
+
+            initial_risk = entry_price - stop_loss
+            if initial_risk <= 0:
+                self.logger.error("Unable to ensure positive initial risk for BUY after adjustments.")
+                return stop_loss, take_profit, False
+
+        elif signal == "SELL":
+            if stop_loss <= entry_price:
+                stop_loss = entry_price + abs(entry_price * adjustment_factor)
+                self.logger.warning(f"Adjusted stop loss from {original_sl} to {stop_loss} for SELL.")
+            if take_profit >= entry_price:
+                take_profit = entry_price - abs(entry_price * adjustment_factor * 2)
+                self.logger.warning(f"Adjusted take profit from {original_tp} to {take_profit} for SELL.")
+
+            initial_risk = stop_loss - entry_price
+            if initial_risk <= 0:
+                self.logger.error("Unable to ensure positive initial risk for SELL after adjustments.")
+                return stop_loss, take_profit, False
+
+        return stop_loss, take_profit, True
+    
+    def apply_trailing_stop(self, current_price, trailing_stop, entry_price):
+        """
+        Apply trailing stop logic. If platform does not support dynamic stop adjustments, 
+        this can be simulated by closing early when price crosses the trailing stop line.
+        """
+        # For a BUY: trailing stop would be entry_price or current_price - trailing_stop
+        # For a SELL: logic can be mirrored or decided based on actual trade direction.
+        new_stop = max(entry_price, current_price - trailing_stop)
+        return new_stop
+    
 
     async def execute_trade(self, symbol, signal, price_proposal):
         proposal_id = price_proposal['id']
@@ -351,16 +456,35 @@ class TradingStrategy:
             poc_subscription.dispose()
             self.logger.info(f"Stopped monitoring trade. Contract ID: {contract_id}")
 
+    # In TradingStrategy.handle_poc_update()
     async def handle_poc_update(self, poc_update, contract_id, future):
         poc_data = poc_update.get('proposal_open_contract', {})
         is_sold = poc_data.get('is_sold', False)
         profit = float(poc_data.get('profit', 0.0))
-        
-        # Update best profit
-        if profit > self.best_profit:
-            self.best_profit = profit
+        current_price = float(poc_data.get('bid_price', 0.0))
 
-        # Check conditions
+        # Use the stored last_signal chosen during trade execution
+        signal = self.last_signal
+        entry_price = self.entry_price
+
+        # Apply trailing stop logic if applicable
+        if not is_sold and signal in ["BUY", "SELL"] and current_price > 0 and self.dynamic_trailing_stop > 0:
+            new_stop = self.apply_trailing_stop(current_price, self.dynamic_trailing_stop, entry_price)
+            # For BUY: close if current_price < new_stop
+            if signal == "BUY" and current_price < new_stop:
+                self.logger.info(f"Price dipped below trailing stop {new_stop}, closing contract {contract_id}.")
+                await self.sell_contract(contract_id, future)
+            # For SELL: close if current_price > (entry_price + trailing stop logic reversed if needed)
+            elif signal == "SELL":
+                # For SELL, you might define a mirrored trailing logic:
+                # If trailing stop is used as a buffer above entry_price for SELL:
+                # Convert trailing stop logic accordingly. For simplicity, close if current_price > entry_price + trailing_stop.
+                sell_stop_line = entry_price + self.dynamic_trailing_stop
+                if current_price > sell_stop_line:
+                    self.logger.info(f"Price rose above trailing stop {sell_stop_line}, closing contract {contract_id}.")
+                    await self.sell_contract(contract_id, future)
+
+        # Check stop loss and take profit conditions
         if profit <= -abs(self.dynamic_stop_loss) and not is_sold:
             self.logger.info(f"Stop loss hit for contract {contract_id}. Selling contract.")
             await self.sell_contract(contract_id, future)
@@ -368,9 +492,6 @@ class TradingStrategy:
         if profit >= self.dynamic_take_profit and not is_sold:
             self.logger.info(f"Take profit reached for contract {contract_id}. Selling contract.")
             await self.sell_contract(contract_id, future)
-            
-            
-                    
 
         if is_sold:
             self.logger.info(f"Contract {contract_id} settled. Profit: {profit}")
@@ -378,6 +499,7 @@ class TradingStrategy:
             await self.log_current_balance()
             if not future.done():
                 future.set_result(None)
+
 
             
                 

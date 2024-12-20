@@ -43,8 +43,7 @@ Python-3.12.0.tgz
 logs/
 *.log
 
-# Configuration
-config.py
+
 
 # Mac
 .DS_Store

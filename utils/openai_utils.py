@@ -46,46 +46,62 @@ async def get_trading_signal_from_openai(client, symbol, prices, times, logger,
     news_str = "\n".join(news_headlines[:3])
 
     prompt = f"""
-QUANTITATIVE ANALYSIS FRAMEWORK
-Version: 3.1
 
-You are given a quantitative analysis framework and market data.
-Follow the framework to produce a single, valid JSON object as output.
-Do not include any code blocks or additional explanations. Only return the JSON object.
+QUANTITATIVE ANALYSIS FRAMEWORK Version: 3.5
 
-Framework Summary:
+You will receive market and sentiment data. 
+Produce exactly one valid JSON object as your response and nothing else.
 
-Evaluate trends using EMAs (20/50/200), confirm with VWAP & relative volume.
-Use ATR and Bollinger Band width to judge volatility; favor moderate volatility.
-Confirm positive sentiment (score > 0) aligns with technical and volume signals.
-Prioritize entries near clear support/resistance with a favorable recent win/loss ratio.
-Maintain ≥1:1.5 risk/reward ratio; use ATR-based stops, and ensure trailing stops are not too tight.
-Activate the trailing stop only after the position is in profit beyond a certain threshold, or after a set time interval has passed. Adjust the trailing stop distance based on volatility (e.g., a multiple of ATR), providing sufficient room for the trade to develop.
-Avoid trades if volatility is too high or if signals conflict (negative news or unclear trend).
-Enter trades only if at least three criteria align: strong trend, volume confirmation, positive sentiment, and acceptable risk/reward.
-Confidence scoring: start at 0.5; add +0.1 for each positive factor (trend, volume, sentiment, clear S/R, positive performance), subtract 0.1 for negatives (high volatility, conflicting signals, negative news, poor R/R, uncertain markets).
-Aim for final confidence ≥0.7.
-Validate conditions pre-trade (volume, spreads, no major news events) and ensure position sizing and account risk are within limits.
-Execute only if final confidence ≥0.7.
+Criteria for BUY or SELL signals (no losses allowed):
 
-Inputs Provided Separately:
+Positive initial risk structure: For BUY: stop_loss < current_price < take_profit For SELL: take_profit < current_price < stop_loss
+Favorable risk/reward ratio ≥ 1:1.5
+Position size > 0.35
+Positive sentiment score > 0 and supportive news if buying; if selling, ensure sentiment alignment supports a downward move (e.g., negative or neutral sentiment and signals favoring a price decline).
+Trend confirmation: For BUY, confirm uptrend; for SELL, confirm downtrend (EMAs, VWAP).
+Confidence ≥ 0.7 after scoring.
+If any conditions fail, return HOLD.
+
+Confidence Scoring: Start: 0.5
+Add +0.1 for each of:
+
+Strong trend alignment (uptrend for BUY or downtrend for SELL)
+Volume confirmation
+Positive sentiment/news alignment for BUY, negative/neutral for SELL
+Proximity to key levels
+Positive recent performance metrics
+Deduct -0.1 for each of:
+
+High volatility
+Conflicting or unclear trends
+Opposite sentiment to intended direction
+Poor risk/reward
+If final confidence < 0.7, signal=HOLD.
+
+Output Format: Return one JSON object with: "signal": "BUY", "SELL", or "HOLD" "stop_loss": float "take_profit": float "confidence": float (0 to 1) "position_size": float (> 0.35 for BUY/SELL) "max_holding_time": int "trailing_stop": float
+
+No explanations, code blocks, or extra text. Return only the JSON object.
+
+Example (for illustration only): {{ "signal": "BUY", "stop_loss": 1.2345, "take_profit": 1.2500, "confidence": 0.85, "position_size": 0.5, "max_holding_time": 3600, "trailing_stop": 0.5 }}
+
+If conditions not met, return: {{ "signal": "HOLD", "stop_loss": 0.0, "take_profit": 0.0, "confidence": 0.0, "position_size": 0.0, "max_holding_time": 60, "trailing_stop": 0.0 }}
+
 Symbol: {symbol}
 Historical Price Data: {price_data_str}
-Recent Volume Data: {recent_volume}
 Volatility Metrics: {recent_volatility}
-Market Sentiment Score (-1 to 1): {sentiment_score}
+Market Sentiment Score: {sentiment_score}
 Recent Trades Win/Loss Ratio: {recent_trades_win_loss_ratio}
 Current Account Balance: {account_balance}
 Market Data: {polygon_data}
 News Sentiment Analysis: {news_str}
+Ensure output JSON adheres to this structure and only submit when confidence ≥ 0.7.
 
 Required JSON Output Format (no code blocks, no extra text):
 {{ "signal": "BUY" or "SELL" or "HOLD", "stop_loss": float, "take_profit": float, "confidence": float (0 to 1), "position_size": float, "max_holding_time": int (in seconds or minutes), "trailing_stop": float }}
 
-Example:
-{{ "signal": "BUY", "stop_loss": 1.2345, "take_profit": 1.2500, "confidence": 0.85, "position_size": 12.23, "max_holding_time": 3600, "trailing_stop": 3.2 }}
 
-No additional formatting or explanations. Return only a valid JSON object.
+
+IMPORTANT: No additional formatting or explanations or ``` slashes. Return only a valid JSON object.
 
 Note: This framework operates on predefined mathematical criteria for educational and testing purposes. All signals are generated systematically based on technical indicators without discretionary input.
             """
@@ -103,7 +119,7 @@ Note: This framework operates on predefined mathematical criteria for educationa
                             "text": prompt
                         },
                     ],
-                    "max_completion_tokens": 150
+                    "max_completion_tokens": 300
                 }
             ]
         )
@@ -153,7 +169,7 @@ Note: This framework operates on predefined mathematical criteria for educationa
 
                 # Ensure minimum position size ≥ 0.35
                 if position_size < 0.35:
-                    position_size = max(0.35, position_size)
+                    position_size = max(1, position_size)
 
                 logger.info(
                     f"OpenAI assistant recommendation: Signal={signal}, SL={stop_loss}, TP={take_profit}, "
