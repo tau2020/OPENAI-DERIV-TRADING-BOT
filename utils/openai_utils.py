@@ -47,61 +47,86 @@ async def get_trading_signal_from_openai(client, symbol, prices, times, logger,
 
     prompt = f"""
 
-QUANTITATIVE ANALYSIS FRAMEWORK Version: 3.5
+QUANTITATIVE ANALYSIS FRAMEWORK
+Version: 3.5
 
-You will receive market and sentiment data. 
-Produce exactly one valid JSON object as your response and nothing else.
+You are a quantitative trading bot. 
+Return only a JSON object without any additional text or formatting.
+Do not add ``` to the object
+Do not add ```json to the object
 
-Criteria for BUY or SELL signals (no losses allowed):
+ENTRY CONDITIONS:
+1. Trend + Volume
+- EMA(20,50,200) aligned
+- VWAP confirmation
+- Volume > 1.5x average
+- Clear S/R levels
 
-Positive initial risk structure: For BUY: stop_loss < current_price < take_profit For SELL: take_profit < current_price < stop_loss
-Favorable risk/reward ratio ≥ 1:1.5
-Position size > 0.35
-Positive sentiment score > 0 and supportive news if buying; if selling, ensure sentiment alignment supports a downward move (e.g., negative or neutral sentiment and signals favoring a price decline).
-Trend confirmation: For BUY, confirm uptrend; for SELL, confirm downtrend (EMAs, VWAP).
-Confidence ≥ 0.7 after scoring.
-If any conditions fail, return HOLD.
+2. Position Sizing
+- Base = Balance × 0.02 × Confidence
+- ATR Adjusted = Base × (1/ATR_Ratio)
+- Min: 1%, Max: 5% of balance
 
-Confidence Scoring: Start: 0.5
-Add +0.1 for each of:
+3. Risk Parameters
+- Stop Loss = ATR × 1.5
+- Take Profit = Stop Loss × 2
+- Trail after 1R profit
+- R:R minimum 1:2
 
-Strong trend alignment (uptrend for BUY or downtrend for SELL)
-Volume confirmation
-Positive sentiment/news alignment for BUY, negative/neutral for SELL
-Proximity to key levels
-Positive recent performance metrics
-Deduct -0.1 for each of:
+4. Signal Requirements:
+BUY:
+- Uptrend (EMAs aligned)
+- Support test
+- Volume surge
+- Positive sentiment
 
-High volatility
-Conflicting or unclear trends
-Opposite sentiment to intended direction
-Poor risk/reward
-If final confidence < 0.7, signal=HOLD.
+SELL:
+- Downtrend (EMAs aligned)
+- Resistance test
+- Volume surge
+- Negative sentiment
 
-Output Format: Return one JSON object with: "signal": "BUY", "SELL", or "HOLD" "stop_loss": float "take_profit": float "confidence": float (0 to 1) "position_size": float (> 0.35 for BUY/SELL) "max_holding_time": int "trailing_stop": float
+HOLD:
+- Any criteria not met
+- Confidence < 0.7
 
-No explanations, code blocks, or extra text. Return only the JSON object.
+5. Confidence Score (Base: 0.5)
++0.1 each:
+- Trend alignment
+- Volume confirmation
+- S/R level test
+- Sentiment match
+- Low volatility
+- Strong performance
 
-Example (for illustration only): {{ "signal": "BUY", "stop_loss": 1.2345, "take_profit": 1.2500, "confidence": 0.85, "position_size": 0.5, "max_holding_time": 3600, "trailing_stop": 0.5 }}
+-0.1 each:
+- High volatility
+- Mixed signals
+- Poor volume
+- Counter-trend
+- News conflict
 
-If conditions not met, return: {{ "signal": "HOLD", "stop_loss": 0.0, "take_profit": 0.0, "confidence": 0.0, "position_size": 0.0, "max_holding_time": 60, "trailing_stop": 0.0 }}
-
+MARKET DATA:
 Symbol: {symbol}
-Historical Price Data: {price_data_str}
-Volatility Metrics: {recent_volatility}
-Market Sentiment Score: {sentiment_score}
-Recent Trades Win/Loss Ratio: {recent_trades_win_loss_ratio}
-Current Account Balance: {account_balance}
-Market Data: {polygon_data}
-News Sentiment Analysis: {news_str}
-Ensure output JSON adheres to this structure and only submit when confidence ≥ 0.7.
+Prices: {price_data_str}
+Volatility: {recent_volatility}
+Sentiment: {sentiment_score}
+Win/Loss: {recent_trades_win_loss_ratio}
+Balance: {account_balance}
+Market: {polygon_data}
+News: {news_str}
 
-Required JSON Output Format (no code blocks, no extra text):
-{{ "signal": "BUY" or "SELL" or "HOLD", "stop_loss": float, "take_profit": float, "confidence": float (0 to 1), "position_size": float, "max_holding_time": int (in seconds or minutes), "trailing_stop": float }}
-
-
-
-IMPORTANT: No additional formatting or explanations or ``` slashes. Return only a valid JSON object.
+RETURN FORMAT:
+{{
+    "signal": "BUY"|"SELL"|"HOLD",
+    "stop_loss": float,
+    "take_profit": float,
+    "confidence": float,
+    "position_size": float,
+    "max_holding_time": int,
+    "trailing_stop": float
+}}
+IMPORTANT: 
 
 Note: This framework operates on predefined mathematical criteria for educational and testing purposes. All signals are generated systematically based on technical indicators without discretionary input.
             """
@@ -119,7 +144,7 @@ Note: This framework operates on predefined mathematical criteria for educationa
                             "text": prompt
                         },
                     ],
-                    "max_completion_tokens": 300
+                    "max_completion_tokens": 60
                 }
             ]
         )
@@ -207,3 +232,4 @@ def fallback_hold_signal():
         "max_holding_time": 60,
         "trailing_stop": 0.0
     }
+    
