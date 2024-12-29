@@ -18,12 +18,10 @@ async def get_trading_signal_from_openai(client, symbol, prices, times, logger,
     recent_volatility=None,
     sentiment_score=None,
     recent_trades_win_loss_ratio=None,
-    account_balance=None,
-    news_headlines=None,
-    polygon_data=None):
+    account_balance=None):
 
     # Limit data points
-    max_data_points = 150
+    max_data_points = 400
     if len(prices) > max_data_points:
         logger.info(f"Truncating input data from {len(prices)} to {max_data_points} points")
         prices = prices[-max_data_points:]
@@ -40,17 +38,23 @@ async def get_trading_signal_from_openai(client, symbol, prices, times, logger,
     sentiment_score = sentiment_score if sentiment_score is not None else 0.0
     recent_trades_win_loss_ratio = recent_trades_win_loss_ratio if recent_trades_win_loss_ratio is not None else 1.0
     account_balance = account_balance if account_balance is not None else 1000.0
-    news_headlines = news_headlines or []
-    polygon_data = polygon_data or "No additional market data."
-
-    news_str = "\n".join(news_headlines[:3])
+    
+    
+    
+    logger.info(f"recent_volume: {recent_volume}")
+    logger.info(f"recent_volatility: {recent_volatility}")
+    logger.info(f"sentiment_score: {sentiment_score}")
+    logger.info(f"recent_trades_win_loss_ratio: {recent_trades_win_loss_ratio}")
+    logger.info(f"account_balance: {account_balance}")
+   
+    
+    
 
     prompt = f"""
 
 QUANTITATIVE ANALYSIS FRAMEWORK
 Version: 3.5
 
-You are a quantitative trading bot. 
 Return only a JSON object without any additional text or formatting.
 Do not add ``` to the object
 Do not add ```json to the object
@@ -63,15 +67,9 @@ ENTRY CONDITIONS:
 - Clear S/R levels
 
 2. Position Sizing
-- Base = Balance × 0.02 × Confidence
-- ATR Adjusted = Base × (1/ATR_Ratio)
+- Base = Balance * 0.02 * Confidence
+- ATR Adjusted = Base * (1/ATR_Ratio)
 - Min: 1%, Max: 5% of balance
-
-3. Risk Parameters
-- Stop Loss = ATR × 1.5
-- Take Profit = Stop Loss × 2
-- Trail after 1R profit
-- R:R minimum 1:2
 
 4. Signal Requirements:
 BUY:
@@ -90,7 +88,7 @@ HOLD:
 - Any criteria not met
 - Confidence < 0.7
 
-5. Confidence Score (Base: 0.5)
+5. Confidence Score
 +0.1 each:
 - Trend alignment
 - Volume confirmation
@@ -104,17 +102,6 @@ HOLD:
 - Mixed signals
 - Poor volume
 - Counter-trend
-- News conflict
-
-MARKET DATA:
-Symbol: {symbol}
-Prices: {price_data_str}
-Volatility: {recent_volatility}
-Sentiment: {sentiment_score}
-Win/Loss: {recent_trades_win_loss_ratio}
-Balance: {account_balance}
-Market: {polygon_data}
-News: {news_str}
 
 RETURN FORMAT:
 {{
@@ -129,6 +116,16 @@ RETURN FORMAT:
 IMPORTANT: 
 
 Note: This framework operates on predefined mathematical criteria for educational and testing purposes. All signals are generated systematically based on technical indicators without discretionary input.
+  
+  MARKET DATA:
+Symbol: {symbol}
+Prices: {price_data_str}
+Volatility: {recent_volatility}
+Sentiment: {sentiment_score}
+Win/Loss: {recent_trades_win_loss_ratio}
+Balance: {account_balance}
+  
+  
             """
 
     try:
@@ -144,7 +141,7 @@ Note: This framework operates on predefined mathematical criteria for educationa
                             "text": prompt
                         },
                     ],
-                    "max_completion_tokens": 60
+                    "max_completion_tokens": 300
                 }
             ]
         )
