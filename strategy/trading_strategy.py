@@ -11,6 +11,7 @@ from config import config
 from utils.openai_utils import initialize_openai, get_trading_signal_from_openai
 from utils.risk_manager import RiskManager
 from utils.anthropic_utils import ClaudeTradingClient
+from strategy.rule_based_signals import RuleBasedSignals
 
 class TradingStrategy:
     def __init__(self, logger, deriv_api_client: DerivAPI, openai_api_key: str, anthropic_api_key: str):
@@ -28,7 +29,7 @@ class TradingStrategy:
         self.cumulative_loss = 0.0
         self.pl_times = []
         self.pl_values = []
-
+        self.rule_signals = RuleBasedSignals(logger=self.logger)
         self.tick_times = []
         self.tick_prices = []
         self.trades_data = []
@@ -139,7 +140,7 @@ class TradingStrategy:
         await self.fetch_historical_data(symbol)
 
         # Evaluate strategy (AI signals, etc.)
-        signal, confidence = await self.evaluate_strategy()
+        signal, confidence = await self.evaluate_strategy(config.SYMBOL)
         self.logger.info(f"Strategy evaluated. Final Signal: {signal}, Confidence: {confidence}")
 
         # Contract type from signal
@@ -210,72 +211,87 @@ class TradingStrategy:
         except Exception as e:
             self.logger.error(f"Error fetching historical data: {e}")
 
-    async def evaluate_strategy(self):
+    async def evaluate_strategy(self, symbol: str):
+        """
+        1) Fetch historical data via ticks_history
+        2) Generate rule-based signals
+        3) Execute or hold
+        """
+        self.last_strategy_evaluation = datetime.now()
+        await self.fetch_historical_data(symbol)
+
         with self.lock:
-            if len(self.tick_prices) < config.MIN_DATA_POINTS_FOR_STRATEGY:
-                self.logger.debug("Insufficient data for strategy evaluation.")
-                return "HOLD", 0.0
             prices = self.tick_prices.copy()
             times = self.tick_times.copy()
 
-        # Suppose you do custom computations for volume, volatility, sentiment:
-        recent_volume_data = await self.compute_volume_data(self.current_symbol)
-        recent_volatility = self.compute_volatility(prices)
-        sentiment_score = self.fetch_sentiment_score(self.current_symbol)
-        recent_trades_win_loss_ratio = self.compute_recent_win_loss_ratio(self.trades_data, 20)
+        if len(prices) < config.MIN_DATA_POINTS_FOR_STRATEGY:
+            self.logger.debug("Insufficient data for strategy evaluation.")
+            return
 
+        volume_data = await self.compute_volume_data(symbol)
+        volatility = self.compute_volatility(prices)
+        sentiment_score = 0.0
+        win_loss_ratio = self.compute_recent_win_loss_ratio(self.trades_data, 20)
         account_balance = self.latest_balance
-        openai_result = await get_trading_signal_from_openai(
-            self.openai_client,
-            self.current_symbol,
-            prices,
-            times,
-            self.logger,
-            recent_volume=recent_volume_data,
-            recent_volatility=recent_volatility,
+
+        signal_data = self.rule_signals.generate_signal(
+            prices=prices,
+            times=times,
+            volume_data=volume_data,
+            volatility=volatility,
             sentiment_score=sentiment_score,
-            recent_trades_win_loss_ratio=recent_trades_win_loss_ratio,
+            recent_trades_win_loss_ratio=win_loss_ratio,
             account_balance=account_balance
         )
-        self.logger.info(f"OpenAI recommendation: {openai_result}")
 
-        # Min confidence filter
-        if openai_result["confidence"] < self.MIN_CONFIDENCE_THRESHOLD:
-            self.logger.info(f"Confidence {openai_result['confidence']:.2f} < {self.MIN_CONFIDENCE_THRESHOLD}, forcing HOLD.")
-            openai_result["signal"] = "HOLD"
+        final_signal = signal_data["signal"]
+        final_conf = signal_data["confidence"]
+        if final_conf < self.MIN_CONFIDENCE_THRESHOLD:
+            self.logger.info(
+                f"Confidence {final_conf:.2f} < {self.MIN_CONFIDENCE_THRESHOLD}, forcing HOLD."
+            )
+            final_signal = "HOLD"
 
-        # Scale AI stops if out-of-scale
-        if len(prices) > 0:
-            current_price = prices[-1]
-            # Only if the market price is large, e.g. 6000+
-            if current_price > 1000:
-                # If AI gave very small numeric SL or TP (<10), treat them as offsets
-                if 0 < openai_result["stop_loss"] < 10:
-                    if openai_result["signal"] == "BUY":
-                        openai_result["stop_loss"] = current_price - openai_result["stop_loss"]
-                    elif openai_result["signal"] == "SELL":
-                        openai_result["stop_loss"] = current_price + openai_result["stop_loss"]
+        self.dynamic_stop_loss = signal_data["stop_loss"]
+        self.dynamic_take_profit = signal_data["take_profit"]
+        self.dynamic_confidence = final_conf
+        self.dynamic_position_size = signal_data["position_size"]
+        self.dynamic_max_holding_time = signal_data["max_holding_time"]
+        self.dynamic_trailing_stop = signal_data["trailing_stop"]
+        self.last_signal = final_signal
 
-                if 0 < openai_result["take_profit"] < 10:
-                    if openai_result["signal"] == "BUY":
-                        openai_result["take_profit"] = current_price + openai_result["take_profit"]
-                    elif openai_result["signal"] == "SELL":
-                        openai_result["take_profit"] = current_price - openai_result["take_profit"]
+        if final_signal == "BUY":
+            self.dynamic_contract_type = "CALL"
+        elif final_signal == "SELL":
+            self.dynamic_contract_type = "PUT"
+        else:
+            self.dynamic_contract_type = "CALL"
 
-        # Update dynamic fields
-        self.dynamic_stop_loss = openai_result["stop_loss"]
-        self.dynamic_take_profit = openai_result["take_profit"]
-        self.dynamic_confidence = openai_result["confidence"]
-        self.dynamic_position_size = openai_result["position_size"]
-        self.dynamic_max_holding_time = openai_result["max_holding_time"]
-        self.dynamic_trailing_stop = openai_result["trailing_stop"]
-        self.dynamic_contract_type = "CALL"  # default
-        self.dynamic_duration = config.DURATION
+        if final_signal in ["BUY", "SELL"] and len(prices) > 0:
+            entry_price = prices[-1]
+            sl, tp, valid = self.validate_and_adjust_levels(
+                final_signal,
+                entry_price,
+                self.dynamic_stop_loss,
+                self.dynamic_take_profit
+            )
+            if not valid:
+                self.logger.warning("Cannot ensure positive initial risk. Defaulting to HOLD.")
+                final_signal = "HOLD"
+            else:
+                self.dynamic_stop_loss = sl
+                self.dynamic_take_profit = tp
 
-        final_signal = openai_result["signal"]
-        final_conf = openai_result["confidence"]
-
-        return final_signal, final_conf
+        self.last_signal = final_signal
+        if final_signal in ["BUY", "SELL"]:
+            self.logger.info(f"Requesting price proposal with amount: {self.dynamic_position_size}")
+            proposal = await self.get_price_proposal(symbol, final_signal)
+            if proposal:
+                await self.execute_trade(symbol, final_signal, proposal)
+            else:
+                self.logger.error("Failed to get price proposal. Trade not executed.")
+        else:
+            self.logger.info("No trade action taken (HOLD).")
 
     def validate_and_adjust_levels(self, signal, entry_price, stop_loss, take_profit):
         """
