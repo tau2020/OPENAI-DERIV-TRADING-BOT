@@ -20,7 +20,7 @@ if DERIV_APP_ID is None or DERIV_API_TOKEN is None:
 DERIV_API_URL = f"wss://ws.binaryws.com/websockets/v3?app_id={DERIV_APP_ID}"
 
 # Trading parameters
-SYMBOL = os.getenv("SYMBOL", "R_50")
+SYMBOL = os.getenv("SYMBOL", "RDBEAR")
 AMOUNT = float(os.getenv("AMOUNT", "10"))
 DURATION = int(os.getenv("DURATION", "5"))
 CURRENCY = os.getenv("CURRENCY", "USD")
@@ -28,8 +28,8 @@ CURRENCY = os.getenv("CURRENCY", "USD")
 # Strategy parameters
 MAX_TICK_DATA_POINTS = int(os.getenv("MAX_TICK_DATA_POINTS", "1000"))
 CHART_UPDATE_INTERVAL = int(os.getenv("CHART_UPDATE_INTERVAL", "60"))
-STRATEGY_EVALUATION_INTERVAL = int(os.getenv("STRATEGY_EVALUATION_INTERVAL", "15"))
-MIN_DATA_POINTS_FOR_STRATEGY = int(os.getenv("MIN_DATA_POINTS_FOR_STRATEGY", "45"))
+STRATEGY_EVALUATION_INTERVAL = int(os.getenv("STRATEGY_EVALUATION_INTERVAL", "120"))
+MIN_DATA_POINTS_FOR_STRATEGY = int(os.getenv("MIN_DATA_POINTS_FOR_STRATEGY", "200"))
 STOP_LOSS = float(os.getenv("STOP_LOSS", "5"))
 TAKE_PROFIT = float(os.getenv("TAKE_PROFIT", "10"))
 MONITOR_INTERVAL = int(os.getenv("MONITOR_INTERVAL", "5"))
