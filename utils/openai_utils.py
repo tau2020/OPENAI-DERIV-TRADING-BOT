@@ -23,7 +23,7 @@ async def get_trading_signal_from_openai(
     recent_trades_win_loss_ratio=None,
     account_balance=None
 ):
-    max_data_points = 500
+    max_data_points = 1000
     if len(prices) > max_data_points:
         logger.info(f"Truncating input data from {len(prices)} to {max_data_points} points")
         prices = prices[-max_data_points:]
