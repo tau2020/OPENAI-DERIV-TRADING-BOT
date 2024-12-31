@@ -38,10 +38,14 @@ async def get_trading_signal_from_openai(
     recent_trades_win_loss_ratio = recent_trades_win_loss_ratio or 1.0
     account_balance = account_balance or 1000.0
 
-   
-    logger.info(f"recent_volatility: {recent_volatility}")
+  
+    logger.info(f"symbol: {symbol}")
     logger.info(f"recent_trades_win_loss_ratio: {recent_trades_win_loss_ratio}")
     logger.info(f"account_balance: {account_balance}")
+ 
+
+    
+
 
     prompt = f"""
 QUANTITATIVE ANALYSIS FRAMEWORK
@@ -70,7 +74,6 @@ RETURN FORMAT:
 MARKET DATA:
 Symbol: {symbol}
 Prices: {price_data_str}
-Volatility: {recent_volatility}
 Win/Loss: {recent_trades_win_loss_ratio}
 Balance: {account_balance}
     """

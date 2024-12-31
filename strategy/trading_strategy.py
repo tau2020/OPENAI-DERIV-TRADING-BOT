@@ -146,12 +146,16 @@ class TradingStrategy:
         try:
             balance_response = await self.deriv_api.balance()
             if balance_response and 'balance' in balance_response:
-                balance = float(balance_response['balance'])
-                currency = balance_response.get('currency', 'USD')
+                balance_data = balance_response['balance']  # this is a dict
+                # Now extract the numeric 'balance' key:
+                numeric_balance = float(balance_data.get('balance', 0.0))
+                currency = balance_data.get('currency', 'USD')
+
                 with self.lock:
-                    self.latest_balance = balance
+                    self.latest_balance = numeric_balance
                     self.currency = currency
-                self.logger.info(f"Updated Account Balance: {balance} {currency}")
+
+                self.logger.info(f"Updated Account Balance: {numeric_balance} {currency}")
             else:
                 self.logger.error("Failed to retrieve account balance.")
         except Exception as e:
@@ -203,9 +207,7 @@ class TradingStrategy:
         await self.execute_trade(symbol, signal, price_proposal)
 
     async def evaluate_strategy(self, symbol: str):
-        """
-        Evaluate the next signal via candle-based rule signals + AI, then combine.
-        """
+        await self.log_current_balance()
         try:
             # For demonstration, we fetch TICKS + CANDLES in each evaluation
             await self.fetch_historical_data(symbol, use_candles=False)  # Ticks
@@ -221,8 +223,7 @@ class TradingStrategy:
 
         # Compute volume from candle_volumes or fallback
         volume_data = self.candle_volumes.copy()
-        volatility = 0.0  # or compute from candle data
-        # Could also do a candle-based W/L ratio
+        volatility = self.compute_volatility(self.candle_closes, 20)
 
         # 1) Candle-based rule signal
         rule_signal_data = self.rule_signals.generate_candle_signal(
@@ -232,7 +233,7 @@ class TradingStrategy:
             candle_lows=self.candle_lows,
             candle_closes=self.candle_closes,
             candle_volumes=self.candle_volumes,
-            recent_trades_win_loss_ratio=1.0,
+            recent_trades_win_loss_ratio=self.compute_recent_win_loss_ratio(self.trades_data, 20),
             account_balance=self.latest_balance
         )
 
@@ -245,8 +246,8 @@ class TradingStrategy:
             logger=self.logger,
             recent_volume=volume_data,
             recent_volatility=volatility,
-            recent_trades_win_loss_ratio=1.0,
-            account_balance=self.latest_balance
+            recent_trades_win_loss_ratio=self.compute_recent_win_loss_ratio(self.trades_data, 20),
+            account_balance= self.latest_balance
         )
 
         # 3) Combine
@@ -271,9 +272,6 @@ class TradingStrategy:
         return final_signal["signal"], final_confidence
 
     def combine_signals(self, rule_signal_data, openai_signal_data):
-        """
-        Let AI have final say, but degrade confidence if rule-based strongly disagrees, etc.
-        """
         ai_signal = openai_signal_data["signal"]
         ai_conf = openai_signal_data["confidence"]
         rule_signal = rule_signal_data["signal"]
@@ -283,15 +281,26 @@ class TradingStrategy:
         if ai_signal == "HOLD":
             return openai_signal_data, ai_conf
 
-        # If AI & rule match => merge
+        # If signals match => minor confidence boost
         if ai_signal == rule_signal and rule_signal in ["BUY", "SELL"]:
             final_conf = min(1.0, ai_conf + 0.1)
             merged = dict(openai_signal_data)
             merged["confidence"] = final_conf
             self.logger.info("Rule-based and AI match, boosting AI confidence by 0.1")
+            # Now clamp
+            entry_price = self.tick_prices[-1] if self.tick_prices else 0.0
+            merged_stop, merged_tp = self.clamp_levels(
+                entry_price, 
+                merged["stop_loss"], 
+                merged["take_profit"], 
+                merged["signal"]
+            )
+            merged["stop_loss"] = merged_stop
+            merged["take_profit"] = merged_tp
+
             return merged, final_conf
 
-        # Else AI differs from rule => degrade AI conf if rule_conf is high
+        # Mismatch => degrade confidence if rule_conf is high
         if rule_conf >= 0.8:
             if ai_conf > 0.1:
                 ai_conf -= 0.1
@@ -299,7 +308,58 @@ class TradingStrategy:
 
         final_data = dict(openai_signal_data)
         final_data["confidence"] = ai_conf
+
+        # Always clamp levels before returning
+        entry_price = self.tick_prices[-1] if self.tick_prices else 0.0
+        clamped_sl, clamped_tp = self.clamp_levels(
+            entry_price, 
+            final_data["stop_loss"], 
+            final_data["take_profit"], 
+            final_data["signal"]
+        )
+        final_data["stop_loss"] = clamped_sl
+        final_data["take_profit"] = clamped_tp
+
         return final_data, ai_conf
+    
+    
+    
+    def clamp_levels(self, entry_price, stop_loss, take_profit, signal):
+        """
+        Force stop_loss below entry for BUY, above entry for SELL.
+        Also clamp any huge numeric values that make 'initial risk' negative or zero.
+        """
+        # Example: For a price near 19, disallow SL > entry_price by more than a small margin
+        # Tweak these thresholds to suit your symbol's range and your risk tolerance.
+        
+        if signal == "BUY":
+            # If AI's SL is > entry_price or is outlandish, clamp it
+            # e.g. 2 points below entry (or 5% of entry)
+            if stop_loss >= entry_price:
+                stop_loss = max(0.0, entry_price - (entry_price * 0.05))  # 5% below
+            # Also clamp if SL is insanely large (6370) for a price near 19
+            if stop_loss < (entry_price - 200):  # or some max range
+                stop_loss = entry_price - 2.0    # simpler clamp
+            
+            # For take_profit, ensure it's above entry
+            if take_profit <= entry_price:
+                take_profit = entry_price + (entry_price * 0.05)  # minimal 5% above
+            if take_profit > (entry_price + 200):
+                take_profit = entry_price + 5.0
+
+        elif signal == "SELL":
+            # Opposite logic
+            if stop_loss <= entry_price:
+                stop_loss = entry_price + (entry_price * 0.05)
+            if stop_loss > (entry_price + 200):
+                stop_loss = entry_price + 2.0
+
+            if take_profit >= entry_price:
+                take_profit = entry_price - (entry_price * 0.05)
+            if take_profit < (entry_price - 200):
+                take_profit = entry_price - 5.0
+
+        return stop_loss, take_profit
 
     async def fetch_historical_data(self, symbol: str, use_candles: bool = False):
         """
@@ -644,6 +704,22 @@ class TradingStrategy:
         current_time = datetime.now()
         self.pl_times.append(current_time)
         self.pl_values.append(net_pl)
+        
+        
+    def compute_volatility(self, prices, window: int = 20):
+        if len(prices) < window + 1:
+            return 0.01  # small floor
+        returns = []
+        for i in range(1, len(prices)):
+            ret = (prices[i] - prices[i - 1]) / max(1e-9, prices[i - 1])
+            returns.append(ret)
+        recent_returns = returns[-window:]
+        if not recent_returns:
+            return 0.01
+        avg_return = statistics.mean(recent_returns)
+        variance = sum((r - avg_return) ** 2 for r in recent_returns) / len(recent_returns)
+        vol = variance ** 0.5
+        return max(0.01, vol)  # never < 0.01    
 
     def set_active_symbols(self, symbols):
         self.active_symbols = symbols
