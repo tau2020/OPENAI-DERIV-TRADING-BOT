@@ -14,7 +14,6 @@ async def main():
     Main entry point for the trading bot.
     Sets up logging, initializes API connections, starts the trading strategy, and runs the dashboard.
     """
-    # Setup logger with configuration
     logger = setup_logger(config.LOG_LEVEL, config.LOG_FILE)
     logger.info("Starting trading bot...")
 
@@ -31,14 +30,17 @@ async def main():
         else:
             logger.info("Authorized with Deriv API.")
 
-        # Initialize trading strategy with both OpenAI and Anthropic API keys
-        # Ensure config.ANTHROPIC_API_KEY is defined in config.py or is None
-       
+        # (Fix) Retrieve loginid directly from the authorize response
+        # and pass it to the TradingStrategy if you like
+        loginid = authorize_response.get('authorize', {}).get('loginid', 'Unknown')
+
+        # Initialize trading strategy
         strategy = TradingStrategy(
             logger=logger,
             deriv_api_client=deriv_api,
             openai_api_key=config.OPENAI_API_KEY,
             anthropic_api_key=config.ANTHROPIC_API_KEY,
+            loginid=loginid  # (optional) pass the loginid for logging
         )
 
         # Fetch active symbols
@@ -54,14 +56,10 @@ async def main():
         # Start receiving ticks
         tick_stream = await deriv_api.subscribe({"ticks": config.SYMBOL})
 
-        # Define an asynchronous tick handler
         async def handle_tick(tick):
             await strategy.tick_callback(tick)
 
-        # Subscribe to ticks with the asynchronous handler
-        tick_stream.subscribe(
-            on_next=lambda tick: asyncio.create_task(handle_tick(tick))
-        )
+        tick_stream.subscribe(on_next=lambda t: asyncio.create_task(handle_tick(t)))
         logger.info(f"Subscribed to ticks for symbol: {config.SYMBOL}")
 
         # Run indefinitely
@@ -69,11 +67,11 @@ async def main():
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")
-
     finally:
         await deriv_api.disconnect()
         logger.info("Disconnected from Deriv API.")
         logger.info("Trading bot stopped.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

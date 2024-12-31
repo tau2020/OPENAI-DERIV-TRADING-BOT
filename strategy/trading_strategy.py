@@ -5,7 +5,6 @@ import asyncio
 import statistics
 import threading
 from datetime import datetime
-import requests
 from api.deriv_api import DerivAPI
 from config import config
 from utils.openai_utils import initialize_openai, get_trading_signal_from_openai
@@ -14,25 +13,50 @@ from utils.anthropic_utils import ClaudeTradingClient
 from strategy.rule_based_signals import RuleBasedSignals
 
 class TradingStrategy:
-    def __init__(self, logger, deriv_api_client: DerivAPI, openai_api_key: str, anthropic_api_key: str):
+    def __init__(
+        self,
+        logger,
+        deriv_api_client: DerivAPI,
+        openai_api_key: str,
+        anthropic_api_key: str,
+        loginid: str = "Unknown"
+    ):
         self.logger = logger
         self.deriv_api = deriv_api_client
         self.lock = threading.Lock()
+
+        # Basic tracking
         self.total_wins = 0
         self.total_losses = 0
         self.cumulative_profit = 0.0
         self.cumulative_loss = 0.0
         self.trades_data = []
+
+        # P/L over time
         self.pl_times = []
         self.pl_values = []
+
+        # Price/time series for ticks
         self.tick_times = []
         self.tick_prices = []
+
+        # Candle arrays: fix for candle-based signals
+        self.candle_times = []
+        self.candle_opens = []
+        self.candle_highs = []
+        self.candle_lows = []
+        self.candle_closes = []
+        self.candle_volumes = []
+
+        # Active symbols & general state
         self.active_symbols = []
         self.current_symbol = config.SYMBOL
         self.account_info_logged = False
         self.last_strategy_evaluation = datetime.now()
         self.latest_balance = 0.0
         self.currency = 'USD'
+
+        # Derived/AI dynamic trade parameters
         self.dynamic_stop_loss = 0.0
         self.dynamic_take_profit = 0.0
         self.dynamic_confidence = 0.0
@@ -44,14 +68,29 @@ class TradingStrategy:
         self.last_signal = "HOLD"
         self.best_profit = 0.0
         self.entry_price = 0.0
+
+        # For preventing double-sell
         self.contracts_closed = {}
+
+        # AI Clients
         self.openai_client = initialize_openai(openai_api_key, self.logger)
         self.claude_client = ClaudeTradingClient(logger=self.logger, api_key=anthropic_api_key)
+
+        # Risk Manager
         self.risk_manager = RiskManager(logger)
+        # Candle-based or tick-based rule signals
         self.rule_signals = RuleBasedSignals(logger=self.logger)
+
+        # Safety threshold
         self.MIN_CONFIDENCE_THRESHOLD = 0.75
 
+        # Store the loginid if you want to log it
+        self.loginid = loginid
+
     async def tick_callback(self, tick):
+        """
+        Called each time a new tick arrives (from subscription).
+        """
         tick_data = tick.get('tick', {})
         symbol = tick_data.get('symbol')
         price = float(tick_data.get('quote', 0.0))
@@ -59,10 +98,13 @@ class TradingStrategy:
         timestamp = datetime.fromtimestamp(epoch)
 
         self.append_tick_data(timestamp, price)
+
+        # Log account info once
         if not self.account_info_logged:
             await self.log_account_info()
             self.account_info_logged = True
 
+        # Periodically run the strategy
         if self.should_evaluate_strategy():
             asyncio.create_task(self.evaluate_and_execute_trade(symbol))
 
@@ -75,11 +117,14 @@ class TradingStrategy:
                 self.tick_prices = self.tick_prices[-config.MAX_TICK_DATA_POINTS:]
 
     async def log_account_info(self):
+        """
+        Log once. If you want the actual loginid, use `self.loginid`.
+        """
+        self.logger.info(f"Name (Login ID): {self.loginid}")
         try:
             account_status_response = await self.deriv_api.get_account_status()
             account_status = account_status_response.get('get_account_status', {})
             if account_status:
-                account_name = account_status.get('loginid', 'Unknown')
                 balance_response = await self.deriv_api.balance()
                 balance_data = balance_response.get('balance', {})
                 balance = float(balance_data.get('balance', 0.0))
@@ -90,7 +135,6 @@ class TradingStrategy:
                     self.latest_balance = balance
                     self.currency = currency
 
-                self.logger.info(f"Account Name (Login ID): {account_name}")
                 self.logger.info(f"Account Balance: {balance} {currency}")
                 self.logger.info(f"Account Type: {account_type}")
             else:
@@ -118,6 +162,9 @@ class TradingStrategy:
         return elapsed >= config.STRATEGY_EVALUATION_INTERVAL
 
     async def evaluate_and_execute_trade(self, symbol: str):
+        """
+        Evaluate the strategy and possibly place a trade.
+        """
         self.last_strategy_evaluation = datetime.now()
         signal, confidence = await self.evaluate_strategy(symbol)
         self.logger.info(f"Strategy evaluated. Final Signal: {signal}, Confidence: {confidence}")
@@ -126,16 +173,17 @@ class TradingStrategy:
             self.logger.info("No trade action taken (HOLD).")
             return
 
+        # Ensure min position size
         if self.dynamic_position_size < 1:
             self.logger.info(f"Position size {self.dynamic_position_size} is below 1. Setting to 1.")
             self.dynamic_position_size = 1
 
-        if len(self.tick_prices) > 0:
+        # Validate levels if we have a legit price
+        if self.tick_prices:
             entry_price = self.tick_prices[-1]
             if entry_price > 0:
                 adjusted_sl, adjusted_tp, valid = self.validate_and_adjust_levels(
-                    signal,
-                    entry_price,
+                    signal, entry_price,
                     self.dynamic_stop_loss,
                     self.dynamic_take_profit
                 )
@@ -155,47 +203,56 @@ class TradingStrategy:
         await self.execute_trade(symbol, signal, price_proposal)
 
     async def evaluate_strategy(self, symbol: str):
+        """
+        Evaluate the next signal via candle-based rule signals + AI, then combine.
+        """
         try:
-            await self.fetch_historical_data(symbol)
+            # For demonstration, we fetch TICKS + CANDLES in each evaluation
+            await self.fetch_historical_data(symbol, use_candles=False)  # Ticks
+            await self.fetch_candle_history(symbol)                      # Candles
         except Exception as e:
             self.logger.error(f"Error in fetch_historical_data: {e}")
             return "HOLD", 0.0
 
-        with self.lock:
-            prices = self.tick_prices.copy()
-            times = self.tick_times.copy()
-
-        if len(prices) < config.MIN_DATA_POINTS_FOR_STRATEGY:
-            self.logger.debug("Insufficient data for strategy evaluation.")
+        # If we want to place trades based on candle signals:
+        if len(self.candle_closes) < 20:
+            self.logger.debug("Not enough candle data to evaluate.")
             return "HOLD", 0.0
 
-        volume_data = await self.compute_volume_data(symbol)
-        volatility = self.compute_volatility(prices)
-        win_loss_ratio = self.compute_recent_win_loss_ratio(self.trades_data, lookback=20)
-        account_balance = self.latest_balance
+        # Compute volume from candle_volumes or fallback
+        volume_data = self.candle_volumes.copy()
+        volatility = 0.0  # or compute from candle data
+        # Could also do a candle-based W/L ratio
 
-        rule_signal_data = self.rule_signals.generate_signal(
-            prices=prices,
-            times=times,
-            volume_data=volume_data,
-            volatility=volatility,
-            recent_trades_win_loss_ratio=win_loss_ratio,
-            account_balance=account_balance
+        # 1) Candle-based rule signal
+        rule_signal_data = self.rule_signals.generate_candle_signal(
+            candle_times=self.candle_times,
+            candle_opens=self.candle_opens,
+            candle_highs=self.candle_highs,
+            candle_lows=self.candle_lows,
+            candle_closes=self.candle_closes,
+            candle_volumes=self.candle_volumes,
+            recent_trades_win_loss_ratio=1.0,
+            account_balance=self.latest_balance
         )
 
+        # 2) OpenAI signal (use candle closes as "prices")
         openai_signal_data = await get_trading_signal_from_openai(
             client=self.openai_client,
-            symbol=symbol,
-            prices=prices,
-            times=times,
+            symbol=self.current_symbol,
+            prices=self.candle_closes.copy(),
+            times=self.candle_times.copy(),
             logger=self.logger,
             recent_volume=volume_data,
             recent_volatility=volatility,
-            recent_trades_win_loss_ratio=win_loss_ratio,
-            account_balance=account_balance
+            recent_trades_win_loss_ratio=1.0,
+            account_balance=self.latest_balance
         )
 
+        # 3) Combine
         final_signal, final_confidence = self.combine_signals(rule_signal_data, openai_signal_data)
+
+        # Store results in dynamic fields
         self.dynamic_stop_loss = final_signal["stop_loss"]
         self.dynamic_take_profit = final_signal["take_profit"]
         self.dynamic_confidence = final_signal["confidence"]
@@ -213,105 +270,167 @@ class TradingStrategy:
 
         return final_signal["signal"], final_confidence
 
-    # strategy/trading_strategy.py
-
     def combine_signals(self, rule_signal_data, openai_signal_data):
         """
-        Use rule_signal_data as a safety guide, but allow AI (openai_signal_data) the final say.
-
-        1) If AI says "HOLD", we do exactly that (AI final).
-        2) If AI says "BUY"/"SELL":
-            - If rule-based signal is the same, merge for improved SL/TP.
-            - If rule-based signal conflicts, we still go with AI, 
-            but if rule-based confidence is high (>= some threshold), we reduce AI's confidence slightly as a caution.
-        3) Overall, final signal is from AI. 
-        We only adjust the AI's stop_loss / take_profit slightly if the rule-based agreement is strong.
+        Let AI have final say, but degrade confidence if rule-based strongly disagrees, etc.
         """
         ai_signal = openai_signal_data["signal"]
         ai_conf = openai_signal_data["confidence"]
         rule_signal = rule_signal_data["signal"]
         rule_conf = rule_signal_data["confidence"]
-        
-        # 1) If AI says HOLD, final is HOLD outright
+
+        # If AI says HOLD => final is HOLD
         if ai_signal == "HOLD":
             return openai_signal_data, ai_conf
 
-        # 2) AI says BUY/SELL
-        #   2a) If rule-based is the same (BUY/SELL) => merge levels, keep AI's final
+        # If AI & rule match => merge
         if ai_signal == rule_signal and rule_signal in ["BUY", "SELL"]:
-            # Merge
-            merged_stop_loss = openai_signal_data["stop_loss"]
-            merged_take_profit = openai_signal_data["take_profit"] 
-            merged_trail = openai_signal_data["trailing_stop"]
-            merged_position_size = openai_signal_data["position_size"]
-            # Boost AI confidence if both match
             final_conf = min(1.0, ai_conf + 0.1)
+            merged = dict(openai_signal_data)
+            merged["confidence"] = final_conf
+            self.logger.info("Rule-based and AI match, boosting AI confidence by 0.1")
+            return merged, final_conf
 
-            final_data = {
-                "signal": ai_signal,
-                "stop_loss": merged_stop_loss,
-                "take_profit": merged_take_profit,
-                "confidence": final_conf,
-                "position_size": merged_position_size,
-                "max_holding_time": openai_signal_data["max_holding_time"],
-                "trailing_stop": merged_trail
-            }
-            return final_data, final_conf
-
-        #   2b) AI says BUY/SELL, rule-based disagrees
-        #       If rule-based is HOLD or the opposite side, we still do AI, 
-        #       but if rule_conf is quite high, degrade AI confidence a bit as a safety measure
-        degrade_threshold = 0.8
-        if rule_conf >= degrade_threshold:
-            # Degrade AI confidence by 0.1 if it's > 0
+        # Else AI differs from rule => degrade AI conf if rule_conf is high
+        if rule_conf >= 0.8:
             if ai_conf > 0.1:
                 ai_conf -= 0.1
+                self.logger.info("Rule-based strong, degrading AI confidence by 0.1")
 
-        # Return AI final
-        final_data = {
-            "signal": ai_signal,
-            "stop_loss": openai_signal_data["stop_loss"],
-            "take_profit": openai_signal_data["take_profit"],
-            "confidence": ai_conf,
-            "position_size": openai_signal_data["position_size"],
-            "max_holding_time": openai_signal_data["max_holding_time"],
-            "trailing_stop": openai_signal_data["trailing_stop"]
-        }
+        final_data = dict(openai_signal_data)
+        final_data["confidence"] = ai_conf
         return final_data, ai_conf
 
-
-    def force_hold(self):
-        return {
-            "signal": "HOLD",
-            "stop_loss": 0.0,
-            "take_profit": 0.0,
-            "confidence": 0.0,
-            "position_size": 0.0,
-            "max_holding_time": 60,
-            "trailing_stop": 0.0
-        }
-
-    async def fetch_historical_data(self, symbol):
-        end_time = int(datetime.utcnow().timestamp())
-        start_time = end_time - config.HISTORICAL_DATA_DURATION
-        response = await self.deriv_api.ticks_history({
+    async def fetch_historical_data(self, symbol: str, use_candles: bool = False):
+        """
+        Ticks or Candles. We'll store them in self.tick_times / self.tick_prices
+        just for reference if needed, but real trades use the candle arrays below.
+        """
+        style = "candles" if use_candles else "ticks"
+        request = {
             "ticks_history": symbol,
-            "start": start_time,
-            "end": end_time,
-            "style": "ticks",
+            "adjust_start_time": 1,
+            "start": int(datetime.utcnow().timestamp()) - config.HISTORICAL_DATA_DURATION,
+            "end": "latest",
+            "count": config.MAX_TICK_DATA_POINTS,
+            "style": style
+        }
+        if use_candles:
+            request["granularity"] = 60
+
+        try:
+            response = await self.deriv_api.ticks_history(request)
+            if style == "candles":
+                candles = response.get('candles', [])
+                if not candles:
+                    self.logger.error(f"No candle data returned for {symbol}")
+                    return
+                with self.lock:
+                    self.tick_times.clear()
+                    self.tick_prices.clear()
+                    for c in candles:
+                        ts = c.get('epoch', 0)
+                        price = float(c.get('close', 0.0))
+                        self.tick_times.append(datetime.fromtimestamp(ts))
+                        self.tick_prices.append(price)
+                self.logger.info(f"Fetched {len(candles)} candles for {symbol}. (style=candles)")
+
+            else:
+                # style=ticks
+                history = response.get('history', {})
+                times = history.get('times', [])
+                prices = history.get('prices', [])
+                if not times or not prices:
+                    self.logger.error(f"No tick data returned for {symbol}")
+                    return
+                with self.lock:
+                    self.tick_times.clear()
+                    self.tick_prices.clear()
+                    for t, p in zip(times, prices):
+                        self.tick_times.append(datetime.fromtimestamp(int(t)))
+                        self.tick_prices.append(float(p))
+                self.logger.info(f"Fetched {len(self.tick_prices)} ticks for {symbol}. (style=ticks)")
+
+        except Exception as e:
+            self.logger.error(f"Error fetching historical data ({style}) for {symbol}: {e}")
+
+    async def fetch_candle_history(self, symbol: str):
+        """
+        Fill the self.candle_times... arrays for candle-based signals.
+        """
+        end_epoch = int(datetime.utcnow().timestamp())
+        start_epoch = end_epoch - config.HISTORICAL_DATA_DURATION
+        request = {
+            "ticks_history": symbol,
+            "start": start_epoch,
+            "end": "latest",
+            "adjust_start_time": 1,
+            "style": "candles",
+            "granularity": 60,
             "count": config.MAX_TICK_DATA_POINTS
-        })
-        history = response.get('history', {})
-        if not history:
-            self.logger.error(f"Failed to fetch historical data for {symbol}")
-            return
-        with self.lock:
-            times = [datetime.fromtimestamp(int(ts)) for ts in history.get('times', [])]
-            prices = [float(p) for p in history.get('prices', [])]
-            self.tick_times.clear()
-            self.tick_prices.clear()
-            self.tick_times.extend(times)
-            self.tick_prices.extend(prices)
+        }
+        try:
+            response = await self.deriv_api.ticks_history(request)
+            candles = response.get('candles', [])
+            if not candles:
+                self.logger.error(f"No candle data returned for {symbol}")
+                return
+
+            with self.lock:
+                self.candle_times.clear()
+                self.candle_opens.clear()
+                self.candle_highs.clear()
+                self.candle_lows.clear()
+                self.candle_closes.clear()
+                self.candle_volumes.clear()
+
+                for c in candles:
+                    epoch = c.get('epoch', 0)
+                    o = float(c.get('open', 0.0))
+                    h = float(c.get('high', 0.0))
+                    l = float(c.get('low', 0.0))
+                    close = float(c.get('close', 0.0))
+                    vol = float(c.get('volume', 1.0))
+
+                    self.candle_times.append(datetime.fromtimestamp(epoch))
+                    self.candle_opens.append(o)
+                    self.candle_highs.append(h)
+                    self.candle_lows.append(l)
+                    self.candle_closes.append(close)
+                    self.candle_volumes.append(vol)
+
+            self.logger.info(f"Fetched {len(candles)} candles for {symbol}.")
+
+        except Exception as e:
+            self.logger.error(f"Error fetching candle data for {symbol}: {e}")
+
+    async def subscribe_live_ticks(self, symbol: str):
+        request = {
+            "ticks_history": symbol,
+            "end": "latest",
+            "style": "ticks",
+            "adjust_start_time": 1,
+            "count": 10,
+            "subscribe": 1
+        }
+        try:
+            tick_stream = await self.deriv_api.ticks_history(request)
+
+            def on_next(tick_update):
+                if "tick" in tick_update:
+                    asyncio.create_task(self.tick_callback(tick_update))
+
+            def on_error(error):
+                self.logger.error(f"Live tick error for {symbol}: {error}")
+
+            def on_completed():
+                self.logger.info(f"Live tick subscription completed for {symbol}")
+
+            tick_stream.subscribe(on_next=on_next, on_error=on_error, on_completed=on_completed)
+            self.logger.info(f"Subscribed to live ticks for {symbol}")
+
+        except Exception as e:
+            self.logger.error(f"Error subscribing to live ticks for {symbol}: {e}")
 
     def validate_and_adjust_levels(self, signal, entry_price, stop_loss, take_profit):
         if signal == "BUY":
@@ -412,9 +531,7 @@ class TradingStrategy:
                 future.set_result(None)
 
         poc_subscription = poc_stream.subscribe(
-            on_next=on_next,
-            on_error=on_error,
-            on_completed=on_completed
+            on_next=on_next, on_error=on_error, on_completed=on_completed
         )
 
         try:
@@ -431,6 +548,7 @@ class TradingStrategy:
         profit = float(poc_data.get('profit', 0.0))
         current_price = float(poc_data.get('bid_price', 0.0))
 
+        # Already sold or closed
         if contract_id in self.contracts_closed:
             return
 
@@ -443,6 +561,7 @@ class TradingStrategy:
                 future.set_result(None)
             return
 
+        # Dynamic profit safeguard
         if current_price > 0:
             if self.last_signal == "BUY":
                 new_stop_loss = self.risk_manager.dynamic_profit_safeguard(
@@ -473,6 +592,7 @@ class TradingStrategy:
                     await self.sell_contract(contract_id, future)
                     return
 
+        # Monetary stop/tp
         if profit <= -abs(self.dynamic_stop_loss):
             self.logger.info(f"Stop loss hit for contract {contract_id}. Selling contract.")
             await self.sell_contract(contract_id, future)
@@ -485,7 +605,12 @@ class TradingStrategy:
 
     async def sell_contract(self, contract_id, future):
         try:
-            response = await self.deriv_api.sell()
+            
+            request = {
+            "sell": contract_id,
+            "price": 0
+             }
+            response = await self.deriv_api.sell(request)
             if response and 'sell' in response:
                 self.logger.info(f"Contract {contract_id} sold successfully.")
             else:
@@ -530,36 +655,3 @@ class TradingStrategy:
         wins = sum(1 for trade in trades if trade['profit'] > 0)
         losses = sum(1 for trade in trades if trade['profit'] < 0)
         return (wins / losses) if losses else float(wins)
-
-    async def compute_volume_data(self, symbol: str, lookback: int = 5):
-        volume_data = []
-        try:
-            end_time = int(datetime.utcnow().timestamp())
-            start_time = end_time - (60 * lookback)
-            response = await self.deriv_api.ticks_history({
-                "ticks_history": symbol,
-                "start": start_time,
-                "end": end_time,
-                "style": "ticks",
-                "count": config.MAX_TICK_DATA_POINTS
-            })
-            history = response.get('history', {})
-            if history and 'prices' in history and 'times' in history:
-                volume_data = [1 for _ in history['prices']]
-        except Exception as e:
-            self.logger.error(f"Error computing volume data for {symbol}: {e}")
-        return volume_data
-
-    def compute_volatility(self, prices, window: int = 20):
-        if len(prices) < window + 1:
-            return 0.0
-        returns = []
-        for i in range(1, len(prices)):
-            ret = (prices[i] - prices[i - 1]) / prices[i - 1]
-            returns.append(ret)
-        recent_returns = returns[-window:]
-        if not recent_returns:
-            return 0.0
-        avg_return = statistics.mean(recent_returns)
-        variance = sum((r - avg_return) ** 2 for r in recent_returns) / len(recent_returns)
-        return variance ** 0.5
