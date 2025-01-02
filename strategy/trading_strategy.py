@@ -63,7 +63,7 @@ class TradingStrategy:
         self.dynamic_position_size = 0.0
         self.dynamic_max_holding_time = 60
         self.dynamic_trailing_stop = 0.0
-        self.dynamic_contract_type = "CALL"
+        self.dynamic_contract_type = "MULTUP"
         self.dynamic_duration = config.DURATION
         self.last_signal = "HOLD"
         self.best_profit = 0.0
@@ -262,11 +262,14 @@ class TradingStrategy:
         self.last_signal = final_signal["signal"]
 
         if final_signal["signal"] == "BUY":
-            self.dynamic_contract_type = "CALL"
+        # For a bullish multiplier contract
+            self.dynamic_contract_type = "MULTUP"
         elif final_signal["signal"] == "SELL":
-            self.dynamic_contract_type = "PUT"
+            # For a bearish multiplier contract
+            self.dynamic_contract_type = "MULTDOWN"
         else:
-            self.dynamic_contract_type = "CALL"
+            # If it’s HOLD or anything else, we won’t open a new position
+            self.dynamic_contract_type = None  # or keep "MULTUP" as a default fallback
 
         return final_signal["signal"], final_confidence
 
@@ -433,22 +436,19 @@ class TradingStrategy:
             self.logger.error(f"Error subscribing to live ticks for {symbol}: {e}")
 
     def validate_and_adjust_levels(self, signal, entry_price, stop_loss, take_profit):
-        if signal == "BUY":
-            if stop_loss >= entry_price - 1:
-                self.logger.warning(f"Stop Loss {stop_loss} for BUY.")
-            if take_profit <= entry_price + 1:
-                self.logger.warning(f"Take Profit {take_profit} for BUY.")
-            if (entry_price - stop_loss) <= 0:
-                self.logger.error("Unable to ensure positive initial risk for BUY after adjustments.")
-                return stop_loss, take_profit, False
-        else:
-            if stop_loss <= entry_price + 1:
-                self.logger.warning(f"Stop Loss {stop_loss} for SELL.")
-            if take_profit >= entry_price - 1:
-                self.logger.warning(f"Take Profit {take_profit} for SELL.")
-            if (stop_loss - entry_price) <= 0:
-                self.logger.error("Unable to ensure positive initial risk for SELL after adjustments.")
-                return stop_loss, take_profit, False
+        """
+        For multiplier contracts, stop_loss and take_profit
+        are set in absolute monetary terms. You could still do
+        minimal validation if you like.
+        """
+        # You can either remove these checks entirely or adapt them:
+        if stop_loss < 0:
+            self.logger.warning("Stop loss cannot be negative for multipliers. Setting to 0.")
+            stop_loss = 0.0
+        if take_profit < 0:
+            self.logger.warning("Take profit cannot be negative for multipliers. Setting to 0.")
+            take_profit = 0.0
+
         return stop_loss, take_profit, True
 
     def apply_trailing_stop(self, current_price, trailing_stop, entry_price, signal):
@@ -466,17 +466,17 @@ class TradingStrategy:
                 "basis": "stake",
                 "contract_type": self.dynamic_contract_type,
                 "currency": config.CURRENCY,
-                "duration": self.dynamic_duration,
-                "duration_unit": "m",
-                "symbol": symbol
+                "symbol": symbol,
+                "multiplier": 100   # Accepts 100,250,500,1000,2000.
+              
             }
             response = await self.deriv_api.proposal(proposal_request)
             if response and 'proposal' in response:
                 ask_price = response['proposal'].get('ask_price', 'N/A')
-                self.logger.info(f"Price proposal received: {ask_price}")
+                self.logger.info(f" Multiplier Price proposal received: {ask_price}")
                 return response['proposal']
             else:
-                self.logger.error("Failed to get price proposal.")
+                self.logger.error("Failed to get multiplier price proposal.")
                 return None
         except Exception as e:
             self.logger.error(f"Error getting price proposal: {e}")
