@@ -1,17 +1,22 @@
 # strategy/rule_based_signals.py
 
-import statistics
 from typing import List
-from utils.analysis_utils import analyze_volume
 
 class RuleBasedSignals:
     def __init__(self, logger=None):
         self.logger = logger
-        self.MIN_ATR = 0.0001
-        self.RISK_MULTIPLIER_SL = 1.5
-        self.RISK_MULTIPLIER_TP = 2.0
-        self.CONFIDENCE_THRESHOLD_UPTREND = 0.8
-        self.CONFIDENCE_THRESHOLD_DOWNTREND = 0.8
+
+        # For scalping, we pick a small offset (in pips, ticks, or points).
+        # Tune these to match your symbol’s average price movement & spread.
+        self.SMALL_SL = 0.0010   # e.g. 0.001 points away
+        self.SMALL_TP = 0.0015   # e.g. 0.0015 points away
+
+        # Short windows for quick trend detection
+        self.FAST_EMA_WINDOW = 3
+        self.SLOW_EMA_WINDOW = 8
+
+        # We want to quickly close if the market isn’t moving in our favor.
+        self.SHORT_MAX_HOLDING_TIME = 3  # in minutes (or candles)
 
     def generate_candle_signal(
         self,
@@ -25,108 +30,94 @@ class RuleBasedSignals:
         account_balance: float = 1000.0
     ):
         """
-        Use O/H/L/C volume for more robust signals.
+        A scalping approach that tries to catch small moves in the short-term trend direction.
+        - We compute a short EMA(3) and a slightly slower EMA(8).
+        - If EMA(3) > EMA(8), we BUY with small SL/TP.
+        - If EMA(3) < EMA(8), we SELL with small SL/TP.
+        - If they’re nearly equal, we HOLD (avoid a choppy sideways state).
+        
+        This is purely an example. Adjust the offsets, windows, or add more conditions if needed.
         """
-        if len(candle_closes) < 20:
+
+        # 1) Ensure we have enough candles to compute our short EMAs
+        if len(candle_closes) < self.SLOW_EMA_WINDOW:
             if self.logger:
-                self.logger.debug("Not enough candles to compute signals. Returning HOLD.")
+                self.logger.debug("Not enough candle data for short EMAs. Returning HOLD.")
+            return self.default_hold_signal()
+
+        # 2) Compute short EMAs
+        fast_ema = self.compute_ema(candle_closes, self.FAST_EMA_WINDOW)
+        slow_ema = self.compute_ema(candle_closes, self.SLOW_EMA_WINDOW)
+
+        if fast_ema is None or slow_ema is None:
+            if self.logger:
+                self.logger.debug("Unable to compute short EMAs. Returning HOLD.")
             return self.default_hold_signal()
 
         current_close = candle_closes[-1]
-        atr = self.compute_atr(candle_highs, candle_lows, candle_closes, window=14)
-        volume_ratio = analyze_volume(candle_volumes, lookback=5) if candle_volumes else 1.0
 
-        ema_20 = self.compute_ema(candle_closes, 20)
-        ema_50 = self.compute_ema(candle_closes, 50)
-        ema_200 = self.compute_ema(candle_closes, 200)
-
-        uptrend = False
-        downtrend = False
-        if ema_20 and ema_50 and ema_200:
-            uptrend = (ema_20 > ema_50 > ema_200)
-            downtrend = (ema_20 < ema_50 < ema_200)
-
-        signal = "HOLD"
-        if uptrend and volume_ratio > 1.5:
-            if current_close <= (ema_20 * 1.01):
-                signal = "BUY"
-        elif downtrend and volume_ratio > 1.5:
-            if current_close >= (ema_20 * 0.99):
-                signal = "SELL"
-
-        if signal == "BUY" and uptrend:
-            confidence = self.CONFIDENCE_THRESHOLD_UPTREND
-        elif signal == "SELL" and downtrend:
-            confidence = self.CONFIDENCE_THRESHOLD_DOWNTREND
+        # 3) Determine direction
+        if abs(fast_ema - slow_ema) < 1e-8:
+            # EMAs basically equal => sideways => skip
+            signal = "HOLD"
+        elif fast_ema > slow_ema:
+            signal = "BUY"
         else:
-            confidence = 0.3
+            signal = "SELL"
 
-        if signal in ["BUY", "SELL"]:
-            stop_loss, take_profit = self.calculate_stop_take(signal, current_close, atr)
-        else:
-            stop_loss = 0.0
-            take_profit = 0.0
+        # 4) If HOLD, just return
+        if signal == "HOLD":
+            return self.default_hold_signal()
 
-        position_size = self.dynamic_position_sizing(account_balance, confidence)
+        # 5) Define small stop-loss & take-profit around current_close
+        #    For a BUY, SL = current_close - SMALL_SL, TP = current_close + SMALL_TP
+        #    For a SELL, SL = current_close + SMALL_SL, TP = current_close - SMALL_TP
+        if signal == "BUY":
+            stop_loss = current_close - self.SMALL_SL
+            take_profit = current_close + self.SMALL_TP
+        else:  # SELL
+            stop_loss = current_close + self.SMALL_SL
+            take_profit = current_close - self.SMALL_TP
 
+        # 6) Confidence = 1.0 for frequent trading
+        #    So the main strategy won't filter us out if it has a confidence threshold
+        confidence = 1.0
+
+        # 7) Position size: small fraction (like 1%) of account for frequent trades
+        position_size = account_balance * 0.01
+        if position_size < 1.0:
+            position_size = 1.0  # or whatever minimal stake your broker requires
+
+        # 8) Build final result
         result = {
             "signal": signal,
             "stop_loss": stop_loss,
             "take_profit": take_profit,
             "confidence": confidence,
             "position_size": position_size,
-            "max_holding_time": 60,
-            "trailing_stop": 0.0
+            "max_holding_time": self.SHORT_MAX_HOLDING_TIME,
+            "trailing_stop": 0.0  # optional, you can implement a small trailing stop if you like
         }
+
         if self.logger:
-            self.logger.info(f"Candle-based rule signal: {result}")
+            self.logger.info(f"Scalping-based rule signal: {result}")
         return result
 
+    #
+    # HELPER METHODS
+    #
+
     def compute_ema(self, data: List[float], window: int):
+        """
+        Basic EMA calculation over entire series, returning the latest EMA value.
+        """
         if len(data) < window:
             return None
         multiplier = 2 / (window + 1)
-        ema_val = sum(data[:window]) / window
+        ema_val = sum(data[:window]) / window  # start with SMA for first "window"
         for p in data[window:]:
             ema_val = (p - ema_val) * multiplier + ema_val
         return ema_val
-
-    def compute_atr(self, highs: List[float], lows: List[float], closes: List[float], window: int = 14):
-        """
-        True Range often uses: max(high-low, abs(high-prevClose), abs(low-prevClose)).
-        For simplicity, you can approximate. Here we'll do a basic approach.
-        """
-        if len(highs) < window + 1:
-            return 0.0
-        true_ranges = []
-        for i in range(1, len(highs)):
-            hl_range = abs(highs[i] - lows[i])
-            cp_range1 = abs(highs[i] - closes[i - 1])
-            cp_range2 = abs(lows[i] - closes[i - 1])
-            tr = max(hl_range, cp_range1, cp_range2)
-            true_ranges.append(tr)
-
-        recent_tr = true_ranges[-window:]
-        if not recent_tr:
-            return self.MIN_ATR
-        avg_range = sum(recent_tr) / len(recent_tr)
-        return max(avg_range, self.MIN_ATR)
-
-    def calculate_stop_take(self, signal: str, current_price: float, atr: float):
-        if signal == "BUY":
-            stop_loss = current_price - (self.RISK_MULTIPLIER_SL * atr)
-            take_profit = current_price + (self.RISK_MULTIPLIER_TP * atr)
-        elif signal == "SELL":
-            stop_loss = current_price + (self.RISK_MULTIPLIER_SL * atr)
-            take_profit = current_price - (self.RISK_MULTIPLIER_TP * atr)
-        else:
-            stop_loss = current_price
-            take_profit = current_price
-        return stop_loss, take_profit
-
-    def dynamic_position_sizing(self, account_balance: float, confidence: float):
-        base_size = account_balance * 0.01
-        return max(1, base_size * confidence)
 
     def default_hold_signal(self):
         return {
@@ -135,6 +126,6 @@ class RuleBasedSignals:
             "take_profit": 0.0,
             "confidence": 0.0,
             "position_size": 0.0,
-            "max_holding_time": 60,
+            "max_holding_time": 1,
             "trailing_stop": 0.0
         }

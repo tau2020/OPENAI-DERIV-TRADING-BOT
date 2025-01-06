@@ -12,7 +12,7 @@ from deriv_api import DerivAPI
 async def main():
     """
     Main entry point for the trading bot.
-    Sets up logging, initializes API connections, starts the trading strategy, and runs the dashboard.
+    Sets up logging, initializes API connections, starts the trading strategy, and runs indefinitely.
     """
     logger = setup_logger(config.LOG_LEVEL, config.LOG_FILE)
     logger.info("Starting trading bot...")
@@ -30,17 +30,14 @@ async def main():
         else:
             logger.info("Authorized with Deriv API.")
 
-        # (Fix) Retrieve loginid directly from the authorize response
-        # and pass it to the TradingStrategy if you like
+        # Retrieve loginid from the authorize response (optional)
         loginid = authorize_response.get('authorize', {}).get('loginid', 'Unknown')
 
-        # Initialize trading strategy
+        # Initialize the AI-free TradingStrategy
         strategy = TradingStrategy(
             logger=logger,
             deriv_api_client=deriv_api,
-            openai_api_key=config.OPENAI_API_KEY,
-            anthropic_api_key=config.ANTHROPIC_API_KEY,
-            loginid=loginid  # (optional) pass the loginid for logging
+            loginid=loginid  # pass the loginid for logging/trace if desired
         )
 
         # Fetch active symbols
@@ -53,7 +50,7 @@ async def main():
             logger.error("Failed to retrieve active symbols.")
             return
 
-        # Start receiving ticks
+        # Start receiving ticks for the configured symbol
         tick_stream = await deriv_api.subscribe({"ticks": config.SYMBOL})
 
         async def handle_tick(tick):
@@ -62,8 +59,8 @@ async def main():
         tick_stream.subscribe(on_next=lambda t: asyncio.create_task(handle_tick(t)))
         logger.info(f"Subscribed to ticks for symbol: {config.SYMBOL}")
 
-        # Run indefinitely
-        await asyncio.Future()  # Keeps the main coroutine running
+        # Keep running indefinitely
+        await asyncio.Future()  # Blocks so the bot keeps running
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")

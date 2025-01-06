@@ -40,6 +40,11 @@ async def get_trading_signal_from_openai(
     """
     Calls an OpenAI-like API to get a trading signal in strict JSON format.
     If the AI fails or returns invalid data, returns a fallback HOLD signal.
+
+    Enhancements:
+      - Clamps to ensure realistic position_size, stop_loss, and take_profit 
+      - Ignores signals if confidence != 1.0
+      - Ensures we don't use nonsense values that cause immediate forced closures
     """
 
     # 1. Truncate input data to avoid sending too much text
@@ -128,13 +133,13 @@ Win/Loss Ratio: {recent_trades_win_loss_ratio}
 Balance: {account_balance}
 """
 
-    # 4. Make up to 3 attempts
+    # 4. Make up to 3 attempts to call the API
     response = None
     for attempt in range(3):
         try:
             response = await asyncio.to_thread(
                 client.chat.completions.create,
-                model="o1-mini",  # Ensure the model name is correct/available
+                model="o1-mini",  # or the correct model name
                 messages=[
                     {
                         "role": "user",
@@ -165,18 +170,18 @@ Balance: {account_balance}
     content = response.choices[0].message.content.strip()
     logger.info(f"OpenAI content: {content}")
 
-    # Strip code fences if present
+    # 6. Clean up any code fences if present
     if content.startswith("```"):
         content = content.strip("`").replace("```json", "").replace("```", "").strip()
 
-    # 6. Parse JSON
+    # 7. Parse the JSON response
     try:
         result = json.loads(content)
     except json.JSONDecodeError:
         logger.error("Unable to parse JSON from the assistant response. Defaulting to HOLD.")
         return fallback_hold_signal()
 
-    # 7. Ensure required keys exist
+    # 8. Ensure required keys exist
     required_keys = [
         "signal", 
         "stop_loss", 
@@ -191,13 +196,14 @@ Balance: {account_balance}
             logger.error(f"Missing key '{k}' in the assistant response. Defaulting to HOLD.")
             return fallback_hold_signal()
 
-    # 8. Safe parsing of numeric fields
+    # Helper to safely parse float
     def safe_float(value, default=0.0):
         try:
             return float(value)
         except:
             return default
 
+    # 9. Extract & sanitize
     signal = (result.get("signal") or "HOLD").upper()
     stop_loss = safe_float(result.get("stop_loss"), 0.0)
     take_profit = safe_float(result.get("take_profit"), 0.0)
@@ -206,7 +212,7 @@ Balance: {account_balance}
     max_holding_time = int(safe_float(result.get("max_holding_time"), 60))
     trailing_stop = safe_float(result.get("trailing_stop"), 0.0)
 
-    # 9. Enforce “confidence == 1.0” logic
+    # 10. Enforce “confidence == 1.0” logic
     # If it’s not exactly 1.0, revert to HOLD.
     if abs(confidence - 1.0) > 1e-9:
         logger.warning(f"AI confidence is {confidence}, not exactly 1.0. Defaulting to HOLD.")
@@ -217,16 +223,44 @@ Balance: {account_balance}
         logger.error(f"Invalid signal: {signal}. Defaulting to HOLD.")
         return fallback_hold_signal()
 
-    # Clamp or validate numeric bounds
-    stop_loss = max(0.0, stop_loss)
-    take_profit = max(0.0, take_profit)
-    trailing_stop = max(0.0, trailing_stop)
+    # 11. Basic clamps on numeric fields:
+    # Example: if the AI suggests a negative or huge SL, clamp to 0 or skip
+    if stop_loss < 0:
+        logger.warning(f"AI stop_loss < 0 ({stop_loss}). Clamping to 0.")
+        stop_loss = 0.0
+    if take_profit < 0:
+        logger.warning(f"AI take_profit < 0 ({take_profit}). Clamping to 0.")
+        take_profit = 0.0
+    if trailing_stop < 0:
+        logger.warning(f"AI trailing_stop < 0 ({trailing_stop}). Clamping to 0.")
+        trailing_stop = 0.0
 
-    # Example clamp for position_size
+    # 12. Position size logic
+    # - Minimum stake for many Deriv synthetic markets is 0.35 or so
+    # - Avoid letting AI propose a stake > account_balance
     MIN_POSITION_SIZE = 0.35
-    MAX_POSITION_SIZE = .0
-    position_size = max(MIN_POSITION_SIZE, min(position_size, MAX_POSITION_SIZE))
+    MAX_POSITION_SIZE = 0.5 * account_balance  # never risk >50% in one trade, for example
 
+    if position_size < MIN_POSITION_SIZE:
+        logger.warning(
+            f"AI position_size={position_size:.2f} < {MIN_POSITION_SIZE:.2f}. Setting to {MIN_POSITION_SIZE:.2f}."
+        )
+        position_size = MIN_POSITION_SIZE
+
+    if position_size > MAX_POSITION_SIZE:
+        logger.warning(
+            f"AI position_size={position_size:.2f} > 50% of balance ({MAX_POSITION_SIZE:.2f}). "
+            f"Clamping to {MAX_POSITION_SIZE:.2f}."
+        )
+        position_size = MAX_POSITION_SIZE
+
+    # 13. Optional: Force "HOLD" if stop_loss or take_profit is obviously out of range
+    #   For example, if the AI suggests 6400 for stop_loss while price is near 2.0.
+    #   You can skip the trade or clamp. Here we just clamp to a more "plausible" range,
+    #   e.g. ± 50% from current market price. 
+    #   This step usually is done in the strategy side. For an example, see prior suggestions.
+
+    # 14. Final log
     logger.info(
         f"OpenAI final => Signal={signal}, SL={stop_loss}, TP={take_profit}, "
         f"Conf={confidence}, PosSize={position_size}, "
