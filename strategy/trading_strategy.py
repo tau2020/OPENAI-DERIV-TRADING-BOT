@@ -10,6 +10,7 @@ from config import config
 from utils.risk_manager import RiskManager
 from strategy.rule_based_signals import RuleBasedSignals
 
+
 class TradingStrategy:
     def __init__(
         self,
@@ -20,9 +21,12 @@ class TradingStrategy:
         """
         TradingStrategy class tailored for a scalping/short-term approach.
         - Uses the short-EMA or small SL/TP rule-based signals
-        - Removes dynamic_safeguard that compared contract bid_price vs. underlying stop_loss
         - Prevents double sells
         - Daily risk checks, consecutive loss checks remain
+
+        Modified to include:
+        - Hardcoded manual stop loss & take profit
+        - Close position as soon as there's profit
         """
         self.logger = logger
         self.deriv_api = deriv_api_client
@@ -110,6 +114,14 @@ class TradingStrategy:
 
         # Hard cap on scalping stake
         self.MAX_SCALPING_STAKE = 100.0
+
+        # -------------------------------------------------
+        # Hardcoded Manual Stop Loss / Take Profit
+        # -------------------------------------------------
+        # If you want a STOP LOSS of $5 and a TAKE PROFIT that triggers for ANY positive profit:
+        self.MANUAL_STOP_LOSS = 20.0   # Hard stop if profit <= -5
+        self.MANUAL_TAKE_PROFIT = 5.0 # Close as soon as profit > 0
+        # You can customize these to your own risk profile.
 
     #
     # ---------------------------
@@ -292,6 +304,7 @@ class TradingStrategy:
 
     async def evaluate_strategy(self, symbol: str):
         try:
+            # Basic fetch of historical data
             await self.fetch_historical_data(symbol, use_candles=False)
             await self.fetch_candle_history(symbol)
         except Exception as e:
@@ -313,6 +326,7 @@ class TradingStrategy:
             account_balance=self.latest_balance
         )
 
+        # Overwrite dynamic stops with rule-based signals (optional)
         self.dynamic_stop_loss = rule_signal_data["stop_loss"]
         self.dynamic_take_profit = rule_signal_data["take_profit"]
         self.dynamic_confidence = rule_signal_data["confidence"]
@@ -503,6 +517,7 @@ class TradingStrategy:
 
                 self.entry_price = float(ask_price)
                 self.best_profit = 0.0
+                # Keep track of original dynamic stops if you want to reference them
                 self.original_stop_loss = self.dynamic_stop_loss
                 self.original_take_profit = self.dynamic_take_profit
 
@@ -552,16 +567,10 @@ class TradingStrategy:
 
     async def handle_poc_update(self, poc_update, contract_id, future):
         """
-        DISABLE mismatched dynamic_safeguard logic:
-        We won't compare contract 'bid_price' vs. underlying stop_loss.
-
-        We'll still allow monetary SL/TP checks if you want:
-          if profit <= -abs(self.dynamic_stop_loss):
-             # close
-          if profit >= self.dynamic_take_profit:
-             # close
-
-        Also, we skip double sells by checking if contract_id is already closed in self.contracts_closed.
+        Hardcoded SL/TP Logic:
+        - If profit <= -MANUAL_STOP_LOSS, close.
+        - If profit > MANUAL_TAKE_PROFIT, close immediately (any positive profit).
+        - Avoid double sells by checking if contract_id is in self.contracts_closed.
         """
         if contract_id in self.contracts_closed:
             return
@@ -579,14 +588,22 @@ class TradingStrategy:
             await self.log_current_balance()
             return
 
-        # Optional: check monetary stop/tp in contract P/L terms
-        if profit <= -abs(self.dynamic_stop_loss):
-            self.logger.info(f"Stop loss hit for contract {contract_id}. Selling contract.")
+        # Hardcoded (Manual) Stop Loss
+        if profit <= -abs(self.MANUAL_STOP_LOSS):
+            self.logger.info(
+                f"Hardcoded Stop Loss of {self.MANUAL_STOP_LOSS} hit. "
+                f"Current P/L: {profit:.2f} for contract {contract_id}. Selling contract."
+            )
             await self.sell_contract(contract_id, future)
             return
 
-        if profit >= self.dynamic_take_profit:
-            self.logger.info(f"Take profit reached for contract {contract_id}. Selling contract.")
+        # Hardcoded (Manual) Take Profit - close if profit > 0
+        # (If you want a specific target, set self.MANUAL_TAKE_PROFIT to e.g. 10.0)
+        if profit > self.MANUAL_TAKE_PROFIT:
+            self.logger.info(
+                f"Hardcoded Take Profit triggered (profit > {self.MANUAL_TAKE_PROFIT}). "
+                f"Current P/L: {profit:.2f}. Selling contract {contract_id}."
+            )
             await self.sell_contract(contract_id, future)
             return
 
@@ -615,6 +632,7 @@ class TradingStrategy:
                 future.set_result(None)
 
     async def record_trade_results(self, profit, contract_id):
+        # If the reported profit is near 0, you can do final check via get_contract_profit(...)
         if abs(profit) < 0.01:
             real_profit = await self.deriv_api.get_contract_profit(contract_id)
             if real_profit is not None:
