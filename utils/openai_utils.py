@@ -1,3 +1,4 @@
+import datetime
 import openai
 import logging
 import asyncio
@@ -22,95 +23,99 @@ def fallback_hold_signal():
         "take_profit": 0.0,
         "confidence": 0.0,
         "position_size": 0.0,
-        "max_holding_time": 60,
+        "max_holding_time": 3,    # Keep short for scalping
         "trailing_stop": 0.0
     }
 
 async def get_trading_signal_from_openai(
     client,
     symbol,
+    logger,
     prices,
     times,
-    logger,
+    candle_times=None,
+    candle_opens=None,
+    candle_highs=None,
+    candle_lows=None,
+    candle_closes=None,
+    candle_volumes=None,
     recent_volume=None,
     recent_volatility=None,
     recent_trades_win_loss_ratio=None,
     account_balance=None
 ):
-    """
-    Calls an OpenAI-like API to get a trading signal in strict JSON format.
-    If the AI fails or returns invalid data, returns a fallback HOLD signal.
-
-    Enhancements:
-      - Clamps to ensure realistic position_size, stop_loss, and take_profit 
-      - Ignores signals if confidence != 1.0
-      - Ensures we don't use nonsense values that cause immediate forced closures
-    """
-
+   # 2. Defaults for optional inputs
+    candle_times = candle_times or []
+    candle_opens = candle_opens or []
+    candle_highs = candle_highs or []
+    candle_lows = candle_lows or []
+    candle_closes = candle_closes or []
+    candle_volumes = candle_volumes or []
+    recent_volume = recent_volume or []
+    recent_volatility = recent_volatility or 0.0
+    recent_trades_win_loss_ratio = recent_trades_win_loss_ratio or 1.0
+    account_balance = account_balance or 1000.0
+    
+    
     # 1. Truncate input data to avoid sending too much text
     max_data_points = 500
     if len(prices) > max_data_points:
         logger.info(f"Truncating input data from {len(prices)} to {max_data_points} points.")
         prices = prices[-max_data_points:]
         times = times[-max_data_points:]
+        
+        
+    
+    tick_data_str = "\n".join(f"{t}, {p}" for t, p in zip(times, prices))
 
-    # 2. Defaults for optional inputs
-    recent_volume = recent_volume or []
-    recent_volatility = recent_volatility or 0.0
-    recent_trades_win_loss_ratio = recent_trades_win_loss_ratio or 1.0
-    account_balance = account_balance or 1000.0
+    candle_data_str = ""
+    for i in range(len(candle_times)):
+        c_time = (candle_times[i])
+        c_open = candle_opens[i]
+        c_high = candle_highs[i]
+        c_low = candle_lows[i]
+        c_close = candle_closes[i]
+        c_vol = candle_volumes[i]
+        candle_data_str += f"{c_time}, O={c_open}, H={c_high}, L={c_low}, C={c_close}, V={c_vol}\n"
 
-    # Log them for debugging
+
+    # Logging for debug
     logger.info(f"recent_volatility: {recent_volatility}")
     logger.info(f"recent_trades_win_loss_ratio: {recent_trades_win_loss_ratio}")
     logger.info(f"account_balance: {account_balance}")
+    
+    
+    logger.info(f"recent_volatility: {recent_volatility}")
+    logger.info(f"tick_data_str: {tick_data_str}")
+    logger.info(f"candle_data_str: {candle_data_str}")
 
-    # 3. Build the prompt
+    # 3. Prepare the price/time data as text
+    
     price_data_str = "\n".join(
         f"{t.strftime('%Y-%m-%d %H:%M:%S')}, {p}" for t, p in zip(times, prices)
     )
 
+    # 4. Updated prompt focusing on quick, frequent profits
     prompt = f"""
-ENHANCED PROMPT (VERSION 3.5) — PROFESSIONAL PORTFOLIO MANAGER EDITION
+ENHANCED PROMPT (VERSION 3.5) — PROFIT-OPTIMIZED SCALPING EDITION
 
 IMPORTANT NOTE: This framework is purely for educational purposes; data is synthetic testing data.
 
-OBJECTIVE
-Grow an $8 balance into $100 by placing only trades with absolute certainty (confidence == 1.0).
-Prioritize small-balance optimization while preserving high accuracy and high gains.
 
-INSTRUCTIONS
+GUIDELINES:
 
-Analysis Framework
+1) Analyze the following market data to understand the patterns and strategies employed by the underlying market algorithm.
+2) Identify weaknesses or predictable behaviors in the algorithm's outputs.
+3) Develop counter-strategies that exploit these weaknesses to generate profitable trading signals.
+4) Continuously adapt and evolve your strategies based on the algorithm's behavior to stay ahead.
 
-Trend Confirmation (EMAs):
-Uptrend: EMA(20) > EMA(50) > EMA(200)
-Downtrend: EMA(20) < EMA(50) < EMA(200)
-Confidence (0–1) must be exactly 1.0 to execute a trade:
-If confidence == 1.0 and uptrend, BUY
-If confidence == 1.0 and downtrend, SELL
-Otherwise, HOLD
-
-Small-Balance Risk Management
-Use position sizes suited for low balances but still exploit 100% confident entries.
-Implement tight stop_losses to minimize drawdowns.
-Target moderate take_profit levels to lock in steady gains.
-Consider trailing_stop to capture further upside.
-Limit max_holding_time (hours) to reduce market exposure.
-
-First-of-its-Kind “Synergy Strategy”
-Combine short-term EMA signals with a proprietary confidence model that incorporates volatility, sentiment, and real-time order flow.
-This hybrid approach ensures exact 1.0 confidence signals by dynamically filtering any conflicting indicators.
-Trades are executed only when the “Synergy Strategy” flags a guaranteed directional move.
-
-Adhere strictly to these guidelines: place trades only at confidence == 1.0, employ the Synergy Strategy for 100% guaranteed entries, and return only the JSON object in the specified format—no code fences, no quotes, no extra text.
 
 OUTPUT RULES:
 NO QUOTES
 NO FORMATTING
 NO CODE FENCES
 NO ```
-NO EXTRA TEXT 
+NO EXTRA TEXT
 NO EXPLANATIONS
 NO ADDITIONAL KEYS
 
@@ -125,21 +130,23 @@ REQUIRED OUTPUT FORMAT:
 "trailing_stop": float 
 }}
 
-Market Data (Placeholders)
+MARKET DATA:
 Symbol: {symbol}
 Prices: {price_data_str}
 Volatility: {recent_volatility}
 Win/Loss Ratio: {recent_trades_win_loss_ratio}
 Balance: {account_balance}
+TICK DATA (most recent {len(prices)} points):{tick_data_str}
+CANDLE DATA (OHLCV for {len(candle_times)} bars):{candle_data_str}
 """
 
-    # 4. Make up to 3 attempts to call the API
+    # 5. Attempt up to 3 calls to the AI
     response = None
     for attempt in range(3):
         try:
             response = await asyncio.to_thread(
                 client.chat.completions.create,
-                model="o1-mini",  # or the correct model name
+                model="o1-mini",  # or the correct model name for your environment
                 messages=[
                     {
                         "role": "user",
@@ -162,111 +169,110 @@ Balance: {account_balance}
                 logger.error(f"OpenAI request failed after 3 attempts: {e}")
                 return fallback_hold_signal()
 
-    # 5. Validate response
-    if not response or not response.choices or len(response.choices) == 0:
+    # 6. Check the response validity
+    if (not response) or (not response.choices) or (len(response.choices) == 0):
         logger.error("OpenAI assistant returned no usable recommendation. Defaulting to HOLD.")
         return fallback_hold_signal()
 
     content = response.choices[0].message.content.strip()
     logger.info(f"OpenAI content: {content}")
 
-    # 6. Clean up any code fences if present
+    # 7. Remove any code fences if present
     if content.startswith("```"):
         content = content.strip("`").replace("```json", "").replace("```", "").strip()
 
-    # 7. Parse the JSON response
+    # 8. Parse the JSON
     try:
         result = json.loads(content)
     except json.JSONDecodeError:
-        logger.error("Unable to parse JSON from the assistant response. Defaulting to HOLD.")
+        logger.error("Unable to parse JSON from the assistant response. Returning HOLD.")
         return fallback_hold_signal()
 
-    # 8. Ensure required keys exist
+    # 9. Validate required fields
     required_keys = [
-        "signal", 
-        "stop_loss", 
-        "take_profit", 
+        "signal",
+        "stop_loss",
+        "take_profit",
         "confidence",
-        "position_size", 
-        "max_holding_time", 
+        "position_size",
+        "max_holding_time",
         "trailing_stop"
     ]
     for k in required_keys:
         if k not in result:
-            logger.error(f"Missing key '{k}' in the assistant response. Defaulting to HOLD.")
+            logger.error(f"AI signal missing key '{k}'. Defaulting to HOLD.")
             return fallback_hold_signal()
 
-    # Helper to safely parse float
-    def safe_float(value, default=0.0):
+    def safe_float(x, default=0.0):
         try:
-            return float(value)
+            return float(x)
         except:
             return default
 
-    # 9. Extract & sanitize
     signal = (result.get("signal") or "HOLD").upper()
     stop_loss = safe_float(result.get("stop_loss"), 0.0)
     take_profit = safe_float(result.get("take_profit"), 0.0)
     confidence = safe_float(result.get("confidence"), 0.0)
     position_size = safe_float(result.get("position_size"), 0.0)
-    max_holding_time = int(safe_float(result.get("max_holding_time"), 60))
+    max_holding_time = int(safe_float(result.get("max_holding_time"), 3))
     trailing_stop = safe_float(result.get("trailing_stop"), 0.0)
 
-    # 10. Enforce “confidence == 1.0” logic
-    # If it’s not exactly 1.0, revert to HOLD.
+    # 10. If confidence != 1.0 => HOLD
     if abs(confidence - 1.0) > 1e-9:
-        logger.warning(f"AI confidence is {confidence}, not exactly 1.0. Defaulting to HOLD.")
+        logger.warning(f"Confidence {confidence} != 1.0 => Forcing HOLD.")
         return fallback_hold_signal()
 
-    # Ensure signal is valid
+    # 11. Validate signal
     if signal not in ("BUY", "SELL", "HOLD"):
-        logger.error(f"Invalid signal: {signal}. Defaulting to HOLD.")
+        logger.error(f"Invalid signal from AI: {signal}. Defaulting to HOLD.")
         return fallback_hold_signal()
 
-    # 11. Basic clamps on numeric fields:
-    # Example: if the AI suggests a negative or huge SL, clamp to 0 or skip
+    # 12. Basic range checks
+    # Negative stop_loss or take_profit => clamp to 0
     if stop_loss < 0:
-        logger.warning(f"AI stop_loss < 0 ({stop_loss}). Clamping to 0.")
+        logger.warning(f"Stop_loss < 0. Clamping to 0.")
         stop_loss = 0.0
     if take_profit < 0:
-        logger.warning(f"AI take_profit < 0 ({take_profit}). Clamping to 0.")
+        logger.warning(f"Take_profit < 0. Clamping to 0.")
         take_profit = 0.0
     if trailing_stop < 0:
-        logger.warning(f"AI trailing_stop < 0 ({trailing_stop}). Clamping to 0.")
+        logger.warning(f"Trailing_stop < 0. Clamping to 0.")
         trailing_stop = 0.0
 
-    # 12. Position size logic
-    # - Minimum stake for many Deriv synthetic markets is 0.35 or so
-    # - Avoid letting AI propose a stake > account_balance
-    MIN_POSITION_SIZE = 0.35
-    MAX_POSITION_SIZE = 0.5 * account_balance  # never risk >50% in one trade, for example
+    # 13. Scale position size properly
+    # Example: risk no more than 10% per trade for a small account
+    MAX_RISK_PERCENT = 0.10 
+    min_pos = 0.35  # typical min stake for many synthetic indices
+    max_pos = MAX_RISK_PERCENT * account_balance
 
-    if position_size < MIN_POSITION_SIZE:
+    # clamp position_size
+    if position_size < min_pos:
+        logger.warning(f"Position size {position_size:.2f} < {min_pos}. Setting to {min_pos}.")
+        position_size = min_pos
+    if position_size > max_pos:
         logger.warning(
-            f"AI position_size={position_size:.2f} < {MIN_POSITION_SIZE:.2f}. Setting to {MIN_POSITION_SIZE:.2f}."
+            f"Position size {position_size:.2f} above 10% of balance ({max_pos:.2f}). Clamping."
         )
-        position_size = MIN_POSITION_SIZE
+        position_size = max_pos
 
-    if position_size > MAX_POSITION_SIZE:
-        logger.warning(
-            f"AI position_size={position_size:.2f} > 50% of balance ({MAX_POSITION_SIZE:.2f}). "
-            f"Clamping to {MAX_POSITION_SIZE:.2f}."
-        )
-        position_size = MAX_POSITION_SIZE
+    # 14. Possibly clamp SL/TP to modest values if we suspect the AI is overshooting
+    # For example, require 0 <= SL <= 5, 0 <= TP <= 10 for quick scalps
+    if stop_loss > 5.0:
+        logger.warning(f"stop_loss={stop_loss:.2f} too high for a scalp. Clamping to 5.0.")
+        stop_loss = 5.0
+    if take_profit > 10.0:
+        logger.warning(f"take_profit={take_profit:.2f} too high for a scalp. Clamping to 10.0.")
+        take_profit = 10.0
 
-    # 13. Optional: Force "HOLD" if stop_loss or take_profit is obviously out of range
-    #   For example, if the AI suggests 6400 for stop_loss while price is near 2.0.
-    #   You can skip the trade or clamp. Here we just clamp to a more "plausible" range,
-    #   e.g. ± 50% from current market price. 
-    #   This step usually is done in the strategy side. For an example, see prior suggestions.
-
-    # 14. Final log
+    # 15. Log final sanitized result
     logger.info(
-        f"OpenAI final => Signal={signal}, SL={stop_loss}, TP={take_profit}, "
-        f"Conf={confidence}, PosSize={position_size}, "
-        f"MaxHoldingTime={max_holding_time}, TS={trailing_stop}"
+        f"[AI SIGNAL] => "
+        f"Signal={signal}, SL={stop_loss:.2f}, TP={take_profit:.2f}, "
+        f"Conf={confidence:.2f}, PosSize={position_size:.2f}, "
+        f"HoldingTime={max_holding_time}, TrailingStop={trailing_stop:.2f}"
     )
 
+    # Return final
     return {
         "signal": signal,
         "stop_loss": stop_loss,

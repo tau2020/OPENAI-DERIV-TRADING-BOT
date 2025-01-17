@@ -1,7 +1,6 @@
 from typing import List
 import numpy as np
 
-
 class RuleBasedSignals:
     def __init__(self, logger=None):
         self.logger = logger
@@ -10,31 +9,35 @@ class RuleBasedSignals:
         # Scalping thresholds / tunable parameters specifically for R_10
         #
         
-        # Tighter SL/TP for low-volatility environment
-        self.SCALP_SL = 0.0002  # e.g., stops about 0.0002 points away
-        self.SCALP_TP = 0.0005  # e.g., take-profit about 0.0005 points away
+        # 1. Adjusted SL/TP for improved reward-to-risk
+        #    - Stop ~0.0002 away, Take-profit ~0.0007 => R:R ~3.5:1
+        self.SCALP_SL = 0.0002   # e.g., stops ~0.0002 points away
+        self.SCALP_TP = 0.0007   # e.g., take-profit ~0.0007 points away
 
-        # Because R_10 often moves slowly, we reduce this threshold.
-        # If the difference between FAST_EMA and SLOW_EMA is under this value, 
+        # Because R_10 often moves slowly, we reduce this threshold slightly.
+        # If the difference between FAST_EMA and SLOW_EMA is under this value,
         # we consider it “no trend”.
-        self.EMA_SPREAD_THRESHOLD = 1e-6
+        self.EMA_SPREAD_THRESHOLD = 8e-7  # lowered from 1e-6 => more sensitivity
 
-        # Momentum check:
-        # We require that the last candle move (close - open)/open is beyond this threshold 
-        # to confirm a bullish or bearish push.
+        # 2. Momentum check
+        #    The last candle move (close - open)/open must exceed this threshold
+        #    to confirm a bullish or bearish push.
         self.MOMENTUM_THRESHOLD = 0.0002
 
-        # For R_10, shorter windows can catch micro-trends quickly
+        # 3. Shorter windows can catch micro-trends quickly;
+        #    reduced SLOW_EMA_WINDOW from 5 to 4 for slightly faster reaction
         self.FAST_EMA_WINDOW = 2
-        self.SLOW_EMA_WINDOW = 5
+        self.SLOW_EMA_WINDOW = 4
 
-        # Max holding time (in minutes or in candle intervals, depending on your usage).
-        self.SHORT_MAX_HOLDING_TIME = 2  # slightly shorter for quick in-and-out scalping
+        # 4. Max holding time (in minutes or candle intervals)
+        self.SHORT_MAX_HOLDING_TIME = 2
 
-        # Additional filter: we measure the average range of recent candles 
-        # to see if the last candle shows enough expansion to justify a trade.
+        # 5. Candle-range filtering
         self.CANDLE_RANGE_LOOKBACK = 5
-        self.MIN_RANGE_FACTOR = 1.2  # last candle range must be >= 120% of avg range
+        self.MIN_RANGE_FACTOR = 1.2
+
+        # 6. Optional trailing stop if momentum is strong
+        self.TRAILING_STOP_DISTANCE = 0.00015  # adjusts dynamically based on momentum
 
     def generate_candle_signal(
         self,
@@ -49,10 +52,11 @@ class RuleBasedSignals:
     ):
         """
         Rule-based scalping signals for Deriv Synthetic Index 10 (R_10).
-        - Quickly identifies momentum-based micro-trends with short EMAs (2,5).
-        - Imposes a minimum spread requirement between the EMAs (EMA_SPREAD_THRESHOLD).
+        - Quickly identifies momentum-based micro-trends with short EMAs (2,4).
+        - Imposes a minimum spread requirement (EMA_SPREAD_THRESHOLD).
         - Uses candle-range filtering to avoid entering during tiny/flat candles.
         - Returns small SL/TP, suitable for short, frequent trades.
+        - OPTIONAL: dynamic trailing stop if momentum is strongly above threshold.
         """
 
         # 1) Ensure enough candles to compute the SLOW EMA
@@ -88,18 +92,30 @@ class RuleBasedSignals:
 
         last_candle_move_pct = (last_close - last_open) / last_open
 
-        # 4) Candle range filter: measure average of the last N candle ranges, 
-        #    compare with current candle range.
+        # OPTIONAL: multi-candle momentum check (slightly stricter)
+        # If you want to confirm the last two candles were moving in the same direction:
+        # if len(candle_closes) >= 2:
+        #     second_last_close = candle_closes[-2]
+        #     second_last_open = candle_opens[-2]
+        #     second_last_move_pct = (second_last_close - second_last_open) / second_last_open
+        #     # Check if both last candle & second last candle have same sign of momentum
+        #     if not (last_candle_move_pct * second_last_move_pct > 0 and
+        #             abs(last_candle_move_pct) > self.MOMENTUM_THRESHOLD and
+        #             abs(second_last_move_pct) > self.MOMENTUM_THRESHOLD):
+        #         # If you want BOTH candles to confirm, you'd return HOLD here.
+        #         return self.default_hold_signal()
+
+        # 4) Candle range filter
         last_candle_range = candle_highs[-1] - candle_lows[-1]
-        recent_ranges = []
         start_index = max(0, len(candle_closes) - self.CANDLE_RANGE_LOOKBACK)
-        for i in range(start_index, len(candle_closes)):
-            rng = candle_highs[i] - candle_lows[i]
-            recent_ranges.append(rng)
+        recent_ranges = [
+            (candle_highs[i] - candle_lows[i])
+            for i in range(start_index, len(candle_closes))
+        ]
         avg_recent_range = np.mean(recent_ranges) if len(recent_ranges) > 0 else 0.0
 
-        # If current range < MIN_RANGE_FACTOR * avg_recent_range => candle not volatile enough => HOLD
         if avg_recent_range > 0 and last_candle_range < self.MIN_RANGE_FACTOR * avg_recent_range:
+            # Candle not volatile enough => HOLD
             if self.logger:
                 self.logger.debug(
                     f"Last candle range ({last_candle_range:.5f}) < "
@@ -116,7 +132,6 @@ class RuleBasedSignals:
             signal = "HOLD"
 
         if signal == "HOLD":
-            # No strong directional move
             return self.default_hold_signal()
 
         # 6) Define small scalping stop-loss & take-profit
@@ -130,11 +145,23 @@ class RuleBasedSignals:
         # 7) Confidence: set to 1.0 to ensure the main strategy layer doesn't ignore it
         confidence = 1.0
 
-        # 8) Position sizing: for a small balance, stake might be 1% 
-        #    or at least meet the platform's minimum.
+        # 8) Position sizing: for a small balance, stake might be 1%
         position_size = account_balance * 0.01
         if position_size < 1.0:
             position_size = 1.0  # or the broker's actual minimum stake
+
+        # 9) OPTIONAL: dynamic trailing stop if momentum is significantly above the threshold
+        trailing_stop = 0.0
+        if abs(last_candle_move_pct) > self.MOMENTUM_THRESHOLD * 2:
+            # If momentum is quite strong, allow a trailing stop
+            if signal == "BUY":
+                trailing_stop = self.TRAILING_STOP_DISTANCE
+            else:
+                trailing_stop = self.TRAILING_STOP_DISTANCE
+            if self.logger:
+                self.logger.debug(
+                    f"Strong momentum => applying trailing stop of {trailing_stop:.7f}"
+                )
 
         # Build final result
         result = {
@@ -144,7 +171,7 @@ class RuleBasedSignals:
             "confidence": confidence,
             "position_size": position_size,
             "max_holding_time": self.SHORT_MAX_HOLDING_TIME,
-            "trailing_stop": 0.0  # optional trailing logic can be added here
+            "trailing_stop": trailing_stop
         }
 
         if self.logger:

@@ -33,11 +33,15 @@ async def main():
         # Retrieve loginid from the authorize response (optional)
         loginid = authorize_response.get('authorize', {}).get('loginid', 'Unknown')
 
+
+ # If you have an OpenAI API key in config, pass it here:
+        openai_api_key = getattr(config, "OPENAI_API_KEY", None)
         # Initialize the AI-free TradingStrategy
         strategy = TradingStrategy(
             logger=logger,
             deriv_api_client=deriv_api,
-            loginid=loginid  # pass the loginid for logging/trace if desired
+            loginid=loginid  ,
+             openai_api_key=openai_api_key
         )
 
         # Fetch active symbols
