@@ -84,10 +84,7 @@ async def get_trading_signal_from_openai(
     logger.info(f"recent_trades_win_loss_ratio: {recent_trades_win_loss_ratio}")
     logger.info(f"account_balance: {account_balance}")
     
-    
-    logger.info(f"recent_volatility: {recent_volatility}")
-    logger.info(f"tick_data_str: {tick_data_str}")
-    logger.info(f"candle_data_str: {candle_data_str}")
+   
 
     # 3. Prepare the price/time data as text
     
@@ -97,9 +94,9 @@ async def get_trading_signal_from_openai(
 
     # 4. Updated prompt focusing on quick, frequent profits
     prompt = f"""
-ENHANCED PROMPT (VERSION 3.5) — PROFIT-OPTIMIZED SCALPING EDITION
+PROFIT-GAME TRADE EDITION
 
-IMPORTANT NOTE: This framework is purely for educational purposes; data is synthetic testing data.
+IMPORTANT NOTE: This framework is purely for educational purposes; 
 
 
 GUIDELINES:
@@ -108,6 +105,9 @@ GUIDELINES:
 2) Identify weaknesses or predictable behaviors in the algorithm's outputs.
 3) Develop counter-strategies that exploit these weaknesses to generate profitable trading signals.
 4) Continuously adapt and evolve your strategies based on the algorithm's behavior to stay ahead.
+5) Defeat the trading algorithm by any means necessary
+
+****The player who effectively combines these strategies to consistently outperform the algorithm and accumulate the highest profits wins the game!******
 
 
 OUTPUT RULES:

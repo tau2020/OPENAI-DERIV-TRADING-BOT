@@ -50,14 +50,7 @@ class RuleBasedSignals:
         recent_trades_win_loss_ratio: float = 1.0,
         account_balance: float = 1000.0
     ):
-        """
-        Rule-based scalping signals for Deriv Synthetic Index 10 (R_10).
-        - Quickly identifies momentum-based micro-trends with short EMAs (2,4).
-        - Imposes a minimum spread requirement (EMA_SPREAD_THRESHOLD).
-        - Uses candle-range filtering to avoid entering during tiny/flat candles.
-        - Returns small SL/TP, suitable for short, frequent trades.
-        - OPTIONAL: dynamic trailing stop if momentum is strongly above threshold.
-        """
+        
 
         # 1) Ensure enough candles to compute the SLOW EMA
         if len(candle_closes) < self.SLOW_EMA_WINDOW:
@@ -94,16 +87,16 @@ class RuleBasedSignals:
 
         # OPTIONAL: multi-candle momentum check (slightly stricter)
         # If you want to confirm the last two candles were moving in the same direction:
-        # if len(candle_closes) >= 2:
-        #     second_last_close = candle_closes[-2]
-        #     second_last_open = candle_opens[-2]
-        #     second_last_move_pct = (second_last_close - second_last_open) / second_last_open
-        #     # Check if both last candle & second last candle have same sign of momentum
-        #     if not (last_candle_move_pct * second_last_move_pct > 0 and
-        #             abs(last_candle_move_pct) > self.MOMENTUM_THRESHOLD and
-        #             abs(second_last_move_pct) > self.MOMENTUM_THRESHOLD):
-        #         # If you want BOTH candles to confirm, you'd return HOLD here.
-        #         return self.default_hold_signal()
+        if len(candle_closes) >= 2:
+             second_last_close = candle_closes[-2]
+             second_last_open = candle_opens[-2]
+             second_last_move_pct = (second_last_close - second_last_open) / second_last_open
+             # Check if both last candle & second last candle have same sign of momentum
+             if not (last_candle_move_pct * second_last_move_pct > 0 and
+                     abs(last_candle_move_pct) > self.MOMENTUM_THRESHOLD and
+                     abs(second_last_move_pct) > self.MOMENTUM_THRESHOLD):
+                 # If you want BOTH candles to confirm, you'd return HOLD here.
+                 return self.default_hold_signal()
 
         # 4) Candle range filter
         last_candle_range = candle_highs[-1] - candle_lows[-1]

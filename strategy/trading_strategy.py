@@ -65,10 +65,10 @@ class TradingStrategy:
         self.last_strategy_evaluation = datetime.now()
         self.latest_balance = 0.0
         self.currency = "USD"
-        self.HARDCODED_STOP_LOSS = 100.0
-        self.HARDCODED_TAKE_PROFIT = 20.0
-        self.HARDCODED_TRAILING_STOP = 100.0
-        self.HARDCODED_POSITION_SIZE = 1000.0
+        self.HARDCODED_STOP_LOSS = 0.40
+        self.HARDCODED_TAKE_PROFIT = 0.05
+        self.HARDCODED_TRAILING_STOP = 0.40
+        self.HARDCODED_POSITION_SIZE = 1.0
         self.HARDCODED_MAX_HOLDING_TIME = 3
         self.dynamic_stop_loss = 0.0
         self.dynamic_take_profit = 0.0
@@ -95,7 +95,7 @@ class TradingStrategy:
         self.daily_profit_target_reached = False
         self.allowed_trading_start = time(0, 0)
         self.allowed_trading_end = time(23, 59)
-        self.MAX_SCALPING_STAKE = 100.0
+        self.MAX_SCALPING_STAKE = 1.0
         self.ai_client = None
         if openai_api_key:
             try:
@@ -207,9 +207,9 @@ class TradingStrategy:
          #   )
        #     return
         ai_direction, ai_confidence = await self.evaluate_ai_direction(symbol)
-       # if ai_direction == "HOLD":
-       #     self.logger.info("AI says HOLD. No trade action.")
-        #    return
+        if ai_direction == "HOLD":
+           self.logger.info("AI says HOLD. No trade action.")
+           return
         #if ai_confidence < self.MIN_CONFIDENCE_THRESHOLD:
           #  self.logger.info(
                # f"AI confidence {ai_confidence:.2f} < {self.MIN_CONFIDENCE_THRESHOLD:.2f}. Skipping trade."
