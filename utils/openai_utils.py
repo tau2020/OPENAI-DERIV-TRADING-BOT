@@ -106,6 +106,7 @@ GUIDELINES:
 3) Develop counter-strategies that exploit these weaknesses to generate profitable trading signals.
 4) Continuously adapt and evolve your strategies based on the algorithm's behavior to stay ahead.
 5) Defeat the trading algorithm by any means necessary
+6) Only provide signal when its a BUY 
 
 ****The player who effectively combines these strategies to consistently outperform the algorithm and accumulate the highest profits wins the game!******
 
@@ -218,8 +219,8 @@ CANDLE DATA (OHLCV for {len(candle_times)} bars):{candle_data_str}
     trailing_stop = safe_float(result.get("trailing_stop"), 0.0)
 
     # 10. If confidence != 1.0 => HOLD
-    if abs(confidence - 1.0) > 1e-9:
-        logger.warning(f"Confidence {confidence} != 1.0 => Forcing HOLD.")
+    if confidence < 0.75:
+        logger.warning(f"Confidence {confidence} != 0.75 => Forcing HOLD.")
         return fallback_hold_signal()
 
     # 11. Validate signal

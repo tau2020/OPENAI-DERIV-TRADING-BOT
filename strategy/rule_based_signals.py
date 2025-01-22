@@ -1,3 +1,33 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+================================================================================
+Title:     Enhanced Micro-Scalper with ATR/Volume Filters & Confidence Threshold
+Author:    Neo (THE ONE)
+Version:   3.2 (with extra logging at each filter step)
+================================================================================
+Description:
+    This module demonstrates an enhanced version of the micro-scalper approach,
+    incorporating additional filters to reduce whipsaw trades and improve 
+    overall entry quality. Now with extra info logs after each filter, so we 
+    can see which filter(s) cause the signal to remain in HOLD.
+
+    1) **Confidence Threshold**:
+       - Only take signals when confidence >= self.MIN_CONFIDENCE
+
+    2) **ATR Filter** (volatility check):
+       - Compute a short ATR. If ATR < self.MIN_ATR, skip trades.
+
+    3) **Volume Filter**:
+       - If average volume over the last N candles < self.MIN_VOLUME, skip trades.
+
+    4) **Multi-Candle Momentum**:
+       - Ensure the last M candles each exceed a minimum momentum threshold 
+         (e.g., 0.0005 relative change). If not, skip trades.
+
+    5) **(Optional) Time-of-Day Filter**: (not included here)
+================================================================================
+"""
 from typing import List
 import numpy as np
 
@@ -5,39 +35,40 @@ class RuleBasedSignals:
     def __init__(self, logger=None):
         self.logger = logger
 
-        #
-        # Scalping thresholds / tunable parameters specifically for R_10
-        #
-        
-        # 1. Adjusted SL/TP for improved reward-to-risk
-        #    - Stop ~0.0002 away, Take-profit ~0.0007 => R:R ~3.5:1
-        self.SCALP_SL = 0.0002   # e.g., stops ~0.0002 points away
-        self.SCALP_TP = 0.0007   # e.g., take-profit ~0.0007 points away
+        # Very short windows for immediate momentum
+        self.VERY_FAST_EMA_WINDOW = 9
+        self.FAST_EMA_WINDOW      = 10
+        self.MICRO_WINDOW         = 15
 
-        # Because R_10 often moves slowly, we reduce this threshold slightly.
-        # If the difference between FAST_EMA and SLOW_EMA is under this value,
-        # we consider it “no trend”.
-        self.EMA_SPREAD_THRESHOLD = 8e-7  # lowered from 1e-6 => more sensitivity
+        # Probability threshold for bullish/bearish distribution
+        self.MIN_PROB_THRESHOLD   = 0.55
 
-        # 2. Momentum check
-        #    The last candle move (close - open)/open must exceed this threshold
-        #    to confirm a bullish or bearish push.
-        self.MOMENTUM_THRESHOLD = 0.0002
+        # Price-based scalping distances
+        self.DEFAULT_STOP_LOSS_POINTS   = 10.0
+        self.DEFAULT_TAKE_PROFIT_POINTS = 5.0
+        self.DEFAULT_TRAILING_STOP      = 4.0
 
-        # 3. Shorter windows can catch micro-trends quickly;
-        #    reduced SLOW_EMA_WINDOW from 5 to 4 for slightly faster reaction
-        self.FAST_EMA_WINDOW = 2
-        self.SLOW_EMA_WINDOW = 4
+        # Confidence threshold
+        self.MIN_CONFIDENCE       = 0.30
 
-        # 4. Max holding time (in minutes or candle intervals)
-        self.SHORT_MAX_HOLDING_TIME = 2
+        # ATR-based volatility filter
+        self.ATR_WINDOW           = 7
+        self.MIN_ATR              = 0.2
 
-        # 5. Candle-range filtering
-        self.CANDLE_RANGE_LOOKBACK = 5
-        self.MIN_RANGE_FACTOR = 1.2
+        # Volume filter
+        self.MIN_VOLUME           = 0.5
+        self.VOLUME_LOOKBACK      = 5
 
-        # 6. Optional trailing stop if momentum is strong
-        self.TRAILING_STOP_DISTANCE = 0.00015  # adjusts dynamically based on momentum
+        # Multi-candle momentum check
+        self.MIN_MOMENTUM_PCT     = 0.0001
+        self.MOMENTUM_LOOKBACK    = 2
+
+        # Risk-based position sizing
+        self.RISK_PCT             = 0.01
+        self.MAX_POSITION_SIZE    = 50.0
+
+        # Hard-coded max holding time
+        self.MAX_HOLDING_TIME     = 3
 
     def generate_candle_signal(
         self,
@@ -47,160 +78,225 @@ class RuleBasedSignals:
         candle_lows: List[float],
         candle_closes: List[float],
         candle_volumes: List[float],
-        recent_trades_win_loss_ratio: float = 1.0,
         account_balance: float = 1000.0
-    ):
-        
+    ) -> dict:
 
-        # 1) Ensure enough candles to compute the SLOW EMA
-        if len(candle_closes) < self.SLOW_EMA_WINDOW:
-            if self.logger:
-                self.logger.debug("Not enough candle data for EMAs. Returning HOLD.")
-            return self.default_hold_signal()
+        n = len(candle_closes)
+        min_required = max(self.MICRO_WINDOW, self.VERY_FAST_EMA_WINDOW,
+                           self.FAST_EMA_WINDOW, self.ATR_WINDOW)
 
-        # 2) Compute the short EMAs
-        fast_ema = self.compute_ema(candle_closes, self.FAST_EMA_WINDOW)
-        slow_ema = self.compute_ema(candle_closes, self.SLOW_EMA_WINDOW)
-        if fast_ema is None or slow_ema is None:
-            if self.logger:
-                self.logger.debug("Unable to compute EMAs. Returning HOLD.")
-            return self.default_hold_signal()
-
-        ema_spread = fast_ema - slow_ema
-        if abs(ema_spread) < self.EMA_SPREAD_THRESHOLD:
-            # EMAs are too close => no strong trend => HOLD
+        # 0) Check we have enough data
+        if n < min_required:
             if self.logger:
                 self.logger.debug(
-                    f"EMA spread ({ema_spread:.7f}) < threshold => likely sideways => HOLD."
+                    f"[FilterFail] Not enough candles (have={n}, need={min_required}). => HOLD."
                 )
             return self.default_hold_signal()
+        if self.logger:
+            self.logger.info(f"[FilterCheck] Candle count={n}, min_required={min_required}")
 
-        # 3) Momentum check (last candle only)
-        last_close = candle_closes[-1]
-        last_open = candle_opens[-1]
-        if last_open == 0.0:
-            if self.logger:
-                self.logger.debug("Last candle open is 0.0 => Invalid data => HOLD.")
-            return self.default_hold_signal()
-
-        last_candle_move_pct = (last_close - last_open) / last_open
-
-        # OPTIONAL: multi-candle momentum check (slightly stricter)
-        # If you want to confirm the last two candles were moving in the same direction:
-        if len(candle_closes) >= 2:
-             second_last_close = candle_closes[-2]
-             second_last_open = candle_opens[-2]
-             second_last_move_pct = (second_last_close - second_last_open) / second_last_open
-             # Check if both last candle & second last candle have same sign of momentum
-             if not (last_candle_move_pct * second_last_move_pct > 0 and
-                     abs(last_candle_move_pct) > self.MOMENTUM_THRESHOLD and
-                     abs(second_last_move_pct) > self.MOMENTUM_THRESHOLD):
-                 # If you want BOTH candles to confirm, you'd return HOLD here.
-                 return self.default_hold_signal()
-
-        # 4) Candle range filter
-        last_candle_range = candle_highs[-1] - candle_lows[-1]
-        start_index = max(0, len(candle_closes) - self.CANDLE_RANGE_LOOKBACK)
-        recent_ranges = [
-            (candle_highs[i] - candle_lows[i])
-            for i in range(start_index, len(candle_closes))
-        ]
-        avg_recent_range = np.mean(recent_ranges) if len(recent_ranges) > 0 else 0.0
-
-        if avg_recent_range > 0 and last_candle_range < self.MIN_RANGE_FACTOR * avg_recent_range:
-            # Candle not volatile enough => HOLD
-            if self.logger:
-                self.logger.debug(
-                    f"Last candle range ({last_candle_range:.5f}) < "
-                    f"{self.MIN_RANGE_FACTOR}x average range ({avg_recent_range:.5f}) => HOLD."
-                )
-            return self.default_hold_signal()
-
-        # 5) Derive signal direction from EMAs + last candle momentum
-        if ema_spread > 0 and last_candle_move_pct > self.MOMENTUM_THRESHOLD:
-            signal = "BUY"
-        elif ema_spread < 0 and last_candle_move_pct < -self.MOMENTUM_THRESHOLD:
-            signal = "SELL"
-        else:
-            signal = "HOLD"
-
-        if signal == "HOLD":
-            return self.default_hold_signal()
-
-        # 6) Define small scalping stop-loss & take-profit
-        if signal == "BUY":
-            stop_loss = last_close - self.SCALP_SL
-            take_profit = last_close + self.SCALP_TP
-        else:  # SELL
-            stop_loss = last_close + self.SCALP_SL
-            take_profit = last_close - self.SCALP_TP
-
-        # 7) Confidence: set to 1.0 to ensure the main strategy layer doesn't ignore it
-        confidence = 1.0
-
-        # 8) Position sizing: for a small balance, stake might be 1%
-        position_size = account_balance * 0.01
-        if position_size < 1.0:
-            position_size = 1.0  # or the broker's actual minimum stake
-
-        # 9) OPTIONAL: dynamic trailing stop if momentum is significantly above the threshold
-        trailing_stop = 0.0
-        if abs(last_candle_move_pct) > self.MOMENTUM_THRESHOLD * 2:
-            # If momentum is quite strong, allow a trailing stop
-            if signal == "BUY":
-                trailing_stop = self.TRAILING_STOP_DISTANCE
-            else:
-                trailing_stop = self.TRAILING_STOP_DISTANCE
-            if self.logger:
-                self.logger.debug(
-                    f"Strong momentum => applying trailing stop of {trailing_stop:.7f}"
-                )
-
-        # Build final result
-        result = {
-            "signal": signal,
-            "stop_loss": stop_loss,
-            "take_profit": take_profit,
-            "confidence": confidence,
-            "position_size": position_size,
-            "max_holding_time": self.SHORT_MAX_HOLDING_TIME,
-            "trailing_stop": trailing_stop
-        }
+        # A) Micro distribution check => prob_bull
+        bullish_count = 0
+        for i in range(n - self.MICRO_WINDOW, n):
+            if candle_closes[i] > candle_opens[i]:
+                bullish_count += 1
+        micro_bullish_prob = bullish_count / self.MICRO_WINDOW
 
         if self.logger:
-            self.logger.info(f"[R_10 Scalping] Generated signal: {result}")
+            self.logger.info(
+                f"[FilterCheck] micro_bullish_prob={micro_bullish_prob:.3f} "
+                f"(threshold={self.MIN_PROB_THRESHOLD:.3f})"
+            )
+
+        # B) Very short EMA cross => immediate slope
+        very_fast_ema = self.compute_ema(candle_closes, self.VERY_FAST_EMA_WINDOW)
+        fast_ema      = self.compute_ema(candle_closes, self.FAST_EMA_WINDOW)
+        if very_fast_ema is None or fast_ema is None:
+            if self.logger:
+                self.logger.debug("[FilterFail] EMA could not be computed => HOLD.")
+            return self.default_hold_signal()
+
+        if self.logger:
+            self.logger.info(
+                f"[FilterCheck] EMA windows => very_fast_ema={very_fast_ema:.5f}, "
+                f"fast_ema={fast_ema:.5f}"
+            )
+
+        short_trend_signal = "HOLD"
+        if very_fast_ema > fast_ema:
+            short_trend_signal = "BUY"
+        elif very_fast_ema < fast_ema:
+            short_trend_signal = "SELL"
+
+        if self.logger:
+            self.logger.info(
+                f"[FilterCheck] short_trend_signal={short_trend_signal}, "
+                f"very_fast_ema={very_fast_ema:.5f}, fast_ema={fast_ema:.5f}"
+            )
+
+        # Combine micro_bullish_prob & short_trend_signal
+        signal = "HOLD"
+        # If bullish prob >= threshold & short trend=BUY => BUY
+        # If (1-bullish prob) >= threshold & short trend=SELL => SELL
+        if micro_bullish_prob >= self.MIN_PROB_THRESHOLD and short_trend_signal == "BUY":
+            signal = "BUY"
+        elif (1.0 - micro_bullish_prob) >= self.MIN_PROB_THRESHOLD and short_trend_signal == "SELL":
+            signal = "SELL"
+
+        if signal == "HOLD":
+            if self.logger:
+                self.logger.info(
+                    f"[FilterFail] micro_bullish_prob={micro_bullish_prob:.3f} "
+                    f"vs threshold={self.MIN_PROB_THRESHOLD:.3f}, short_trend_signal={short_trend_signal} => HOLD."
+                )
+            return self.default_hold_signal()
+
+        # C) ATR filter => skip if too quiet
+        current_atr = self.compute_atr(candle_highs, candle_lows, candle_closes, self.ATR_WINDOW)
+        if current_atr is None:
+            if self.logger:
+                self.logger.debug("[FilterFail] ATR None => HOLD.")
+            return self.default_hold_signal()
+        if self.logger:
+            self.logger.info(
+                f"[FilterCheck] current_atr={current_atr:.3f} (threshold={self.MIN_ATR:.3f})"
+            )
+        if current_atr < self.MIN_ATR:
+            if self.logger:
+                self.logger.info(
+                    f"[FilterFail] ATR={current_atr:.3f} < MIN_ATR={self.MIN_ATR:.3f} => HOLD."
+                )
+            return self.default_hold_signal()
+
+        # D) Volume filter
+        volume_lookback_slice = candle_volumes[-self.VOLUME_LOOKBACK:]
+        avg_vol = float(np.mean(volume_lookback_slice)) if volume_lookback_slice else 0.0
+        if self.logger:
+            self.logger.info(
+                f"[FilterCheck] avg_vol={avg_vol:.3f} (threshold={self.MIN_VOLUME:.3f}), "
+                f"volume_lookback={volume_lookback_slice}"
+            )
+        if avg_vol < self.MIN_VOLUME:
+            if self.logger:
+                self.logger.info(
+                    f"[FilterFail] AvgVol={avg_vol:.3f} < MIN_VOLUME={self.MIN_VOLUME:.3f} => HOLD."
+                )
+            return self.default_hold_signal()
+
+        # E) Multi-candle momentum check
+        """ if not self.check_momentum(candle_opens, candle_closes, lookback=self.MOMENTUM_LOOKBACK):
+            if self.logger:
+                self.logger.info(
+                    f"[FilterFail] Multi-candle momentum < {self.MIN_MOMENTUM_PCT:.4f} => HOLD."
+                )
+            return self.default_hold_signal()
+        else:
+            if self.logger:
+                self.logger.info(
+                    f"[FilterCheck] Momentum check PASSED => last {self.MOMENTUM_LOOKBACK} candles >= {self.MIN_MOMENTUM_PCT:.4f}"
+                ) """
+
+        # F) Confidence
+        last_close = candle_closes[-1]
+        spread_mag = abs(very_fast_ema - fast_ema)
+        spread_factor = min(spread_mag / max(last_close, 1e-6), 1.0)
+        if signal == "BUY":
+            raw_confidence = micro_bullish_prob
+        else:
+            raw_confidence = (1.0 - micro_bullish_prob)
+        confidence = raw_confidence * (0.5 + 0.5 * spread_factor)
+        confidence = min(1.0, max(0.0, confidence))
+
+        if self.logger:
+            self.logger.info(
+                f"[FilterCheck] confidence={confidence:.3f}, raw_confidence={raw_confidence:.3f}, "
+                f"spread_factor={spread_factor:.3f}, MIN_CONFIDENCE={self.MIN_CONFIDENCE:.3f}"
+            )
+
+        if confidence < self.MIN_CONFIDENCE:
+            if self.logger:
+                self.logger.info(
+                    f"[FilterFail] confidence={confidence:.3f} < MIN_CONFIDENCE={self.MIN_CONFIDENCE:.3f} => HOLD."
+                )
+            return self.default_hold_signal()
+
+        # G) Final check => build signal
+        stop_loss_points     = self.DEFAULT_STOP_LOSS_POINTS
+        take_profit_points   = self.DEFAULT_TAKE_PROFIT_POINTS
+        trailing_stop_points = self.DEFAULT_TRAILING_STOP
+
+        position_size = (account_balance * self.RISK_PCT) / max(stop_loss_points, 1e-6)
+        position_size = min(position_size, self.MAX_POSITION_SIZE)
+
+        result = {
+            "signal": signal,
+            "stop_loss_points": stop_loss_points,
+            "take_profit_points": take_profit_points,
+            "trailing_stop_points": trailing_stop_points,
+            "confidence": confidence,
+            "position_size": position_size,
+            "max_holding_time": self.MAX_HOLDING_TIME
+        }
+        if self.logger:
+            self.logger.info(
+                f"[EnhancedMicroScalper] => direction={signal}, prob(bull)={micro_bullish_prob:.3f}, "
+                f"emaVF={very_fast_ema:.5f}, emaF={fast_ema:.5f}, conf={confidence:.3f}, "
+                f"ATR={current_atr:.3f}, avgVol={avg_vol:.3f}, SL={stop_loss_points:.2f}, "
+                f"TP={take_profit_points:.2f}, trail={trailing_stop_points:.2f}, stake={position_size:.2f}"
+            )
         return result
 
-    #
-    # HELPER METHODS
-    #
     def compute_ema(self, data: List[float], window: int) -> float:
-        """
-        Basic EMA calculation over the entire series, returning ONLY the latest EMA value.
-        """
         if len(data) < window:
             return None
-
         multiplier = 2 / (window + 1)
-        # Start with a simple moving average for the first 'window' data points
-        ema_val = sum(data[:window]) / window
-
-        # Then apply the EMA formula over the rest
+        ema_val = np.mean(data[:window])  # initial average
         for price in data[window:]:
             ema_val = (price - ema_val) * multiplier + ema_val
-
         return ema_val
 
+    def compute_atr(self, highs, lows, closes, window):
+        """
+        Standard ATR over 'window' periods, returning the most recent ATR value.
+        """
+        n = len(closes)
+        if n < window + 1:
+            return None
+        trs = []
+        for i in range(n - window, n):
+            current_high = highs[i]
+            current_low  = lows[i]
+            prev_close   = closes[i - 1]
+            tr1 = current_high - current_low
+            tr2 = abs(current_high - prev_close)
+            tr3 = abs(current_low - prev_close)
+            trs.append(max(tr1, tr2, tr3))
+        return float(np.mean(trs))
+
+    def check_momentum(self, opens, closes, lookback=2) -> bool:
+        """
+        Ensures the last 'lookback' candles each have at least self.MIN_MOMENTUM_PCT
+        of price change from open to close. If not, return False.
+        """
+        if len(closes) < lookback:
+            return False
+        recent_opens  = opens[-lookback:]
+        recent_closes = closes[-lookback:]
+        for o, c in zip(recent_opens, recent_closes):
+            if o == 0:
+                return False
+            momentum_pct = abs((c - o) / o)
+            if momentum_pct < self.MIN_MOMENTUM_PCT:
+                return False
+        return True
+
     def default_hold_signal(self) -> dict:
-        """
-        Returns a default 'do nothing' signal with minimal placeholders.
-        """
         return {
             "signal": "HOLD",
-            "stop_loss": 0.0,
-            "take_profit": 0.0,
+            "stop_loss_points": 0.0,
+            "take_profit_points": 0.0,
+            "trailing_stop_points": 0.0,
             "confidence": 0.0,
             "position_size": 0.0,
-            "max_holding_time": 1,
-            "trailing_stop": 0.0
+            "max_holding_time": 1
         }

@@ -1,18 +1,15 @@
-# main.py
-
 import asyncio
 import logging
-import threading
 from utils.logger import setup_logger
 from strategy.trading_strategy import TradingStrategy
 from config import config
 from deriv_api import DerivAPI
 
-
 async def main():
     """
     Main entry point for the trading bot.
-    Sets up logging, initializes API connections, starts the trading strategy, and runs indefinitely.
+    Sets up logging, initializes API connections, starts the trading strategy,
+    and runs indefinitely.
     """
     logger = setup_logger(config.LOG_LEVEL, config.LOG_FILE)
     logger.info("Starting trading bot...")
@@ -33,15 +30,11 @@ async def main():
         # Retrieve loginid from the authorize response (optional)
         loginid = authorize_response.get('authorize', {}).get('loginid', 'Unknown')
 
-
- # If you have an OpenAI API key in config, pass it here:
-        openai_api_key = getattr(config, "OPENAI_API_KEY", None)
-        # Initialize the AI-free TradingStrategy
+        # Initialize the TradingStrategy (no openAI_api_key)
         strategy = TradingStrategy(
             logger=logger,
             deriv_api_client=deriv_api,
-            loginid=loginid  ,
-             openai_api_key=openai_api_key
+            loginid=loginid
         )
 
         # Fetch active symbols
@@ -54,7 +47,7 @@ async def main():
             logger.error("Failed to retrieve active symbols.")
             return
 
-        # Start receiving ticks for the configured symbol
+        # Subscribe to ticks for the configured symbol
         tick_stream = await deriv_api.subscribe({"ticks": config.SYMBOL})
 
         async def handle_tick(tick):
