@@ -273,12 +273,9 @@ class TradingStrategy:
                 "basis": "stake",
                 "contract_type": self.dynamic_contract_type,
                 "currency": config.CURRENCY,
-                #"duration": self.dynamic_duration,
-               # "duration_unit": "m",
                 "symbol": symbol,
-                "multiplier"    : config.MULTIPLIER,  
-                "stop_loss"     : round(self.dynamic_stop_loss_points, 2),
-                "take_profit"   : round(self.dynamic_take_profit_points, 2),
+                "multiplier"    : config.MULTIPLIER
+               
             }
             response = await self.deriv_api.proposal(proposal_request)
             if response and 'proposal' in response:
