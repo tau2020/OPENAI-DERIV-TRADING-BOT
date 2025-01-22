@@ -106,7 +106,7 @@ class TradingStrategy:
 
         # Basic contract state
         self.dynamic_duration = config.DURATION
-        self.dynamic_contract_type = "CALL"
+        self.dynamic_contract_type = "MULTIPLIER"
 
         # Active symbols
         self.active_symbols = []
@@ -273,9 +273,12 @@ class TradingStrategy:
                 "basis": "stake",
                 "contract_type": self.dynamic_contract_type,
                 "currency": config.CURRENCY,
-                "duration": self.dynamic_duration,
-                "duration_unit": "m",
-                "symbol": symbol
+                #"duration": self.dynamic_duration,
+               # "duration_unit": "m",
+                "symbol": symbol,
+                "multiplier"    : config.MULTIPLIER,  
+                "stop_loss"     : round(self.dynamic_stop_loss_points, 2),
+                "take_profit"   : round(self.dynamic_take_profit_points, 2),
             }
             response = await self.deriv_api.proposal(proposal_request)
             if response and 'proposal' in response:
@@ -331,9 +334,9 @@ class TradingStrategy:
 
         direction = rule_signal_data["signal"].upper()
         if direction == "BUY":
-            self.dynamic_contract_type = "CALL"
+            self.dynamic_contract_type = "MULTUP"
         else:
-            self.dynamic_contract_type = "PUT"
+            self.dynamic_contract_type = "MULTDOWN"
 
         # 6) Get a real price proposal from Deriv
         price_proposal = await self.get_price_proposal(symbol, direction)

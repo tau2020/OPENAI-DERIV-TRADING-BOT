@@ -26,6 +26,7 @@ SYMBOL = os.getenv("SYMBOL", "R_10")
 AMOUNT = float(os.getenv("AMOUNT", "10"))
 DURATION = int(os.getenv("DURATION", "5"))
 CURRENCY = os.getenv("CURRENCY", "USD")
+MULTIPLIER = os.getenv("MULTIPLIER", "100")
 
 # Strategy parameters
 MAX_TICK_DATA_POINTS = int(os.getenv("MAX_TICK_DATA_POINTS", "1000"))
