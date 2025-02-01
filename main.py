@@ -19,6 +19,7 @@ async def main():
 
     # Initialize Deriv API
     deriv_api = DerivAPI(app_id=config.DERIV_APP_ID)
+    openai_api_key = config.OPENAI_API_KEY
     logger.info("Deriv API instance created.")
 
     try:
@@ -37,6 +38,7 @@ async def main():
         strategy = TradingStrategy(
             logger=logger,
             deriv_api_client=deriv_api,
+            openai_api_key=openai_api_key,
             loginid=loginid  # pass the loginid for logging/trace if desired
         )
 

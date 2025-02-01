@@ -9,23 +9,20 @@ from api.deriv_api import DerivAPI
 from config import config
 from utils.risk_manager import RiskManager
 from strategy.rule_based_signals import RuleBasedSignals
+from utils.openai_utils import get_trading_signal_from_openai, initialize_openai
 
 class TradingStrategy:
     def __init__(
         self,
         logger: logging.Logger,
         deriv_api_client: DerivAPI,
+        openai_api_key: str,
         loginid: str = "Unknown"
     ):
-        """
-        TradingStrategy class tailored for a scalping/short-term approach.
-        - Uses the short-EMA or small SL/TP rule-based signals
-        - Removes dynamic_safeguard that compared contract bid_price vs. underlying stop_loss
-        - Prevents double sells
-        - Daily risk checks, consecutive loss checks remain
-        """
+       
         self.logger = logger
         self.deriv_api = deriv_api_client
+        self.openai_client = initialize_openai(openai_api_key, self.logger)
 
         # Use asyncio.Lock for concurrency in an async environment
         self.lock = Lock()
@@ -292,7 +289,7 @@ class TradingStrategy:
 
     async def evaluate_strategy(self, symbol: str):
         try:
-            await self.fetch_historical_data(symbol, use_candles=False)
+            await self.fetch_historical_data(symbol, use_candles=True)
             await self.fetch_candle_history(symbol)
         except Exception as e:
             self.logger.error(f"Error in fetch_historical_data: {e}")
@@ -312,23 +309,65 @@ class TradingStrategy:
             recent_trades_win_loss_ratio=1.0,
             account_balance=self.latest_balance
         )
+        
+        
+        preliminary_signal = rule_signal_data["signal"]
+        if preliminary_signal == "HOLD":
+            self.logger.debug("Rule-based signal is HOLD. Skipping AI evaluation.")
+            return "HOLD", 0.0
 
-        self.dynamic_stop_loss = rule_signal_data["stop_loss"]
-        self.dynamic_take_profit = rule_signal_data["take_profit"]
-        self.dynamic_confidence = rule_signal_data["confidence"]
-        self.dynamic_position_size = rule_signal_data["position_size"]
-        self.dynamic_max_holding_time = rule_signal_data["max_holding_time"]
-        self.dynamic_trailing_stop = rule_signal_data["trailing_stop"]
-        self.last_signal = rule_signal_data["signal"]
+        self.logger.info(f"Rule-based candidate signal: {rule_signal_data}")
+        
+        prices = self.candle_closes if self.candle_closes else self.tick_prices
+        times = self.candle_times if self.candle_times else self.tick_times
+        if not prices or not times:
+            self.logger.error("Insufficient price/time data for AI evaluation.")
+            return "HOLD", 0.0
 
-        if rule_signal_data["signal"] == "BUY":
-            self.dynamic_contract_type = "CALL"
-        elif rule_signal_data["signal"] == "SELL":
-            self.dynamic_contract_type = "PUT"
-        else:
-            self.dynamic_contract_type = "CALL"
 
-        return rule_signal_data["signal"], rule_signal_data["confidence"]
+        ai_signal_data = await get_trading_signal_from_openai(
+            client=self.openai_client,
+            symbol=symbol,
+            prices=prices,
+            times=times,
+            logger=self.logger,
+            recent_volume=self.rule_signals.calculate_recent_volume(),
+            recent_volatility=self.rule_signals.calculate_volatility(prices),
+            recent_trades_win_loss_ratio=1.0,
+            account_balance=self.latest_balance
+        )
+        self.logger.info(f"AI signal data: {ai_signal_data}")
+        
+        
+        if ai_signal_data["signal"] != preliminary_signal:
+            self.logger.warning(
+                f"AI signal ({ai_signal_data['signal']}) does not confirm the rule-based signal ({preliminary_signal}). Defaulting to HOLD."
+            )
+            return "HOLD", 0.0
+
+        if abs(ai_signal_data["confidence"] - 1.0) > 1e-9:
+            self.logger.warning(
+                f"AI confidence ({ai_signal_data['confidence']}) is not exactly 1.0. Defaulting to HOLD."
+            )
+            return "HOLD", 0.0
+
+
+        self.dynamic_stop_loss = ai_signal_data["stop_loss"]
+        self.dynamic_take_profit = ai_signal_data["take_profit"]
+        self.dynamic_confidence = ai_signal_data["confidence"]
+        self.dynamic_position_size = ai_signal_data["position_size"]
+        self.dynamic_max_holding_time = ai_signal_data["max_holding_time"]
+        self.dynamic_trailing_stop = ai_signal_data["trailing_stop"]
+        
+        
+        self.logger.info(
+            f"Final merged signal: {ai_signal_data['signal']}, "
+            f"SL: {self.dynamic_stop_loss}, TP: {self.dynamic_take_profit}, "
+            f"Conf: {self.dynamic_confidence}, PosSize: {self.dynamic_position_size}"
+        )
+        return ai_signal_data["signal"], ai_signal_data["confidence"]
+
+        
 
     #
     # ---------------------------
@@ -551,18 +590,7 @@ class TradingStrategy:
             self.logger.info(f"Stopped monitoring trade. Contract ID: {contract_id}")
 
     async def handle_poc_update(self, poc_update, contract_id, future):
-        """
-        DISABLE mismatched dynamic_safeguard logic:
-        We won't compare contract 'bid_price' vs. underlying stop_loss.
-
-        We'll still allow monetary SL/TP checks if you want:
-          if profit <= -abs(self.dynamic_stop_loss):
-             # close
-          if profit >= self.dynamic_take_profit:
-             # close
-
-        Also, we skip double sells by checking if contract_id is already closed in self.contracts_closed.
-        """
+       
         if contract_id in self.contracts_closed:
             return
 

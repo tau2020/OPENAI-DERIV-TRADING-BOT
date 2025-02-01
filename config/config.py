@@ -41,7 +41,7 @@ HISTORICAL_DATA_DURATION = int(os.getenv("HISTORICAL_DATA_DURATION", "3600"))
 
 # Historical Data Configuration
 
-GRANULARITY = int(os.getenv("GRANULARITY", "600"))  # in seconds (10 minutes)
+GRANULARITY = int(os.getenv("GRANULARITY", "600"))  
 
 
 
