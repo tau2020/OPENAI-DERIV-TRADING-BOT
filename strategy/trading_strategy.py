@@ -93,7 +93,7 @@ class TradingStrategy:
         self.last_volatility_update = datetime.now()
 
         # Multiplier factor for multiplier trades (default 10x if not set in config)
-        self.multiplier_factor = getattr(config, 'MULTIPLIER_FACTOR', 100)
+        self.multiplier_factor = getattr(config, 'MULTIPLIER_FACTOR', 1000)
 
         # Initialize the new rule-based signals class
         self.rule_signals = RuleBasedSignals(logger=self.logger)
@@ -178,25 +178,30 @@ class TradingStrategy:
         """Handle updates for the open contract and decide on exits."""
         if contract_id in self.contracts_closed:
             return
-        current_price = float(poc_update['proposal_open_contract']['current_spot'])
-        if current_price > self.best_price:
-         self.best_price = current_price
-         
-         
-         trailing_stop_price = self.best_price - self.dynamic_trailing_stop
-        if current_price <= trailing_stop_price:
-            await self.execute_exit(contract_id, "Price trailing stop triggered")
-        
-        
+
+        # Update best price from the current spot.
         poc_data = poc_update.get('proposal_open_contract', {})
+        current_price = float(poc_data.get('current_spot', 0.0))
+        if current_price > self.best_price:
+            self.best_price = current_price
+            self.logger.info(f"New best price: {self.best_price:.2f}")
+        trailing_stop_price = self.best_price - self.dynamic_trailing_stop
+        if current_price <= trailing_stop_price:
+            await self.execute_exit(contract_id, f"Price trailing stop triggered at {trailing_stop_price:.2f}")
+            return
+
         is_sold = poc_data.get('is_sold', False)
         profit = float(poc_data.get('profit', 0.0))
-        if profit > self.best_profit:
-            self.best_profit = profit
-            self.logger.info(f"New best profit: {self.best_profit:.2f}")
         if is_sold:
             await self.finalize_trade(contract_id, profit, future)
             return
+
+        # <<<< AUTO-EXIT CONDITION >>>>
+        # If profit reaches or exceeds $5, exit immediately.
+        if profit >= 5.0:
+            await self.execute_exit(contract_id, f"Auto exit: Profit target +$5 reached (profit: {profit:.2f})")
+            return
+
         await self.update_dynamic_parameters()
         await self.check_exit_conditions(contract_id, profit)
     #endregion
@@ -513,12 +518,11 @@ class TradingStrategy:
             proposal_request = {
                 "proposal": 1,
                 # Use dynamic_position_size as the multiplier amount
-                "amount": self.dynamic_position_size,
+                "amount": 50,
                 # Change basis from stake to multiplier
-                "basis": "multiplier",
+                "basis": "stake",
                 "contract_type": self.dynamic_contract_type,
-                "currency": config.CURRENCY,
-                
+                "currency": config.CURRENCY,            
                 "symbol": symbol,
                 "multiplier": self.multiplier_factor
             }
@@ -584,9 +588,9 @@ class TradingStrategy:
     #region Helper Methods
     def initialize_trade(self, contract_id: str, price_proposal: Dict):
         self.entry_price = float(price_proposal['ask_price'])
-        self.best_price = self.entry_price
+        self.best_price = self.entry_price  # Initialize best_price
         self.trade_open_times[contract_id] = datetime.now()
-        self.logger.info(f"Trade initialized: {contract_id}")
+        self.logger.info(f"Trade initialized at {self.entry_price:.2f}")
 
     async def finalize_trade(self, contract_id: str, profit: float, future: asyncio.Future):
         self.contracts_closed[contract_id] = True
