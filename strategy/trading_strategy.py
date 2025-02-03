@@ -201,6 +201,11 @@ class TradingStrategy:
         if profit >= 5.0:
             await self.execute_exit(contract_id, f"Auto exit: Profit target +$5 reached (profit: {profit:.2f})")
             return
+        
+         # Immediate hard stop check
+        if profit <= -18.0:
+            await self.execute_exit(contract_id, f"Hard stop loss triggered at ${profit:.2f}")
+            return
 
         await self.update_dynamic_parameters()
         await self.check_exit_conditions(contract_id, profit)
