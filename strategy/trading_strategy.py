@@ -27,6 +27,15 @@ class TradingStrategy:
         self.trade_lock = Lock()
         self.balance_lock = Lock()
         self.trailing_stop_lock = Lock()
+        self.data_lock = Lock()
+
+        # Initialize performance stats
+        self.performance_stats = {
+            'wins': 0,
+            'losses': 0,
+            'cumulative_profit': 0.0,
+            'max_drawdown': 0.0
+        }
 
         # Market data storage
         self.tick_times: List[datetime] = []
@@ -65,14 +74,12 @@ class TradingStrategy:
         self.dynamic_take_profit = 0.0
         self.dynamic_confidence = 0.0
         self.dynamic_position_size = 0.0
-        self.dynamic_max_holding_time = 3  # minutes
-        self.dynamic_trailing_stop = 5.0
-        # For multiplier trades, we will set the contract type based on signal:
-        # "MULTUP" for BUY and "MULTDOWN" for SELL.
+        self.dynamic_max_holding_time = 2  # minutes
+        self.dynamic_trailing_stop = 0.0  # Will be updated dynamically
         self.dynamic_contract_type = ""
         self.dynamic_duration = config.DURATION
         self.entry_price = 0.0
-        self.best_profit = 0.0
+        self.best_price = 0.0
 
         # Performance tracking
         self.total_wins = 0
@@ -92,18 +99,22 @@ class TradingStrategy:
         self.last_strategy_evaluation = datetime.now()
         self.last_volatility_update = datetime.now()
 
-        # Multiplier factor for multiplier trades (default 10x if not set in config)
+        # Multiplier factor for multiplier trades (adjust as needed)
         self.multiplier_factor = getattr(config, 'MULTIPLIER_FACTOR', 1000)
 
-        # Initialize the new rule-based signals class
+        # Initialize the rule-based signals class (optimized separately)
         self.rule_signals = RuleBasedSignals(logger=self.logger)
 
-    #region Core Strategy Methods
+    # --------------------- Core Strategy Methods ---------------------
     async def tick_callback(self, tick: Dict):
         """Handle real-time tick updates."""
         tick_data = tick.get('tick', {})
         symbol = tick_data.get('symbol')
-        price = float(tick_data.get('quote', 0.0))
+        try:
+            price = float(tick_data.get('quote', 0.0))
+        except (TypeError, ValueError):
+            self.logger.error("Invalid tick price.")
+            return
         epoch = tick_data.get('epoch', 0)
         timestamp = datetime.fromtimestamp(epoch)
         await self.append_tick_data(timestamp, price)
@@ -114,16 +125,20 @@ class TradingStrategy:
             asyncio.create_task(self.evaluate_and_execute_trade(symbol))
 
     async def evaluate_and_execute_trade(self, symbol: str):
-        """Main trading decision flow."""
         self.last_strategy_evaluation = datetime.now()
         if self.daily_risk_check():
-            self.logger.warning("Daily risk or profit target reached. Skipping trades.")
+            self.logger.warning("Daily risk/profit target reached. Skipping trades.")
             return
         if self.consecutive_losses >= self.max_consecutive_losses:
             self.logger.warning(f"Consecutive losses limit ({self.consecutive_losses}) reached.")
             return
-        signal, confidence = await self.evaluate_strategy(symbol)
-        self.logger.info(f"Strategy evaluated. Signal: {signal}, Confidence: {confidence:.2f}")
+
+        # Get signal and parameters
+        signal, confidence, stop_loss, take_profit = await self.evaluate_strategy(symbol)
+        self.dynamic_stop_loss = stop_loss  # Update from signal
+        self.dynamic_take_profit = take_profit  # Update from signal
+        self.dynamic_contract_type = "MULTUP" if signal == "BUY" else "MULTDOWN"  # Set contract type
+
         if signal not in ["BUY", "SELL"]:
             self.logger.info("No trade executed (HOLD signal).")
             return
@@ -179,15 +194,21 @@ class TradingStrategy:
         if contract_id in self.contracts_closed:
             return
 
-        # Update best price from the current spot.
         poc_data = poc_update.get('proposal_open_contract', {})
-        current_price = float(poc_data.get('current_spot', 0.0))
+        try:
+            current_price = float(poc_data.get('current_spot', 0.0))
+        except (TypeError, ValueError):
+            self.logger.error("Invalid current spot in POC update.")
+            return
+
         if current_price > self.best_price:
             self.best_price = current_price
             self.logger.info(f"New best price: {self.best_price:.2f}")
+
+        # Compute trailing stop price using dynamic trailing stop (tighter for short term)
         trailing_stop_price = self.best_price - self.dynamic_trailing_stop
         if current_price <= trailing_stop_price:
-            await self.execute_exit(contract_id, f"Price trailing stop triggered at {trailing_stop_price:.2f}")
+            await self.execute_exit(contract_id, f"Trailing stop triggered at {trailing_stop_price:.2f}")
             return
 
         is_sold = poc_data.get('is_sold', False)
@@ -196,31 +217,27 @@ class TradingStrategy:
             await self.finalize_trade(contract_id, profit, future)
             return
 
-        # <<<< AUTO-EXIT CONDITION >>>>
-        # If profit reaches or exceeds $5, exit immediately.
-        if profit >= 5.0:
-            await self.execute_exit(contract_id, f"Auto exit: Profit target +$5 reached (profit: {profit:.2f})")
+        # AUTO-EXIT conditions: for short term, exit if profit >= $2 or loss <= -$10.
+        if profit >= 2.0:
+            await self.execute_exit(contract_id, f"Auto exit: Profit target reached at {profit:.2f}")
             return
-        
-         # Immediate hard stop check
-        if profit <= -18.0:
-            await self.execute_exit(contract_id, f"Hard stop loss triggered at ${profit:.2f}")
+
+        if profit <= -10.0:
+            await self.execute_exit(contract_id, f"Hard stop loss triggered at {profit:.2f}")
             return
 
         await self.update_dynamic_parameters()
         await self.check_exit_conditions(contract_id, profit)
-    #endregion
 
-    #region Enhanced Features
     async def update_dynamic_parameters(self):
-        """Update parameters based on market conditions."""
+        """Update parameters based on market conditions (every 5 minutes)."""
         if (datetime.now() - self.last_volatility_update).seconds > 300:
             self.volatility = await self.calculate_market_volatility()
             self.average_true_range = self.calculate_atr()
             self.last_volatility_update = datetime.now()
         async with self.trailing_stop_lock:
             if self.dynamic_trailing_stop <= 0:
-                self.dynamic_trailing_stop = max(self.average_true_range * 1.5, 5.0)
+                self.dynamic_trailing_stop = max(self.average_true_range * 1.2, 3.0)
                 self.logger.info(f"Dynamic trailing stop set to: {self.dynamic_trailing_stop:.2f}")
 
     async def calculate_market_volatility(self) -> float:
@@ -228,7 +245,7 @@ class TradingStrategy:
         if len(prices) < 2:
             return 0.0
         log_returns = np.diff(np.log(prices))
-        return np.std(log_returns) * np.sqrt(252)
+        return float(np.std(log_returns) * np.sqrt(252))
 
     def calculate_atr(self) -> float:
         if len(self.candle_highs) < self.rule_signals.atr_window:
@@ -239,24 +256,18 @@ class TradingStrategy:
         tr = np.maximum(highs - lows,
                         np.abs(highs - np.roll(closes, 1)),
                         np.abs(lows - np.roll(closes, 1)))
-        return np.mean(tr[1:])
+        return float(np.mean(tr[1:]))
 
     async def check_exit_conditions(self, contract_id: str, profit: float):
         exit_reason = None
-        # (For multiplier trades, you might use different exit thresholds.)
         if profit <= -abs(self.dynamic_stop_loss):
-            exit_reason = f"Fixed stop loss at {profit:.2f}"
+            exit_reason = f"Stop loss reached at {profit:.2f}"
         elif profit >= self.dynamic_take_profit:
-            exit_reason = f"Fixed take profit at {profit:.2f}"
-        # A simple trailing stop example: exit if profit drops below (best_profit - dynamic_trailing_stop)
-        
-        
+            exit_reason = f"Take profit reached at {profit:.2f}"
+
         trailing_level = self.best_price - self.dynamic_trailing_stop
-        if profit <= trailing_level:
-            return "Price trailing stop triggered"
-        
         if profit < trailing_level:
-            exit_reason = f"Trailing stop triggered (level: {trailing_level:.2f})"
+            exit_reason = f"Trailing stop triggered at {trailing_level:.2f}"
         elif await self.check_holding_time(contract_id):
             exit_reason = "Max holding time exceeded"
         if exit_reason:
@@ -285,9 +296,7 @@ class TradingStrategy:
             except Exception as e:
                 self.logger.warning(f"Retry {attempt+1} for selling {contract_id} failed: {e}")
         self.logger.error(f"Failed to sell contract {contract_id} after {max_retries} attempts")
-    #endregion
 
-    #region Core Functionality
     async def append_tick_data(self, timestamp: datetime, price: float):
         async with self.lock:
             self.tick_times.append(timestamp)
@@ -346,15 +355,13 @@ class TradingStrategy:
         return True
 
     def daily_risk_check(self) -> bool:
-        # Example: use a maximum drawdown check
-        max_drawdown = 0.03  # 3%
+        max_drawdown = 0.03  # e.g. 3% drawdown; adjust as needed
         peak_balance = max(self.pl_values) if self.pl_values else self.daily_start_balance
         current_drawdown = (peak_balance - self.latest_balance) / peak_balance
         if current_drawdown >= max_drawdown:
             self.logger.warning(f"Max drawdown {current_drawdown:.2%} reached")
             return True
-        # Alternatively, use smaller loss increments
-        loss_increment = self.daily_start_balance * 0.01  # 1%
+        loss_increment = self.daily_start_balance * 0.01
         if (self.daily_start_balance - self.latest_balance) >= loss_increment:
             self.consecutive_losses += 1
             if self.consecutive_losses >= 3:
@@ -363,50 +370,16 @@ class TradingStrategy:
 
     async def evaluate_strategy(self, symbol: str):
         try:
-            await self.fetch_historical_data(symbol, use_candles=True)
-            await self.fetch_candle_history(symbol)
+            await self.fetch_historical_data(symbol)
+            await self.fetch_market_data(symbol)  # This updates buffers for rule signals.
+            
+            signal = self.rule_signals.generate_signal()
+            if signal['signal'] == "HOLD":
+                return "HOLD", 0.0, 0.0, 0.0
+            return signal['direction'], signal['confidence'], signal.get('stop_loss'), signal.get('take_profit')
         except Exception as e:
-            self.logger.error(f"Error fetching historical data: {e}")
-            return "HOLD", 0.0
-        if len(self.candle_closes) < 8:
-            self.logger.debug("Insufficient candle data. HOLD.")
-            return "HOLD", 0.0
-        # Build a list of candle dictionaries for the rule-based signal generator
-        candle_data = []
-        for i in range(len(self.candle_closes)):
-            candle_data.append({
-                'open': self.candle_opens[i],
-                'high': self.candle_highs[i],
-                'low': self.candle_lows[i],
-                'close': self.candle_closes[i],
-                'volume': self.candle_volumes[i]
-            })
-        self.rule_signals.account_balance = self.latest_balance
-        rule_signal_data = self.rule_signals.generate_candle_signal(candle_data)
-        if rule_signal_data["signal"] == "HOLD":
-            self.logger.debug("Rule-based signal is HOLD. No trade executed.")
-            return "HOLD", 0.0
-        self.logger.info(f"Rule-based candidate signal: {rule_signal_data}")
-        self.dynamic_stop_loss = rule_signal_data["stop_loss"]
-        self.dynamic_take_profit = rule_signal_data["take_profit"]
-        self.dynamic_confidence = rule_signal_data["confidence"]
-        # Now, instead of using a fixed stake, we calculate a multiplier.
-        # Multiply the calculated position size by the multiplier factor.
-        base_size = rule_signal_data["position_size"]
-        self.dynamic_position_size = round(base_size * self.multiplier_factor, 2)
-        self.dynamic_max_holding_time = rule_signal_data["max_holding_time"]
-        self.dynamic_trailing_stop = rule_signal_data["trailing_stop"]
-        # Set contract type based on signal: for multiplier trades, use MULTUP for BUY and MULTDOWN for SELL.
-        if rule_signal_data["signal"] == "BUY":
-            self.dynamic_contract_type = "MULTUP"
-        elif rule_signal_data["signal"] == "SELL":
-            self.dynamic_contract_type = "MULTDOWN"
-        self.logger.info(
-            f"Final rule-based signal: {rule_signal_data['signal']}, SL: {self.dynamic_stop_loss}, "
-            f"TP: {self.dynamic_take_profit}, Conf: {self.dynamic_confidence}, "
-            f"Multiplier: {self.dynamic_position_size}"
-        )
-        return rule_signal_data["signal"], rule_signal_data["confidence"]
+            self.logger.error(f"Strategy evaluation error: {e}")
+            return "HOLD", 0.0, 0.0, 0.0
 
     async def fetch_historical_data(self, symbol: str, use_candles: bool = False):
         style = "candles" if use_candles else "ticks"
@@ -520,14 +493,16 @@ class TradingStrategy:
 
     async def get_price_proposal(self, symbol: str, signal: str):
         try:
+            stake_amount = self.dynamic_position_size if self.dynamic_position_size > 0 else 50
+            max_stake = getattr(config, 'MAX_STAKE', 2000.0)
+            stake_amount = min(stake_amount, max_stake)
+            
             proposal_request = {
                 "proposal": 1,
-                # Use dynamic_position_size as the multiplier amount
-                "amount": 50,
-                # Change basis from stake to multiplier
+                "amount": stake_amount,
                 "basis": "stake",
                 "contract_type": self.dynamic_contract_type,
-                "currency": config.CURRENCY,            
+                "currency": config.CURRENCY,
                 "symbol": symbol,
                 "multiplier": self.multiplier_factor
             }
@@ -588,12 +563,11 @@ class TradingStrategy:
     def set_active_symbols(self, symbols: List[str]):
         self.active_symbols = symbols
         self.logger.info(f"Active symbols set. Total symbols: {len(symbols)}")
-    #endregion
 
-    #region Helper Methods
+    # --------------------- Helper Methods ---------------------
     def initialize_trade(self, contract_id: str, price_proposal: Dict):
         self.entry_price = float(price_proposal['ask_price'])
-        self.best_price = self.entry_price  # Initialize best_price
+        self.best_price = self.entry_price
         self.trade_open_times[contract_id] = datetime.now()
         self.logger.info(f"Trade initialized at {self.entry_price:.2f}")
 
@@ -619,4 +593,76 @@ class TradingStrategy:
                     return
             except Exception as e:
                 self.logger.warning(f"Trade retry {attempt+1} failed: {e}")
-    #endregion
+
+    # --------------------- Additional Methods (still part of the class) ---------------------
+
+    async def fetch_market_data(self, symbol: str):
+        """Fetch and update market data buffers in RuleBasedSignals."""
+        try:
+            response = await self.deriv_api.ticks_history({
+                "ticks_history": symbol,
+                "style": "candles",
+                "granularity": 60,
+                "count": config.DATA_WINDOW
+            })
+            
+            candles = response.get('candles', [])
+            if not candles:
+                self.logger.error(f"No candle data for {symbol}")
+                return
+
+            async with self.data_lock:
+                # Clear buffers before updating to avoid shape mismatch
+                self.rule_signals.reset_buffers()
+                
+                for c in candles:
+                    # Validate candle structure
+                    if not all(key in c for key in ['open', 'high', 'low', 'close', 'volume']):
+                        self.logger.warning(f"Skipping invalid candle: {c}")
+                        continue
+                    
+                    # Convert to floats explicitly
+                    try:
+                        open_price = float(c['open'])
+                        high = float(c['high'])
+                        low = float(c['low'])
+                        close = float(c['close'])
+                        volume = float(c['volume'])
+                    except ValueError:
+                        self.logger.error(f"Invalid data types in candle: {c}")
+                        continue
+                    
+                    # Update buffers
+                    self.rule_signals.update_buffers(
+                        open_price=open_price,
+                        high=high,
+                        low=low,
+                        close=close,
+                        volume=volume
+                    )
+                    
+            self.logger.info(f"Updated market data buffers for {symbol}")
+                    
+        except Exception as e:
+            self.logger.error(f"Market data fetch failed: {str(e)}")
+
+
+
+    async def update_account_stats(self, profit: float):
+        """Vectorized stats update."""
+        async with self.data_lock:
+            if profit > 0:
+                self.performance_stats['wins'] += 1
+                self.performance_stats['cumulative_profit'] += profit
+                self.consecutive_losses = 0
+            else:
+                self.performance_stats['losses'] += 1
+                self.consecutive_losses += 1
+                
+            self.latest_balance += profit
+            current_drawdown = (self.daily_start_balance - self.latest_balance) / self.daily_start_balance
+            self.performance_stats['max_drawdown'] = max(self.performance_stats['max_drawdown'], current_drawdown)
+
+# =============================================================================
+# End of TradingStrategy module.
+# =============================================================================

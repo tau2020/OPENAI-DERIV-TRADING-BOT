@@ -27,6 +27,8 @@ AMOUNT = float(os.getenv("AMOUNT", "10"))
 DURATION = int(os.getenv("DURATION", "5"))
 CURRENCY = os.getenv("CURRENCY", "USD")
 
+DATA_WINDOW = os.getenv("DATA_WINDOW")
+
 # Strategy parameters
 MAX_TICK_DATA_POINTS = int(os.getenv("MAX_TICK_DATA_POINTS", "1000"))
 CHART_UPDATE_INTERVAL = int(os.getenv("CHART_UPDATE_INTERVAL", "60"))
@@ -37,11 +39,13 @@ TAKE_PROFIT = float(os.getenv("TAKE_PROFIT", "10"))
 MONITOR_INTERVAL = int(os.getenv("MONITOR_INTERVAL", "5"))
 
 # Historical data configuration
-HISTORICAL_DATA_DURATION = int(os.getenv("HISTORICAL_DATA_DURATION", "3600"))
+HISTORICAL_DATA_DURATION = int(os.getenv("HISTORICAL_DATA_DURATION", "600"))
 
 # Historical Data Configuration
 
-GRANULARITY = int(os.getenv("GRANULARITY", "600"))  
+GRANULARITY = int(os.getenv("GRANULARITY", "600")) 
+
+MAX_STAKE = int(os.getenv("MAX_STAKE", "2000")) 
 
 
 
