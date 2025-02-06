@@ -1,150 +1,104 @@
+# risk_manager.py
+import logging
 from datetime import datetime
+from typing import Optional
+
 
 class RiskManager:
     """
-    Handles trailing stops, dynamic stop-loss adjustments, maximum holding time checks,
-    and optional trailing profit logic.
+    RiskManager implements risk control checks and position sizing logic.
+    It maintains risk state (daily loss/profit, consecutive losses) and
+    ensures that trading does not exceed preset risk limits.
     """
 
     def __init__(
         self,
-        logger,
-        break_even_threshold: float = 0.3,
-        lock_in_profit_threshold: float = 0.8,
-        scale_out_threshold: float = 1.2,
-        trailing_profit_buffer: float = 0.1,
+        logger: Optional[logging.Logger] = None,
+        max_daily_drawdown: float = 0.03,
+        max_consecutive_losses: int = 3,
+        daily_loss_limit_percent: float = 0.02,
+        daily_profit_target_percent: float = 0.03
     ):
-        """
-        Initialize the RiskManager with thresholds for dynamic risk adjustments.
+        self.logger = logger or logging.getLogger(__name__)
+        self.max_daily_drawdown = max_daily_drawdown
+        self.max_consecutive_losses = max_consecutive_losses
+        self.daily_loss_limit_percent = daily_loss_limit_percent
+        self.daily_profit_target_percent = daily_profit_target_percent
+
+        # Risk tracking
+        self.daily_start_balance = 0.0
+        self.current_balance = 0.0
+        self.consecutive_losses = 0
+        self.last_update = datetime.now()
+
+    def initialize_account(self, starting_balance: float) -> None:
+        """Call at the beginning of the trading day."""
+        self.daily_start_balance = starting_balance
+        self.current_balance = starting_balance
+        self.consecutive_losses = 0
+        self.logger.info(f"Risk Manager initialized: Start balance = {starting_balance}")
+
+    
+
+    def record_trade(self, profit: float) -> None:
+        """Record a trade result for risk tracking."""
+        if profit < 0:
+            self.consecutive_losses += 1
+        else:
+            self.consecutive_losses = 0
+
+    def risk_limits_reached(self) -> bool:
+        """Check if any risk limit is breached."""
+        # Check drawdown
+        peak_balance = max(self.daily_start_balance, self.current_balance)
+        if peak_balance <= 0:
+            return True
+
+        drawdown = (peak_balance - self.current_balance) / peak_balance
+        if drawdown >= self.max_daily_drawdown:
+            self.logger.warning(f"Drawdown limit reached: {drawdown:.2%}")
+            return True
+
+        # Check daily loss limit (or profit target reached)
+        if (self.daily_start_balance - self.current_balance) / self.daily_start_balance >= self.daily_loss_limit_percent:
+            self.logger.warning("Daily loss limit reached")
+            return True
+
+        if (self.current_balance - self.daily_start_balance) / self.daily_start_balance >= self.daily_profit_target_percent:
+            self.logger.info("Daily profit target reached")
+            return True
+
+        # Check consecutive losses
+        if self.consecutive_losses >= self.max_consecutive_losses:
+            self.logger.warning(f"Consecutive losses limit reached: {self.consecutive_losses}")
+            return True
+
+        return False
+
+    def get_risk_info(self) -> dict:
+        return {
+            "daily_start_balance": self.daily_start_balance,
+            "current_balance": self.current_balance,
+            "consecutive_losses": self.consecutive_losses,
+            "max_daily_drawdown": self.max_daily_drawdown
+        }
         
-        Args:
-            logger (logging.Logger): Logger instance for logging risk events.
-            break_even_threshold (float): Multiple of initial risk at which the stop-loss
-                moves to breakeven (entry price).
-            lock_in_profit_threshold (float): Multiple of initial risk at which the stop-loss
-                moves above entry to lock in partial profit.
-            scale_out_threshold (float): Multiple of initial risk at which you scale out or
-                further tighten the stop.
-            trailing_profit_buffer (float): If > 0, once the trade moves past lock_in_profit_threshold,
-                apply a trailing stop that maintains a buffer behind the price.
-        """
-        self.logger = logger
-        self.break_even_threshold = break_even_threshold
-        self.lock_in_profit_threshold = lock_in_profit_threshold
-        self.scale_out_threshold = scale_out_threshold
-        self.trailing_profit_buffer = trailing_profit_buffer
-
-    def apply_trailing_stop(self, current_price: float, trailing_stop: float,
-                            entry_price: float, original_stop_loss: float) -> float:
-        """
-        Apply a standard trailing stop-loss offset from the current price (BUY case):
-          new_stop = max(current_price - trailing_stop, original_stop_loss)
-
-        For SELL, you'd invert the logic outside or adapt as needed.
-
-        Args:
-            current_price (float): Current market price.
-            trailing_stop (float): Trailing stop distance (in price units, pips, or ticks).
-            entry_price (float): Trade entry price (unused in a basic trailing stop, but available).
-            original_stop_loss (float): Original stop-loss set at trade entry.
-
-        Returns:
-            float: The newly adjusted stop-loss level.
-        """
-        raw_stop = current_price - trailing_stop
-        # Never loosen beyond original SL
-        return max(raw_stop, original_stop_loss)
-
-    def dynamic_profit_safeguard(self, entry_price: float, current_price: float,
-                                 take_profit: float, initial_stop_loss: float) -> float:
-        """
-        Dynamically update the stop-loss to safeguard profits as the trade moves in your favor.
-        Moves stop-loss to breakeven, then progressively locks in more profit
-        as multiples of the initial risk are achieved. Optionally transitions
-        to a trailing stop once a threshold is reached.
-
-        Args:
-            entry_price (float): The trade entry price.
-            current_price (float): The current market price.
-            take_profit (float): The originally configured take-profit level.
-            initial_stop_loss (float): The initially set stop-loss level.
-
-        Returns:
-            float: The updated stop-loss to safeguard profits.
-        """
-        # Calculate initial risk
-        initial_risk = entry_price - initial_stop_loss
-        if initial_risk <= 0:
-            self.logger.warning("Initial risk is not positive; profit safeguard may not apply correctly.")
-            return initial_stop_loss
-
-        # Current profit from entry
-        current_profit = current_price - entry_price
-        if current_profit <= 0:
-            # No profit to safeguard yet
-            return initial_stop_loss
-
-        multiples_of_risk = current_profit / initial_risk
-
-        # Start with the original stop
-        new_stop = initial_stop_loss
-
-        # 1) Move SL to breakeven if break-even threshold reached
-        if multiples_of_risk >= self.break_even_threshold and new_stop < entry_price:
-            new_stop = entry_price
-            self.logger.info("Break-even threshold reached, SL moved to entry.")
-
-        # 2) Lock in profit if above lock_in_profit_threshold
-        if multiples_of_risk >= self.lock_in_profit_threshold:
-            # For example, lock in 25% of the current profit
-            locked_in = entry_price + (current_profit * 0.25)
-            new_stop = max(new_stop, locked_in)
-            self.logger.info(
-                f"Profit lock-in threshold reached, SL moved above entry to {new_stop:.5f} to secure partial profit."
-            )
-
-            # 2a) If trailing_profit_buffer is set, apply a trailing approach
-            #     that sets the stop to (current_price - trailing_profit_buffer),
-            #     but never loosening below new_stop.
-            if self.trailing_profit_buffer > 0:
-                # This means from here onward, we run a trailing approach
-                raw_trailing_stop = current_price - self.trailing_profit_buffer
-                new_stop = max(new_stop, raw_trailing_stop)
-                self.logger.info(
-                    f"Trailing profit activated. SL updated to {new_stop:.5f} using buffer {self.trailing_profit_buffer}."
-                )
-
-        # 3) Scale-out or further tighten if scale_out_threshold is reached
-        if multiples_of_risk >= self.scale_out_threshold:
-            # For demonstration, lock in 50% of the current profit
-            locked_in_more = entry_price + (current_profit * 0.5)
-            new_stop_before = new_stop
-            new_stop = max(new_stop, locked_in_more)
-            self.logger.info(
-                f"Scale-out threshold reached. SL tightened further from {new_stop_before:.5f} to {new_stop:.5f}."
-            )
-
-            # Also optionally re-check trailing logic here if you want to tighten further
-            if self.trailing_profit_buffer > 0:
-                trailing_stop_price = current_price - self.trailing_profit_buffer
-                if trailing_stop_price > new_stop:
-                    self.logger.info(
-                        f"Additional trailing after scale-out. SL from {new_stop:.5f} to {trailing_stop_price:.5f}."
-                    )
-                    new_stop = trailing_stop_price
-
-        return new_stop
-
-    def exceeded_max_holding_time(self, trade_open_time: datetime, max_holding_time: int) -> bool:
-        """
-        Check if the maximum recommended holding time has been exceeded.
         
-        Args:
-            trade_open_time (datetime): The time when the trade was opened.
-            max_holding_time (int): Maximum holding time in seconds.
+    def update_balance(self, new_balance: float):
+        self.current_balance = new_balance
+        self.logger.info("Updated account balance: %.2f", new_balance)
 
-        Returns:
-            bool: True if holding time is exceeded, False otherwise.
+    def calculate_position_size(self, current_price: float, stop_loss: float) -> float:
         """
-        elapsed_seconds = (datetime.now() - trade_open_time).total_seconds()
-        return elapsed_seconds > max_holding_time
+        Calculates the number of shares (or contracts) to buy/sell based on the risk per trade.
+        """
+        risk_per_share = abs(current_price - stop_loss)
+        if risk_per_share == 0:
+            self.logger.warning("Risk per share is zero; cannot calculate position size.")
+            return 0.0
+        risk_amount = self.current_balance * self.risk_per_trade
+        position_size = risk_amount / risk_per_share
+        # Cap the position size if necessary.
+        position_size = min(position_size, self.max_position_size)
+        self.logger.info("Calculated position size: %.2f", position_size)
+        return position_size    

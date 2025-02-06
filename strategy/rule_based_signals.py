@@ -1,349 +1,331 @@
 import numpy as np
 import logging
-from typing import Dict, Any, Tuple
-from collections import deque
+from datetime import datetime
+from utils.safe_circular_buffer import SafeCircularBuffer
 
 class RuleBasedSignals:
-    def __init__(self, logger: Any = None) -> None:
-        self.logger = logger or logging.getLogger(__name__)
-
-        # Trading parameters
-        self.base_sl = 0.0005
-        self.base_tp = 0.0010
-        self.volatility_window = 20
-        self.atr_window = 7
-        self.rsi_window = 7
-        self.macd_fast = 12
-        self.macd_slow = 26
-        self.macd_signal = 9
-        self.volume_spike_multiplier = 2.0
-        self.min_confidence = 0.65
-        self.max_confidence = 0.9
-        self.risk_per_trade = 0.02
-        self.min_confidence = 0.75  # Example threshold
-        self.opens = deque(maxlen=100)
-        self.highs = deque(maxlen=100)
-        self.lows = deque(maxlen=100)
-        self.closes = deque(maxlen=100)
-        self.volumes = deque(maxlen=100)
-
-        # Optimized data storage
-        self.price_buffer = np.zeros(500, dtype=np.float64)
-        self.high_buffer = np.zeros(500, dtype=np.float64)
-        self.low_buffer = np.zeros(500, dtype=np.float64)
-        self.volume_buffer = np.zeros(500, dtype=np.float64)
-        self.buffer_index = 0
-        self.buffer_size = 0
-
-        # Precomputed indicators cache
-        self.indicator_cache = {
-            'ema': {},
-            'rsi': np.zeros(500, dtype=np.float64),
-            'macd': np.zeros(500, dtype=np.float64),
-            'signal': np.zeros(500, dtype=np.float64),
-            'atr': np.zeros(500, dtype=np.float64),
-            'volumes': np.zeros(500, dtype=np.float64)
-        }
-
-        self.trade_history = deque(maxlen=100)
-        self.account_balance = 1000.0
+    """
+    Generates trading signals based on a fusion of technical indicators computed from candle data.
+    
+    Ticks are aggregated into candles (OHLCV) over a configurable interval.
+    
+    The signal logic integrates:
+      1. Trend analysis via an EMA crossover (fast vs. slow).
+      2. Momentum analysis via MACD (the difference between a fast and slow EMA, and its signal line).
+      3. Oscillator analysis via RSI (using Wilder's smoothing) centered around a neutral level.
+      
+    These individual components are normalized, weighted, and then fused via a logistic transformation 
+    to yield a continuous confidence level. Risk parameters (stop loss and take profit) are dynamically set 
+    based on ATR.
+    """
+    
+    def __init__(self, logger: logging.Logger, candle_interval: int = 60, rsi_window: int = 14, buffer_size: int = 500):
+        self.logger = logger
+        self.candle_interval = candle_interval      # Duration (in seconds) of one candle.
+        self.rsi_window = rsi_window                # Window length for RSI computation.
         
-    def reset_buffers(self):
-        """Clear buffers to avoid shape conflicts."""
-        self.opens.clear()
-        self.highs.clear()
-        self.lows.clear()
-        self.closes.clear()
-        self.volumes.clear()    
+        # Internal state for aggregating ticks into a candle.
+        self.current_candle_start: datetime = None
+        self.current_candle_open: float = None
+        self.current_candle_high: float = None
+        self.current_candle_low: float = None
+        self.current_candle_close: float = None
+        self.current_candle_volume: int = 0
 
-    def update_buffers(self, candle: Dict[str, float]) -> None:
-        """Update circular buffers with new candle data"""
-        idx = self.buffer_index % 500
-        self.price_buffer[idx] = candle['close']
-        self.high_buffer[idx] = candle['high']
-        self.low_buffer[idx] = candle['low']
-        self.volume_buffer[idx] = candle['volume']
-        self.buffer_index = (self.buffer_index + 1) % 500
-        self.buffer_size = min(self.buffer_size + 1, 500)
-        self._precompute_indicators()
+        # Use a SafeCircularBuffer to store close prices (ensuring robust fixed-size history).
+        self.close_buffer = SafeCircularBuffer(size=buffer_size)
+        # For open, high, low and volume, we use lists.
+        self.opens = []
+        self.highs = []
+        self.lows = []
+        self.volumes = []
+        # Set a minimum confidence threshold for signals.
+        self.min_confidence = 0.6
         
-        
-        
-        
+        # For indicator caching, e.g. ATR.
+        self.indicator_cache = {"atr": np.array([])}
 
-    def _get_recent_data(self, length: int) -> Dict[str, np.ndarray]:
-        """Get aligned recent data window"""
-        start_idx = (self.buffer_index - length) % 500
-        if start_idx + length <= 500:
-            return {
-                'prices': self.price_buffer[start_idx:start_idx+length],
-                'highs': self.high_buffer[start_idx:start_idx+length],
-                'lows': self.low_buffer[start_idx:start_idx+length],
-                'volumes': self.volume_buffer[start_idx:start_idx+length]
-            }
+    def process_tick(self, timestamp: datetime, price: float):
+        """
+        Aggregates ticks into candles. If the tick's timestamp is within the current candle interval,
+        update the candle; otherwise, finalize and store the candle and start a new one.
+        """
+        if self.current_candle_start is None:
+            self.current_candle_start = timestamp
+            self.current_candle_open = price
+            self.current_candle_high = price
+            self.current_candle_low = price
+            self.current_candle_close = price
+            self.current_candle_volume = 1
+            self.logger.debug("Started new candle at %s with price %.2f", timestamp, price)
         else:
-            part1 = 500 - start_idx
-            return {
-                'prices': np.concatenate((self.price_buffer[start_idx:], 
-                                       self.price_buffer[:length-part1])),
-                'highs': np.concatenate((self.high_buffer[start_idx:], 
-                                      self.high_buffer[:length-part1])),
-                'lows': np.concatenate((self.low_buffer[start_idx:], 
-                                     self.low_buffer[:length-part1])),
-                'volumes': np.concatenate((self.volume_buffer[start_idx:], 
-                                        self.volume_buffer[:length-part1]))
-            }
+            elapsed = (timestamp - self.current_candle_start).total_seconds()
+            if elapsed < self.candle_interval:
+                self.current_candle_close = price
+                self.current_candle_high = max(self.current_candle_high, price)
+                self.current_candle_low = min(self.current_candle_low, price)
+                self.current_candle_volume += 1
+                self.logger.debug("Updated candle: O=%.2f, H=%.2f, L=%.2f, C=%.2f, V=%d",
+                                  self.current_candle_open, self.current_candle_high,
+                                  self.current_candle_low, self.current_candle_close,
+                                  self.current_candle_volume)
+            else:
+                self.logger.info("Finalizing candle starting at %s: O=%.2f, H=%.2f, L=%.2f, C=%.2f, V=%d",
+                                 self.current_candle_start, self.current_candle_open,
+                                 self.current_candle_high, self.current_candle_low,
+                                 self.current_candle_close, self.current_candle_volume)
+                self.opens.append(self.current_candle_open)
+                self.highs.append(self.current_candle_high)
+                self.lows.append(self.current_candle_low)
+                self.volumes.append(self.current_candle_volume)
+                self.close_buffer.add(self.current_candle_close, self.current_candle_start)
+                # Start new candle.
+                self.current_candle_start = timestamp
+                self.current_candle_open = price
+                self.current_candle_high = price
+                self.current_candle_low = price
+                self.current_candle_close = price
+                self.current_candle_volume = 1
+                self.logger.debug("Started new candle at %s with price %.2f", timestamp, price)
 
-    def _vectorized_ema(self, data: np.ndarray, window: int) -> np.ndarray:
-        """Vectorized EMA using numpy"""
+    def _calculate_ema(self, data: np.ndarray, window: int) -> np.ndarray:
+        """
+        Computes the Exponential Moving Average (EMA) using the standard recursive formula.
+        
+        Formula:
+          EMA[0] = data[0]
+          EMA[i] = α * data[i] + (1 - α) * EMA[i-1]  
+        where α = 2 / (window + 1)
+        """
         alpha = 2 / (window + 1)
-        weights = (1 - alpha) ** np.arange(len(data))[::-1]
-        weights /= weights.sum()
-        return np.convolve(data, weights, mode='valid')
+        ema = np.empty_like(data)
+        ema[0] = data[0]
+        for i in range(1, len(data)):
+            ema[i] = alpha * data[i] + (1 - alpha) * ema[i - 1]
+        return ema
 
-    def _precompute_indicators(self) -> None:
-        """Batch compute all indicators – only if enough data is available,
-        and assign into the cache using the computed length."""
-        length = min(self.buffer_size, 500)
-        if length == 0:
-            return  # Nothing to compute
-
-        data = self._get_recent_data(length)
+    def calculate_macd(self):
+        """
+        Computes the MACD indicator.
         
-        # --- EMA Calculation ---
-        for window in [9, 21, 12, 26]:
-            if length < window:
-                self.indicator_cache['ema'][window] = np.array([])
-            else:
-                ema = self._vectorized_ema(data['prices'], window)
-                self.indicator_cache['ema'][window] = ema  # ema is of length (length - window + 1)
+        MACD is defined as:
+          MACD = EMA(12) - EMA(26)
+          Signal line = EMA(9) of the MACD
+        
+        Returns:
+          Tuple (macd, signal_line) as numpy arrays.
+        """
+        data, _ = self.close_buffer.get_all()
+        if len(data) < 26:
+            self.logger.warning("Insufficient data for MACD calculation.")
+            return None
+        ema12 = self._calculate_ema(data, 12)
+        ema26 = self._calculate_ema(data, 26)
+        macd = ema12 - ema26
+        signal_line = self._calculate_ema(macd, 9)
+        return macd, signal_line
 
-        # --- RSI Calculation ---
-        if length < self.rsi_window:
-            self.indicator_cache['rsi'] = np.array([])
+    def calculate_rsi(self):
+        """
+        Computes the Relative Strength Index (RSI) using Wilder's smoothing method.
+        
+        Steps:
+          - Compute deltas between successive close prices.
+          - Separate positive gains and negative losses.
+          - Compute the smoothed average gain and loss.
+          - RSI = 100 - (100 / (1 + RS)), where RS = avg_gain / (avg_loss + eps)
+        
+        Returns:
+          The most recent RSI value.
+        """
+        data, _ = self.close_buffer.get_all()
+        if len(data) < self.rsi_window + 1:
+            self.logger.warning("Insufficient data for RSI calculation.")
+            return None
+        deltas = np.diff(data)
+        gains = np.where(deltas > 0, deltas, 0)
+        losses = np.where(deltas < 0, -deltas, 0)
+        avg_gain = np.zeros_like(gains)
+        avg_loss = np.zeros_like(losses)
+        # Initialize with simple average for the first window.
+        avg_gain[0] = np.mean(gains[:self.rsi_window])
+        avg_loss[0] = np.mean(losses[:self.rsi_window])
+        for i in range(1, len(gains)):
+            avg_gain[i] = (avg_gain[i - 1] * (self.rsi_window - 1) + gains[i]) / self.rsi_window
+            avg_loss[i] = (avg_loss[i - 1] * (self.rsi_window - 1) + losses[i]) / self.rsi_window
+        rs = avg_gain / (avg_loss + 1e-10)  # avoid division by zero
+        rsi = 100 - (100 / (1 + rs))
+        return rsi[-1]
+
+    def calculate_atr(self, window: int = 14):
+        """
+        Computes the Average True Range (ATR) using Wilder's smoothing on completed candle data.
+        
+        True Range (TR) for each candle is the maximum of:
+          - Current High - Current Low
+          - |Current High - Previous Close|
+          - |Current Low - Previous Close|
+        
+        ATR is the smoothed average of the TR values.
+        
+        Returns:
+          The most recent ATR value.
+        """
+        if len(self.opens) < window + 1:
+            self.logger.warning("Insufficient candle data for ATR calculation.")
+            return None
+        highs = np.array(self.highs)
+        lows = np.array(self.lows)
+        closes, _ = self.close_buffer.get_all()
+        if len(closes) < window + 1:
+            self.logger.warning("Insufficient close data for ATR calculation.")
+            return None
+        tr = np.maximum(
+                highs[1:] - lows[1:],
+                np.maximum(
+                    np.abs(highs[1:] - closes[:-1]),
+                    np.abs(lows[1:] - closes[:-1])
+                )
+            )
+        atr = np.empty_like(tr)
+        atr[0] = np.mean(tr[:window])
+        for i in range(1, len(tr)):
+            atr[i] = (atr[i - 1] * (window - 1) + tr[i]) / window
+        return atr[-1]
+
+    def generate_signal(self):
+        """
+        Produces a trading signal by fusing several technical indicator components.
+        
+        The signal is built from three main components:
+        
+          1. Trend Component (T):
+             - Derived from an EMA crossover.
+             - Normalized as: T = (EMA_fast - EMA_slow) / Price.
+             - A positive T indicates bullish trend; negative T indicates bearish.
+          
+          2. Momentum Component (M):
+             - Derived from MACD.
+             - Defined as the normalized difference: M = (MACD - Signal_line) / Scale,
+               where the scale factor (e.g., 5) adjusts the sensitivity.
+          
+          3. Oscillator Component (O):
+             - Derived from RSI.
+             - Center RSI around 50: O = (50 - RSI) / 50.
+             - This yields positive values for oversold conditions (bullish) and negative for overbought.
+        
+        These components are combined using weights (w_T, w_M, w_O):
+        
+            S = w_T * T + w_M * M + w_O * O
+        
+        The combined score S is then transformed via a logistic (sigmoid) function:
+        
+            Confidence = 1 / (1 + exp(-k * (S - c)))
+        
+        where k determines the steepness and c is the center threshold.
+        
+        Finally, a decision threshold is applied:
+          - If S > threshold, signal = BUY.
+          - If S < -threshold, signal = SELL.
+          - Otherwise, signal = HOLD.
+        
+        Risk parameters (stop loss and take profit) are set as multiples of ATR.
+        
+        Returns:
+          A dictionary with keys: signal, confidence, stop_loss, take_profit.
+        """
+        # Retrieve historical close data.
+        data, _ = self.close_buffer.get_all()
+        if len(data) < 26:
+            self.logger.info("Not enough data for signal generation. Holding position.")
+            return {"signal": "HOLD", "confidence": 0.0, "stop_loss": 0.0, "take_profit": 0.0}
+
+        # Trend Component: EMA crossover.
+        ema_fast = self._calculate_ema(data, 9)
+        ema_slow = self._calculate_ema(data, 21)
+        price = data[-1]
+        T = (ema_fast[-1] - ema_slow[-1]) / price  # Normalized difference
+        
+        # Momentum Component: MACD difference.
+        macd_data = self.calculate_macd()
+        if macd_data is None:
+            self.logger.info("Not enough data for MACD-based momentum. Holding position.")
+            return {"signal": "HOLD", "confidence": 0.0, "stop_loss": 0.0, "take_profit": 0.0}
+        macd, signal_line = macd_data
+        scale_factor = 5.0  # Empirically chosen scaling factor.
+        M = (macd[-1] - signal_line[-1]) / scale_factor
+
+        # Oscillator Component: RSI centered at 50.
+        rsi_val = self.calculate_rsi()
+        if rsi_val is None:
+            self.logger.info("Not enough data for RSI. Holding position.")
+            return {"signal": "HOLD", "confidence": 0.0, "stop_loss": 0.0, "take_profit": 0.0}
+        O = (50 - rsi_val) / 50.0
+
+        # Define component weights.
+        w_T = 0.4  # Weight for Trend.
+        w_M = 0.35 # Weight for Momentum.
+        w_O = 0.25 # Weight for Oscillator.
+
+        # Compute combined score.
+        S = w_T * T + w_M * M + w_O * O
+        self.logger.debug("Indicator Components: Trend=%.4f, Momentum=%.4f, Oscillator=%.4f; Combined S=%.4f", T, M, O, S)
+        
+        # Apply logistic (sigmoid) transformation.
+        k = 10.0  # Steepness of the sigmoid.
+        c = 0.0   # Center of the sigmoid (threshold).
+        confidence = 1 / (1 + np.exp(-k * (S - c)))
+        
+        # Decision thresholds.
+        threshold = 0.10
+        if S > threshold:
+            signal = "BUY"
+        elif S < -threshold:
+            signal = "SELL"
         else:
-            deltas = np.diff(data['prices'])
-            gains = np.where(deltas > 0, deltas, 0)
-            losses = np.where(deltas < 0, -deltas, 0)
-            # The "valid" mode produces an array of length: length - rsi_window
-            avg_gain = np.convolve(gains, np.ones(self.rsi_window)/self.rsi_window, 'valid')
-            avg_loss = np.convolve(losses, np.ones(self.rsi_window)/self.rsi_window, 'valid')
-            rs = avg_gain / np.where(avg_loss == 0, 1e-9, avg_loss)
-            computed_rsi = 100 - (100 / (1 + rs))
-            # Assign the computed RSI into the cache at positions 0..(computed_rsi.shape[0]-1)
-            self.indicator_cache['rsi'][:computed_rsi.shape[0]] = computed_rsi
+            signal = "HOLD"
+            confidence = 0.0  # No decisive signal.
 
-        # --- MACD Calculation ---
-        # We need both EMAs for MACD. Use the computed arrays (if not empty)
-        ema12 = self.indicator_cache['ema'].get(12, np.array([]))
-        ema26 = self.indicator_cache['ema'].get(26, np.array([]))
-        if ema12.size == 0 or ema26.size == 0:
-            self.indicator_cache['macd'] = np.array([])
-            self.indicator_cache['signal'] = np.array([])
-        else:
-            mlen = min(ema12.shape[0], ema26.shape[0])
-            macd = ema12[-mlen:] - ema26[-mlen:]
-            # Store the computed MACD (its length is mlen)
-            self.indicator_cache['macd'][:macd.shape[0]] = macd
-            # For the signal line, ensure enough data is available:
-            if macd.shape[0] >= self.macd_signal:
-                signal_line = self._vectorized_ema(macd, self.macd_signal)
-                self.indicator_cache['signal'][:signal_line.shape[0]] = signal_line
-            else:
-                self.indicator_cache['signal'] = np.array([])
+        # Determine risk parameters using ATR.
+        atr_val = self.calculate_atr(window=14)
+        atr_val = atr_val if atr_val and atr_val > 0 else 1.0
+        stop_loss = atr_val * 2.0
+        take_profit = atr_val * 3.0
 
-        # --- ATR Calculation ---
-        if length < self.atr_window + 1:
-            self.indicator_cache['atr'] = np.array([])
-        else:
-            highs = data['highs']
-            lows = data['lows']
-            prices = data['prices']
-            # Compute True Range for indices 1..length-1
-            tr = np.maximum(highs[1:] - lows[1:],
-                            np.maximum(np.abs(highs[1:] - prices[:-1]),
-                                    np.abs(lows[1:] - prices[:-1])))
-            # Convolve with a window of atr_window; result length = (len(tr) - atr_window + 1)
-            atr = np.convolve(tr, np.ones(self.atr_window)/self.atr_window, 'valid')
-            self.indicator_cache['atr'][:atr.shape[0]] = atr
-
-        # --- Volume Moving Average Calculation ---
-        if length < 20:
-            self.indicator_cache['volumes'] = np.array([])
-        else:
-            volumes = data['volumes']
-            vol_ma = np.convolve(volumes, np.ones(20)/20, 'valid')
-            self.indicator_cache['volumes'][:vol_ma.shape[0]] = vol_ma
-
-
-    def _trend_direction(self, ema_fast: np.ndarray, ema_slow: np.ndarray) -> str:
-        """Vectorized trend analysis"""
-        if len(ema_fast) < 2 or len(ema_slow) < 2:
-            return "neutral"
-        
-        current_fast = ema_fast[-1]
-        current_slow = ema_slow[-1]
-        prev_fast = ema_fast[-2]
-        prev_slow = ema_slow[-2]
-        
-        crossover = np.sign(current_fast - current_slow) - np.sign(prev_fast - prev_slow)
-        if crossover > 0:
-            return "bullish_crossover"
-        if crossover < 0:
-            return "bearish_crossover"
-        return "bullish" if current_fast > current_slow else "bearish"
-
-    def _momentum_strength(self, rsi: np.ndarray, macd: np.ndarray, signal: np.ndarray) -> Dict[str, str]:
-        """Vectorized momentum analysis"""
-        momentum = {'rsi': 'neutral', 'macd_crossover': 'none'}
-        
-        # RSI analysis
-        last_rsi = rsi[-1]
-        if last_rsi > 70:
-            momentum['rsi'] = 'overbought'
-        elif last_rsi < 30:
-            momentum['rsi'] = 'oversold'
-        
-        # MACD crossover
-        if len(macd) >= 2 and len(signal) >= 2:
-            current_diff = macd[-1] - signal[-1]
-            prev_diff = macd[-2] - signal[-2]
-            if current_diff > 0 and prev_diff <= 0:
-                momentum['macd_crossover'] = 'bullish'
-            elif current_diff < 0 and prev_diff >= 0:
-                momentum['macd_crossover'] = 'bearish'
-        
-        return momentum
-
-    def _volume_analysis(self, current_volume: float, volume_ma: float) -> Dict[str, Any]:
-        """Vectorized volume analysis"""
+        self.logger.info("Signal Generation: %s, S=%.4f, Conf=%.2f, RSI=%.2f, ATR=%.2f", 
+                         signal, S, confidence, rsi_val, atr_val)
         return {
-            'volume_spike': current_volume > volume_ma * self.volume_spike_multiplier,
-            'volume_trend': 'rising' if current_volume > volume_ma else 'falling'
+            "signal": signal,
+            "confidence": confidence,
+            "stop_loss": stop_loss,
+            "take_profit": take_profit
         }
+    def reset_buffers(self):
+    
 
-    def _dynamic_stop_loss_take_profit(self, price: float, atr: float, volatility: float) -> Tuple[float, float]:
-        """Optimized SL/TP calculation"""
-        multiplier_sl = 1.2 + volatility * 0.5
-        multiplier_tp = 2.0 + volatility * 1.0
-        sl = price - (atr * multiplier_sl)
-        tp = price + (atr * multiplier_tp)
-        return np.round(sl, 5), np.round(tp, 5)
-
-    def _calculate_position_size(self, sl: float, price: float) -> float:
-        """Vectorized position sizing"""
-        price_risk = np.abs(price - sl)
-        if price_risk < 0.0005:
-            return 0.0
-        risk_amount = self.account_balance * self.risk_per_trade
-        position_size = np.clip(risk_amount / price_risk, 0, self.account_balance * 0.1)
-        return np.round(position_size, 2)
-
-    def _recent_performance(self) -> float:
-        """Vectorized performance calculation"""
-        if len(self.trade_history) < 3:
-            return 0.0
-        recent = np.array(list(self.trade_history)[-3:])
-        win_rate = np.sum(recent > 0) / len(recent)
-        return (win_rate - 0.5) * 2
-
-    def _signal_strength(self, trend: str, momentum: Dict, volume: Dict) -> Dict[str, Any]:
-        """Optimized signal aggregation"""
-        score = 0.0
-        
-        # Trend scoring
-        trend_scores = {
-            "bullish_crossover": 1.0,
-            "bearish_crossover": -1.0,
-            "bullish": 0.5,
-            "bearish": -0.5
-        }
-        score += trend_scores.get(trend, 0)
-        
-        # Momentum scoring
-        momentum_scores = {
-            'overbought': -0.5, 'oversold': 0.5,
-            'bullish': 0.3, 'bearish': -0.3
-        }
-        score += momentum_scores.get(momentum['rsi'], 0)
-        score += momentum_scores.get(momentum['macd_crossover'], 0)
-        
-        # Volume scoring
-        if volume['volume_spike']:
-            score += 0.3 if volume['volume_trend'] == 'rising' else -0.3
-        
-        # Normalize and return
-        strength = np.clip(score / 1.6, -1, 1)  # Max possible score ±1.6
-        return {
-            'direction': 'BUY' if strength > 0 else 'SELL' if strength < 0 else 'HOLD',
-            'strength': np.abs(strength)
-        }
-
-    def _holding_time(self, strength: float) -> int:
-        """Optimized holding time calculation"""
-        base_time = 2  # minutes
-        return int(np.clip(base_time * (1 + strength), 1, 3))
-
-    def generate_signal(self) -> Dict[str, Any]:
-        """Generate complete trading signal"""
-        if self.buffer_size < max(self.macd_slow, self.atr_window, self.rsi_window):
-            return self._hold_signal("Insufficient data")
-        
-        data = self._get_recent_data(self.buffer_size)
-        current_price = data['prices'][-1]
-        atr_value = self.indicator_cache['atr'][self.buffer_size-1]
-        volatility = np.std(np.diff(np.log(data['prices']))) * np.sqrt(252)
-        
-        # Calculate key components
-        trend = self._trend_direction(
-            self.indicator_cache['ema'][9], 
-            self.indicator_cache['ema'][21]
-        )
-        momentum = self._momentum_strength(
-            self.indicator_cache['rsi'],
-            self.indicator_cache['macd'],
-            self.indicator_cache['signal']
-        )
-        volume_analysis = self._volume_analysis(
-            data['volumes'][-1], 
-            self.indicator_cache['volumes'][self.buffer_size-1]
-        )
-        
-        # Generate signal
-        signal = self._signal_strength(trend, momentum, volume_analysis)
-        sl, tp = self._dynamic_stop_loss_take_profit(current_price, atr_value, volatility)
-        
-        return {
-            'signal': signal['direction'],
-            'stop_loss': sl,
-            'take_profit': tp,
-            'confidence': np.clip(
-                (signal['strength'] * 0.7) + (self._recent_performance() * 0.3),
-                self.min_confidence, self.max_confidence
-            ),
-            'position_size': self._calculate_position_size(sl, current_price),
-            'max_holding_time': self._holding_time(signal['strength']),
-            'trailing_stop': atr_value * 2.0,
-            'indicators': {
-                'ema_fast': self.indicator_cache['ema'][9][-1],
-                'ema_slow': self.indicator_cache['ema'][21][-1],
-                'rsi': self.indicator_cache['rsi'][-1],
-                'macd': self.indicator_cache['macd'][-1],
-                'signal_line': self.indicator_cache['signal'][-1],
-                'atr': atr_value
-            }
-        }
-
-    def _hold_signal(self, reason: str) -> Dict[str, Any]:
-        if self.logger:
-            self.logger.debug(f"HOLD signal: {reason}")
-        return {
-            'signal': 'HOLD',
-            'stop_loss': 0.0,
-            'take_profit': 0.0,
-            'confidence': 0.0,
-            'position_size': 0.0,
-            'max_holding_time': 0,
-            'trailing_stop': 0.0,
-            'indicators': {}
-        }
+            self.indicator_cache = {"atr": np.array([])}
+            self.logger.debug("Signal buffers reset.")
+            
+    @property
+    def closes(self) -> np.ndarray:
+        """
+        Exposes the array of close prices from the circular buffer.
+        This property allows external code (e.g., indicator calculations) to access close data.
+        """
+        data, _ = self.close_buffer.get_all()
+        return data      
+    
+    
+    def update_buffers(self, open_price: float, high: float, low: float, close: float, volume: float):
+        """
+        Updates the internal candle buffers with new candle data.
+        This method is used to backfill or update the internal state from historical data.
+        """
+        self.opens.append(open_price)
+        self.highs.append(high)
+        self.lows.append(low)
+        self.volumes.append(volume)
+        # We use the current datetime as a timestamp; modify if you have an actual timestamp.
+        self.close_buffer.add(close, datetime.now())
+        self.logger.debug("Updated buffers with candle: O=%.2f, H=%.2f, L=%.2f, C=%.2f, V=%.2f",
+                          open_price, high, low, close, volume)  
