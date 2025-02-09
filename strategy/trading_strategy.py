@@ -1,24 +1,15 @@
-#!/usr/bin/env python3
-"""
-TradingStrategy: Production-grade trading strategy for the Deriv platform.
-
-This class integrates the Deriv API client, a robust risk manager, and an advanced
-rule-based signals generator. It subscribes to live tick data, maintains historical
-candle data, and executes trades based on signals that are fused from multiple indicators.
-"""
-
+# strategy/trading_strategy.py
 import asyncio
 import logging
 import numpy as np
 from datetime import datetime, time
 from typing import List, Dict, Optional, Tuple
 
-# Import API client, configuration, risk manager, and the advanced rule-based signals.
+# Import API client, configuration, risk manager, and the rule‐based signals.
 from api.deriv_api import DerivAPI  
-from config import config  # Contains settings like SYMBOL, MAX_TICK_DATA_POINTS, etc.
+from config import config
 from utils.risk_manager import RiskManager
 from strategy.rule_based_signals import RuleBasedSignals
-
 
 class TradingStrategy:
     def __init__(self, logger: logging.Logger, deriv_api_client: DerivAPI, loginid: str = "Unknown"):
@@ -27,12 +18,11 @@ class TradingStrategy:
         self.loginid = loginid
 
         # ---------------- Concurrency Locks ----------------
-        # These locks ensure that critical sections modifying shared state are thread-safe.
-        self.lock = asyncio.Lock()                # General-purpose data lock.
-        self.trade_lock = asyncio.Lock()          # Serializes trade executions.
-        self.balance_lock = asyncio.Lock()        # Protects account balance updates.
-        self.trailing_stop_lock = asyncio.Lock()  # Protects trailing stop updates.
-        self.data_lock = asyncio.Lock()           # Protects market data buffers.
+        self.lock = asyncio.Lock()
+        self.trade_lock = asyncio.Lock()
+        self.balance_lock = asyncio.Lock()
+        self.trailing_stop_lock = asyncio.Lock()
+        self.data_lock = asyncio.Lock()
 
         # ---------------- Performance & Trade History ----------------
         self.performance_stats = {
@@ -100,44 +90,34 @@ class TradingStrategy:
             daily_loss_limit_percent=config.DAILY_LOSS_LIMIT_PERCENT,
             daily_profit_target_percent=config.DAILY_PROFIT_TARGET_PERCENT
         )
-        # The advanced rule-based signals module uses sophisticated weighted fusion.
         self.rule_signals = RuleBasedSignals(logger=self.logger)
-
-    # ------------------ Core Strategy Methods ------------------
 
     async def tick_callback(self, tick: Dict):
         """Process an incoming tick update."""
-        tick_data = tick.get('tick', {})
-        symbol = tick_data.get('symbol', self.current_symbol)
         try:
+            tick_data = tick.get('tick', {})
+            symbol = tick_data.get('symbol', self.current_symbol)
             price = float(tick_data.get('quote', 0.0))
-        except (TypeError, ValueError):
-            self.logger.error("Invalid tick price received.")
-            return
-        epoch = tick_data.get('epoch', 0)
-        timestamp = datetime.fromtimestamp(epoch)
-        await self.append_tick_data(timestamp, price)
+            epoch = tick_data.get('epoch', 0)
+            timestamp = datetime.fromtimestamp(epoch)
+            await self.append_tick_data(timestamp, price)
+            self.rule_signals.process_tick(timestamp, price)
 
-        # Feed tick to the rule-based signal aggregator (which updates internal candles).
-        self.rule_signals.process_tick(timestamp, price)
+            if not self.account_info_logged:
+                await self.log_account_info()
+                self.account_info_logged = True
 
-        # Log account info on first tick.
-        if not self.account_info_logged:
-            await self.log_account_info()
-            self.account_info_logged = True
-
-        # Evaluate and possibly execute a trade if the strategy interval has elapsed.
-        if self.should_evaluate_strategy():
-            asyncio.create_task(self.evaluate_and_execute_trade(symbol))
+            if self.should_evaluate_strategy():
+                asyncio.create_task(self.evaluate_and_execute_trade(symbol))
+        except Exception as e:
+            self.logger.error(f"Error in tick_callback: {e}")
 
     async def evaluate_and_execute_trade(self, symbol: str):
         """
         Evaluates the current market state and executes a trade if signals and risk conditions are met.
-        This method uses advanced signal fusion output and dynamic risk thresholds.
         """
         self.last_strategy_evaluation = datetime.now()
 
-        # Check risk limits before further evaluation.
         if self.risk_manager.risk_limits_reached():
             self.logger.warning("Risk limits reached. Skipping trade evaluation.")
             return
@@ -145,15 +125,13 @@ class TradingStrategy:
             self.logger.warning("Maximum consecutive losses reached. Skipping trade evaluation.")
             return
 
-        # Evaluate strategy: fetch historical and market data, then generate a signal.
         signal, confidence, stop_loss, take_profit = await self.evaluate_strategy(symbol)
 
-        # For this PhD-level version, we dynamically set trade parameters.
-        self.dynamic_stop_loss = -10.0   # Example: hard stop loss threshold (can be dynamic)
-        self.dynamic_take_profit = 5.0     # Example: hard take profit threshold
+        # Set dynamic parameters based on the signal output
+        self.dynamic_stop_loss = stop_loss
+        self.dynamic_take_profit = take_profit
         self.dynamic_contract_type = "MULTUP" if signal == "BUY" else "MULTDOWN"
 
-        # Only trade if signal is decisive and meets the confidence threshold.
         if signal not in ["BUY", "SELL"]:
             self.logger.info("Signal is HOLD; no trade executed.")
             return
@@ -161,14 +139,13 @@ class TradingStrategy:
             self.logger.info(f"Signal confidence too low ({confidence:.2f}). Trade skipped.")
             return
 
-        # Execute the trade with robust error handling.
         await self.execute_trade_safely(symbol, signal)
 
     async def execute_trade_safely(self, symbol: str, signal: str):
-        """Execute a trade with concurrency controls and robust error handling."""
+        """Execute a trade with proper concurrency controls and error handling."""
         price_proposal = await self.get_price_proposal(symbol, signal)
         if not price_proposal:
-            self.logger.error("Price proposal invalid. Aborting trade execution.")
+            self.logger.error("Invalid price proposal. Aborting trade execution.")
             return
         try:
             async with self.trade_lock:
@@ -188,8 +165,7 @@ class TradingStrategy:
 
     async def monitor_trade(self, contract_id: str):
         """
-        Monitors an open trade by subscribing to open contract updates.
-        Exits the trade based on trailing stops, profit targets, or time limits.
+        Monitors an open trade and exits based on trailing stops, profit targets, or time limits.
         """
         self.logger.info(f"Monitoring trade: {contract_id}")
         try:
@@ -210,21 +186,20 @@ class TradingStrategy:
             await self.cleanup_trade(contract_id)
 
     async def handle_poc_update(self, poc_update: Dict, contract_id: str, future: asyncio.Future):
-        """Handles real-time updates for an open contract and triggers exit if conditions are met."""
+        """Handles real-time updates for an open contract and checks for exit triggers."""
         if contract_id in self.contracts_closed:
             return
         poc_data = poc_update.get('proposal_open_contract', {})
         try:
             current_price = float(poc_data.get('current_spot', 0.0))
         except (TypeError, ValueError):
-            self.logger.error("Invalid current spot received in POC update.")
+            self.logger.error("Invalid current spot in POC update.")
             return
 
         if current_price > self.best_price:
             self.best_price = current_price
             self.logger.info(f"Best price updated to: {self.best_price:.2f}")
 
-        # Calculate trailing stop and check exit conditions.
         trailing_stop_price = self.best_price - self.dynamic_trailing_stop
         if current_price <= trailing_stop_price:
             await self.execute_exit(contract_id, f"Trailing stop triggered at {trailing_stop_price:.2f}")
@@ -236,44 +211,43 @@ class TradingStrategy:
             await self.finalize_trade(contract_id, profit, future)
             return
 
-        # Update dynamic parameters and check for other exit triggers.
         await self.update_dynamic_parameters()
         await self.check_exit_conditions(contract_id, profit)
 
     async def update_dynamic_parameters(self):
-        """
-        Periodically updates dynamic parameters (volatility, ATR, trailing stops) from market data.
-        This adaptive approach ensures our risk thresholds respond to changing conditions.
-        """
-        if (datetime.now() - self.last_volatility_update).seconds > 300:
-            self.volatility = await self.calculate_market_volatility()
-            self.average_true_range = self.rule_signals.calculate_atr(window=14)
-            self.last_volatility_update = datetime.now()
-        async with self.trailing_stop_lock:
-            if self.dynamic_trailing_stop <= 0:
-                self.dynamic_trailing_stop = max(self.average_true_range * 1.2, 3.0)
-                self.logger.info(f"Dynamic trailing stop updated to: {self.dynamic_trailing_stop:.2f}")
+        if getattr(config, "INSTRUMENT_TYPE", "underlying") == "volatility_option":
+            async with self.trailing_stop_lock:
+                # For volatility options, we use a fixed trailing stop (e.g., 5 units)
+                self.dynamic_trailing_stop = 5.0
+                self.logger.info(f"Dynamic trailing stop set to: {self.dynamic_trailing_stop:.2f} (volatility option mode)")
+        else:
+            if (datetime.now() - self.last_volatility_update).seconds > 300:
+                self.volatility = await self.calculate_market_volatility()
+                self.average_true_range = self.rule_signals.calculate_atr(window=14) or 1.0
+                self.last_volatility_update = datetime.now()
+            async with self.trailing_stop_lock:
+                if self.dynamic_trailing_stop <= 0:
+                    self.dynamic_trailing_stop = max(self.average_true_range * 1.2, 3.0)
+                    self.logger.info(f"Dynamic trailing stop updated to: {self.dynamic_trailing_stop:.2f}")
 
     async def calculate_market_volatility(self) -> float:
         """Calculates annualized volatility from recent candle closes."""
         prices = np.array(self.candle_closes[-50:])
         if len(prices) < 2:
             return 0.0
+        
         log_returns = np.diff(np.log(prices))
         return float(np.std(log_returns) * np.sqrt(252))
 
     async def check_exit_conditions(self, contract_id: str, profit: float):
         """
         Checks for exit conditions based on profit thresholds, trailing stops, or maximum holding time.
-        An exit is triggered if any condition is met.
         """
         exit_reason = None
-        if profit >= 5.0:
-            exit_reason = f"Max profit reached: {profit:.2f}"
+        if profit >= self.dynamic_take_profit:
+            exit_reason = f"Take profit reached: {profit:.2f}"
         elif profit <= -abs(self.dynamic_stop_loss):
             exit_reason = f"Stop loss reached: {profit:.2f}"
-        elif profit >= self.dynamic_take_profit:
-            exit_reason = f"Take profit reached: {profit:.2f}"
         else:
             trailing_level = self.best_price - self.dynamic_trailing_stop
             if profit < trailing_level:
@@ -284,7 +258,7 @@ class TradingStrategy:
             await self.execute_exit(contract_id, exit_reason)
 
     async def check_holding_time(self, contract_id: str) -> bool:
-        """Returns True if the trade has been open longer than the allowed holding time."""
+        """Returns True if the trade has been open longer than allowed."""
         entry_time = self.trade_open_times.get(contract_id)
         if not entry_time:
             return False
@@ -300,7 +274,7 @@ class TradingStrategy:
             await self.retry_sell_contract(contract_id)
 
     async def retry_sell_contract(self, contract_id: str, max_retries: int = 3):
-        """Retries selling a contract a fixed number of times with exponential backoff."""
+        """Retries selling a contract with exponential backoff."""
         for attempt in range(max_retries):
             try:
                 await asyncio.sleep(2 ** attempt)
@@ -311,7 +285,7 @@ class TradingStrategy:
         self.logger.error(f"Failed to sell contract {contract_id} after {max_retries} attempts")
 
     async def append_tick_data(self, timestamp: datetime, price: float):
-        """Appends tick data to in-memory buffers, ensuring they do not exceed the maximum length."""
+        """Appends tick data to in-memory buffers, ensuring maximum length is maintained."""
         async with self.lock:
             self.tick_times.append(timestamp)
             self.tick_prices.append(price)
@@ -320,7 +294,7 @@ class TradingStrategy:
                 self.tick_prices = self.tick_prices[-config.MAX_TICK_DATA_POINTS:]
 
     async def log_account_info(self):
-        """Logs the account balance and initializes risk manager with the starting balance."""
+        """Logs the account balance and initializes the risk manager."""
         try:
             account_status_response = await self.deriv_api.get_account_status()
             account_status = account_status_response.get('get_account_status', {})
@@ -359,7 +333,7 @@ class TradingStrategy:
             self.logger.error(f"Error retrieving balance: {e}")
 
     def should_evaluate_strategy(self) -> bool:
-        """Determines whether enough time has elapsed and market conditions allow strategy evaluation."""
+        """Determines whether it is time to re‐evaluate the strategy."""
         elapsed = (datetime.now() - self.last_strategy_evaluation).total_seconds()
         if elapsed < config.STRATEGY_EVALUATION_INTERVAL:
             return False
@@ -371,15 +345,12 @@ class TradingStrategy:
 
     async def evaluate_strategy(self, symbol: str) -> Tuple[str, float, float, float]:
         """
-        Fetches historical and market data, updates the rule-based signals buffers, and generates a trading signal.
-        
-        Returns:
-          A tuple (signal, confidence, stop_loss, take_profit).
-          If no trade is advised, the tuple will indicate HOLD with zero confidence.
+        Fetches historical and market data, updates signal buffers, and generates a trading signal.
+        Returns a tuple: (signal, confidence, stop_loss, take_profit).
         """
         try:
             await self.fetch_historical_data(symbol)
-            await self.fetch_market_data(symbol)  # Updates the RuleBasedSignals buffers.
+            await self.fetch_market_data(symbol)
             signal_info = self.rule_signals.generate_signal()
             self.logger.info(f"Strategy evaluated for {symbol}: {signal_info}")
             if signal_info['signal'] == "HOLD":
@@ -393,7 +364,6 @@ class TradingStrategy:
     async def fetch_historical_data(self, symbol: str, use_candles: bool = False):
         """
         Fetches historical market data (ticks or candles) and updates internal tick buffers.
-        This historical data is used for indicator initialization and backfilling buffers.
         """
         style = "candles" if use_candles else "ticks"
         request = {
@@ -441,8 +411,7 @@ class TradingStrategy:
 
     async def fetch_market_data(self, symbol: str):
         """
-        Fetches recent candle data and updates the internal buffers of the rule-based signals module.
-        This is critical for real-time indicator updates.
+        Fetches recent candle data and updates the rule-based signals buffers.
         """
         request = {
             "ticks_history": symbol,
@@ -480,8 +449,7 @@ class TradingStrategy:
                     self.candle_lows.append(l)
                     self.candle_closes.append(close)
                     self.candle_volumes.append(vol)
-                    # Update rule-based signals buffers.
-                    self.rule_signals.update_buffers(open_price=o, high=h, low=l, close=close, volume=vol)
+                    self.rule_signals.update_buffers(o, h, l, close, vol)
             self.logger.info(f"Market data updated for {symbol}")
         except Exception as e:
             self.logger.error(f"Error fetching market data for {symbol}: {e}")
@@ -489,7 +457,6 @@ class TradingStrategy:
     async def subscribe_live_ticks(self, symbol: str):
         """
         Subscribes to a live tick stream for a given symbol.
-        The asynchronous callback passes each tick to the tick_callback method.
         """
         request = {
             "ticks_history": symbol,
@@ -516,7 +483,6 @@ class TradingStrategy:
     async def get_price_proposal(self, symbol: str, signal: str):
         """
         Retrieves a price proposal from the Deriv API using dynamic parameters.
-        The stake amount is determined dynamically and capped by the maximum allowed stake.
         """
         try:
             stake_amount = self.dynamic_position_size if self.dynamic_position_size > 0 else 50
@@ -545,7 +511,6 @@ class TradingStrategy:
     async def sell_contract(self, contract_id: str, future: Optional[asyncio.Future] = None):
         """
         Sells an open contract by sending a sell request to the Deriv API.
-        On success, logs the sale; on failure, logs an error.
         """
         try:
             request = {"sell": contract_id, "price": 0}
@@ -566,9 +531,7 @@ class TradingStrategy:
 
     async def record_trade_results(self, profit: float, contract_id: str):
         """
-        Records the result of a trade. If the calculated profit is near zero,
-        attempts to retrieve a more accurate profit figure from the API.
-        Updates performance statistics accordingly.
+        Records the result of a trade, updates performance statistics, and logs the net P/L.
         """
         if abs(profit) < 0.01:
             real_profit = await self.deriv_api.get_contract_profit(contract_id)
@@ -594,8 +557,6 @@ class TradingStrategy:
     def set_active_symbols(self, symbols: List[str]):
         self.active_symbols = symbols
 
-    # ------------------ Helper Methods ------------------
-
     def initialize_trade(self, contract_id: str, price_proposal: Dict):
         """Initializes trade state with entry price and timestamp."""
         self.entry_price = float(price_proposal['ask_price'])
@@ -612,7 +573,7 @@ class TradingStrategy:
             future.set_result(None)
 
     async def cleanup_trade(self, contract_id: str):
-        """Cleans up trade state after a trade has been exited."""
+        """Cleans up trade state after exiting a trade."""
         if contract_id in self.trade_open_times:
             del self.trade_open_times[contract_id]
         self.logger.info(f"Trade cleanup complete for: {contract_id}")
@@ -628,5 +589,3 @@ class TradingStrategy:
                     return
             except Exception as e:
                 self.logger.warning(f"Trade retry {attempt + 1} failed: {e}")
-
-# End of TradingStrategy class.

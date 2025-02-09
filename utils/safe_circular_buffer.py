@@ -1,3 +1,4 @@
+# utils/safe_circular_buffer.py
 import numpy as np
 from datetime import datetime
 
@@ -8,7 +9,7 @@ class SafeCircularBuffer:
     """
     def __init__(self, size: int):
         self.size = size
-        self.buffer = np.full(size, np.nan)
+        self.buffer = np.full(size, np.nan, dtype=float)
         self.timestamps = np.empty(size, dtype='datetime64[ns]')
         self.index = 0
         self.full = False
