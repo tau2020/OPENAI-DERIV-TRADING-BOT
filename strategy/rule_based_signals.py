@@ -6,20 +6,9 @@ from config import config
 from utils.safe_circular_buffer import SafeCircularBuffer
 
 class RuleBasedSignals:
-    """
-    Generates trading signals by fusing technical indicators computed from candle data.
-    Ticks are aggregated into candles (OHLCV) over a configurable interval.
+
     
-    The signal logic includes:
-      • Trend analysis via an EMA crossover.
-      • Momentum via MACD.
-      • Oscillator via RSI.
-    
-    These components are weighted and then passed through a logistic (sigmoid) function to yield
-    a continuous confidence level. ATR is used to set dynamic risk parameters.
-    """
-    
-    def __init__(self, logger: logging.Logger, candle_interval: int = 60, rsi_window: int = 14, buffer_size: int = 500):
+    def __init__(self, logger: logging.Logger, candle_interval: int = 1, rsi_window: int = 14, buffer_size: int = 500):
         self.logger = logger
         self.candle_interval = candle_interval  # seconds per candle
         self.rsi_window = rsi_window
@@ -38,7 +27,7 @@ class RuleBasedSignals:
         self.highs = []
         self.lows = []
         self.volumes = []
-        self.min_confidence = 0.6  # minimum confidence threshold
+        self.min_confidence = 0.07  # minimum confidence threshold
         
         # Indicator cache (for example, ATR)
         self.indicator_cache = {"atr": np.array([])}
@@ -54,7 +43,7 @@ class RuleBasedSignals:
             self.current_candle_high = price
             self.current_candle_low = price
             self.current_candle_close = price
-            self.current_candle_volume = 1
+            self.current_candle_volume = 5
             self.logger.debug("Started new candle at %s with price %.2f", timestamp, price)
         else:
             elapsed = (timestamp - self.current_candle_start).total_seconds()
@@ -83,7 +72,7 @@ class RuleBasedSignals:
                 self.current_candle_high = price
                 self.current_candle_low = price
                 self.current_candle_close = price
-                self.current_candle_volume = 1
+                self.current_candle_volume = 5
                 self.logger.debug("Started new candle at %s with price %.2f", timestamp, price)
 
     def _calculate_ema(self, data: np.ndarray, window: int) -> np.ndarray:
@@ -167,6 +156,8 @@ class RuleBasedSignals:
         return atr[-1]
 
     def generate_signal(self) -> dict:
+        
+    
         # Retrieve historical close data.
         data, _ = self.close_buffer.get_all()
         if len(data) < 26:
@@ -200,7 +191,7 @@ class RuleBasedSignals:
         k, c = 10.0, 0.0
         confidence = 1 / (1 + np.exp(-k * (S - c)))
 
-        threshold = 0.10
+        threshold = 0.08
         if S > threshold:
             signal = "BUY"
         elif S < -threshold:
@@ -212,7 +203,7 @@ class RuleBasedSignals:
         # --- Risk Parameters ---
         if getattr(config, "INSTRUMENT_TYPE", "underlying") == "volatility_option":
             # For volatility options, use fixed percentage-based risk parameters
-            base_stake = 50  # or use self.dynamic_position_size if set
+            base_stake = 2000  # or use self.dynamic_position_size if set
             stop_loss = 0.2 * base_stake    # e.g., 20% of the stake
             take_profit = 0.3 * base_stake  # e.g., 30% of the stake
         else:

@@ -21,7 +21,7 @@ def setup_logging() -> logging.Logger:
         logger: Configured logger instance.
     """
     logger = logging.getLogger("TradingBot")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     # Ensure no duplicate handlers are added in repeated runs.
     if not logger.handlers:
         ch = logging.StreamHandler()
