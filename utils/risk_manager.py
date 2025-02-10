@@ -11,10 +11,10 @@ class RiskManager:
     def __init__(
         self,
         logger: logging.Logger = None,
-        max_daily_drawdown: float = 0.03,
-        max_consecutive_losses: int = 3,
-        daily_loss_limit_percent: float = 0.02,
-        daily_profit_target_percent: float = 0.03,
+        max_daily_drawdown: float = 50.63,
+        max_consecutive_losses: int = 50,
+        daily_loss_limit_percent: float = 50.72,
+        daily_profit_target_percent: float = 30.03,
         risk_per_trade: float = 0.01,   # 1% of balance per trade
         max_position_size: float = 1000 # maximum allowed position size
     ):

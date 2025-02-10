@@ -50,7 +50,7 @@ TICKS_HISTORY_COUNT = int(os.getenv("TICKS_HISTORY_COUNT", "5000"))
 # -------------------- Trade Limits --------------------
 MAX_STAKE = float(os.getenv("MAX_STAKE", "2000"))
 # The risk manager expects a count for consecutive losses. Use an integer.
-MAX_CONSECUTIVE_LOSSES = int(os.getenv("MAX_CONSECUTIVE_LOSSES", "3"))
+MAX_CONSECUTIVE_LOSSES = int(os.getenv("MAX_CONSECUTIVE_LOSSES", "10"))
 DAILY_LOSS_LIMIT_PERCENT = float(os.getenv("DAILY_LOSS_LIMIT_PERCENT", "0.05"))
 DAILY_PROFIT_TARGET_PERCENT = float(os.getenv("DAILY_PROFIT_TARGET_PERCENT", "0.03"))
 # Maximum daily drawdown as a fraction (e.g. 3% drawdown)

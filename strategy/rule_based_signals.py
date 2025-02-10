@@ -14,7 +14,7 @@ class RuleBasedSignals:
     Generates a trading signal (BUY, SELL, or HOLD) with an associated confidence level and risk parameters.
     """
     
-    def __init__(self, logger: logging.Logger, candle_interval: int = 1, rsi_window: int = 14, buffer_size: int = 500):
+    def __init__(self, logger: logging.Logger, candle_interval: int = 60, rsi_window: int = 14, buffer_size: int = 500):
         self.logger = logger
         self.candle_interval = candle_interval  # seconds per candle
         self.rsi_window = rsi_window
@@ -34,7 +34,7 @@ class RuleBasedSignals:
         self.highs = []
         self.lows = []
         self.volumes = []
-        self.min_confidence = 1.0  # minimum confidence threshold
+        self.min_confidence = 1.5  # minimum confidence threshold
 
         # Indicator cache (for example, ATR)
         self.indicator_cache = {"atr": np.array([])}
@@ -214,7 +214,7 @@ class RuleBasedSignals:
         # Compute signal confidence using a sigmoid function.
         k, c = 10.0, 0.0
         confidence = 1 / (1 + np.exp(-k * (S - c)))
-        threshold = 1.5
+        threshold = 0.05
         if S > threshold:
             signal = "BUY"
         elif S < -threshold:

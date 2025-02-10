@@ -88,7 +88,7 @@ class TradingStrategy:
         self.last_volatility_update = datetime.now()
 
         # Trade Multiplier
-        self.multiplier_factor = getattr(config, 'MULTIPLIER_FACTOR', 300)
+        self.multiplier_factor = getattr(config, 'MULTIPLIER_FACTOR', 2000)
 
         # Risk Manager & Signal Generator
         self.risk_manager = RiskManager(
@@ -189,7 +189,7 @@ class TradingStrategy:
                 "contract_id": contract_id
             })
             start_time = datetime.now()
-            min_holding_period = 60  # seconds before exits are allowed
+            min_holding_period = 30  # seconds before exits are allowed
             future = asyncio.get_event_loop().create_future()
 
             def check_holding_time():
