@@ -1,6 +1,10 @@
 import numpy as np
+import pandas as pd
 import logging
 
+# ---------------------------
+# ATR Computation Function
+# ---------------------------
 def compute_atr(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, window: int, logger: logging.Logger = None) -> np.ndarray:
     """
     Computes the Average True Range (ATR) using Wilder's smoothing.

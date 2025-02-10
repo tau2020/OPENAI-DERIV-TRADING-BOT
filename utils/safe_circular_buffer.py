@@ -1,4 +1,3 @@
-# utils/safe_circular_buffer.py
 import numpy as np
 from datetime import datetime
 
@@ -35,3 +34,10 @@ class SafeCircularBuffer:
             return self.buffer.copy(), self.timestamps.copy()
         else:
             return self.buffer[:self.index].copy(), self.timestamps[:self.index].copy()
+
+    def reset(self):
+        """Resets the circular buffer to its initial empty state."""
+        self.buffer = np.full(self.size, np.nan, dtype=float)
+        self.timestamps = np.empty(self.size, dtype='datetime64[ns]')
+        self.index = 0
+        self.full = False
