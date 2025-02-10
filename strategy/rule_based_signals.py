@@ -34,7 +34,7 @@ class RuleBasedSignals:
         self.highs = []
         self.lows = []
         self.volumes = []
-        self.min_confidence = 0.07  # minimum confidence threshold
+        self.min_confidence = 1.0  # minimum confidence threshold
 
         # Indicator cache (for example, ATR)
         self.indicator_cache = {"atr": np.array([])}
@@ -214,7 +214,7 @@ class RuleBasedSignals:
         # Compute signal confidence using a sigmoid function.
         k, c = 10.0, 0.0
         confidence = 1 / (1 + np.exp(-k * (S - c)))
-        threshold = 0.08
+        threshold = 1.5
         if S > threshold:
             signal = "BUY"
         elif S < -threshold:

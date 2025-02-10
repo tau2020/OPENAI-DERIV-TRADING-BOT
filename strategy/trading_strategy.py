@@ -88,7 +88,7 @@ class TradingStrategy:
         self.last_volatility_update = datetime.now()
 
         # Trade Multiplier
-        self.multiplier_factor = getattr(config, 'MULTIPLIER_FACTOR', 2000)
+        self.multiplier_factor = getattr(config, 'MULTIPLIER_FACTOR', 300)
 
         # Risk Manager & Signal Generator
         self.risk_manager = RiskManager(
@@ -149,9 +149,7 @@ class TradingStrategy:
         if signal not in ["BUY", "SELL"]:
             self.logger.info("Signal is HOLD; no trade executed.")
             return
-        if confidence < self.rule_signals.min_confidence:
-            self.logger.info(f"Signal confidence too low ({confidence:.2f}). Trade skipped.")
-            return
+        
 
         await self.execute_trade_safely(symbol, signal)
 
@@ -191,7 +189,7 @@ class TradingStrategy:
                 "contract_id": contract_id
             })
             start_time = datetime.now()
-            min_holding_period = 15  # seconds before exits are allowed
+            min_holding_period = 60  # seconds before exits are allowed
             future = asyncio.get_event_loop().create_future()
 
             def check_holding_time():
@@ -210,6 +208,7 @@ class TradingStrategy:
         finally:
             await self.cleanup_trade(contract_id)
 
+    # Updated handle_poc_update method in TradingStrategy
     async def handle_poc_update(self, poc_update: Dict, contract_id: str, future: asyncio.Future):
         if contract_id in self.contracts_closed:
             return
@@ -226,9 +225,9 @@ class TradingStrategy:
             self.logger.info(f"Best price updated to: {current_price:.2f} (normalized: {normalized_current_price:.2f})")
         atr = self.average_true_range or 1.0
         trailing_stop_offset = max(atr * 2.0, atr * 0.5)
-        if self.dynamic_contract_type == "MULTUP":
+        if self.dynamic_contract_type == "MULTUP":  # Long position
             trailing_stop_threshold = normalized_best_price - trailing_stop_offset
-        else:
+        else:  # Short position: trailing stop should be above the best price
             trailing_stop_threshold = normalized_best_price + trailing_stop_offset
         if (self.dynamic_contract_type == "MULTUP" and normalized_current_price <= trailing_stop_threshold) or \
         (self.dynamic_contract_type == "MULTDOWN" and normalized_current_price >= trailing_stop_threshold):
@@ -243,6 +242,7 @@ class TradingStrategy:
             return
         await self.update_dynamic_parameters()
         await self.check_exit_conditions(contract_id, profit)
+
 
 
     async def update_dynamic_parameters(self):
@@ -326,16 +326,10 @@ class TradingStrategy:
         self.logger.error(f"Failed to sell contract {contract_id} after {max_retries} attempts")
 
     async def append_tick_data(self, timestamp: datetime, price: float):
-        """
-        Appends tick data to in-memory buffers while maintaining maximum length.
-        """
         async with self.lock:
             self.tick_times.append(timestamp)
             self.tick_prices.append(price)
-            if len(self.tick_prices) > config.MAX_TICK_DATA_POINTS:
-                self.tick_times = self.tick_times[-config.MAX_TICK_DATA_POINTS:]
-                self.tick_prices = self.tick_prices[-config.MAX_TICK_DATA_POINTS:]
-
+           
     async def log_account_info(self):
         """
         Logs the account balance and initializes the risk manager.
