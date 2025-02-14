@@ -1,6 +1,8 @@
 import os
 import json
 import logging
+
+import pandas as pd
 import anthropic
 import asyncio
 
@@ -58,7 +60,7 @@ class ClaudeTradingClient:
             times = times[-max_data_points:]
 
         price_data_str = "\n".join(
-            [f"{t.strftime('%Y-%m-%d %H:%M:%S')}, {p}" for t, p in zip(times, prices)]
+            [f"{pd.Timestamp(t).strftime('%Y-%m-%d %H:%M:%S')}, {p}" for t, p in zip(times, prices)]
         )
         news_str = "\n".join(news_headlines[:3])
 

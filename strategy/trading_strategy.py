@@ -8,18 +8,33 @@ from collections import deque
 
 from api.deriv_api import DerivAPI
 from config import config
+from utils.ai_integration import (
+    fallback_hold_signal,
+    get_trading_signal_from_anthropic,
+    get_trading_signal_from_openai,
+    initialize_anthropic,
+    initialize_openai
+)
 from utils.risk_manager import RiskManager
 from strategy.rule_based_signals import RuleBasedSignals
 
 class TradingStrategy:
     """
     Coordinates market data processing, signal generation, risk management,
-    and order execution for the Deriv platform.
+    and order execution for the Deriv platform using CALL/PUT options exclusively.
     """
-    def __init__(self, logger: logging.Logger, deriv_api_client: DerivAPI, loginid: str = "Unknown"):
+    def __init__(self, logger: logging.Logger, deriv_api_client: DerivAPI, loginid: str = "Unknown", openai_client=None, anthropic_client=None):
         self.logger = logger
         self.deriv_api = deriv_api_client
         self.loginid = loginid
+
+        if openai_client is None:
+            openai_client = initialize_openai(config.OPENAI_API_KEY, logger)
+        if anthropic_client is None:
+            anthropic_client = initialize_anthropic(config.ANTHROPIC_API_KEY, logger)
+
+        self.openai_client = openai_client
+        self.anthropic_client = anthropic_client
 
         # Concurrency locks.
         self.lock = asyncio.Lock()
@@ -71,7 +86,7 @@ class TradingStrategy:
         self.dynamic_position_size = 0.0
         self.dynamic_max_holding_time = 2  # in minutes
         self.dynamic_trailing_stop = 0.0
-        self.dynamic_contract_type = ""
+        self.dynamic_contract_type = ""  # Will be set to "CALL" or "PUT"
         self.dynamic_duration = config.DURATION
         self.entry_price = 0.0
         self.best_price = 0.0
@@ -120,7 +135,7 @@ class TradingStrategy:
             if self.should_evaluate_strategy():
                 asyncio.create_task(self.evaluate_and_execute_trade(symbol))
         except Exception as e:
-            self.logger.error(f"Error in tick_callback: {e}")
+            self.logger.exception("Error in tick_callback")
 
     async def evaluate_and_execute_trade(self, symbol: str):
         """
@@ -159,6 +174,9 @@ class TradingStrategy:
         if not price_proposal:
             self.logger.error("Invalid price proposal. Aborting trade execution.")
             return
+        if 'ask_price' not in price_proposal:
+            self.logger.error("Price proposal missing 'ask_price'. Aborting trade.")
+            return
         try:
             async with self.trade_lock:
                 response = await self.deriv_api.buy({
@@ -187,7 +205,7 @@ class TradingStrategy:
             })
             start_time = datetime.now()
             min_holding_period = 30  # seconds
-            future = asyncio.get_event_loop().create_future()
+            future = asyncio.get_running_loop().create_future()
 
             def check_holding_time():
                 return (datetime.now() - start_time).seconds > min_holding_period
@@ -220,7 +238,7 @@ class TradingStrategy:
             self.best_price = current_price
             self.logger.info(f"Best price updated to: {current_price:.2f}")
         atr = self.average_true_range or 1.0
-        trailing_stop_offset = max(atr * 2.0, atr * 0.5)
+        trailing_stop_offset = atr * 1.5 * self.conversion_factor
         if self.dynamic_contract_type == "CALL":  # long (call) position
             trailing_stop_threshold = normalized_best_price - trailing_stop_offset
         else:  # short (put) position: trailing stop above best price
@@ -343,11 +361,11 @@ class TradingStrategy:
             self.logger.error(f"Error retrieving balance: {e}")
 
     def should_evaluate_strategy(self) -> bool:
-        elapsed = (datetime.now() - self.last_strategy_evaluation).total_seconds()
+        now = datetime.now()
+        elapsed = (now - self.last_strategy_evaluation).total_seconds()
         if elapsed < config.STRATEGY_EVALUATION_INTERVAL:
             return False
-        now_local = datetime.now().time()
-        if not (self.allowed_trading_start <= now_local <= self.allowed_trading_end):
+        if not (self.allowed_trading_start <= now.time() <= self.allowed_trading_end):
             self.logger.debug("Outside permitted trading hours.")
             return False
         return True
@@ -358,15 +376,67 @@ class TradingStrategy:
                 self.fetch_historical_data(symbol),
                 self.fetch_market_data(symbol)
             )
-            signal_info = self.rule_signals.generate_signal()
-            self.logger.info(f"Strategy evaluated for {symbol}: {signal_info}")
-            if signal_info['signal'] == "HOLD":
-                return "HOLD", 0.0, 0.0, 0.0
-            return (signal_info['signal'], signal_info['confidence'],
-                    signal_info['stop_loss'], signal_info['take_profit'])
         except Exception as e:
-            self.logger.error(f"Error evaluating strategy: {e}")
+            self.logger.error(f"Error during data fetch for strategy evaluation: {e}")
             return "HOLD", 0.0, 0.0, 0.0
+
+        # First, generate the rule-based signal.
+        rule_signal_info = self.rule_signals.generate_signal()
+        self.logger.info(f"Rule-based signal: {rule_signal_info}")
+
+        # If AI is enabled via configuration, try to obtain an AI signal.
+        if getattr(config, "AI_ENABLED", True):
+            # Retrieve market data from our buffers.
+            try:
+                prices, times = self.rule_signals.close_buffer.get_all()
+            except Exception as e:
+                self.logger.error(f"Error obtaining historical prices: {e}")
+                prices, times = [], []
+            # (For example purposes, we use self.volatility and performance stats.)
+            recent_volatility = self.volatility or 0.0
+            wins = self.performance_stats.get('wins', 0)
+            losses = self.performance_stats.get('losses', 1)
+            recent_trades_win_loss_ratio = wins / losses if losses else wins
+            account_balance = self.latest_balance or 1000.0
+
+            # Call both AI models concurrently.
+            openai_task = asyncio.create_task(
+                get_trading_signal_from_openai(
+                    self.openai_client, symbol, prices, times, self.logger,
+                    recent_volatility, recent_trades_win_loss_ratio, account_balance
+                )
+            )
+            anthropic_task = asyncio.create_task(
+                get_trading_signal_from_anthropic(
+                    self.anthropic_client, symbol, prices, times, self.logger,
+                    recent_volatility, recent_trades_win_loss_ratio, account_balance
+                )
+            )
+            openai_signal, anthropic_signal = await asyncio.gather(openai_task, anthropic_task)
+            self.logger.info(f"OpenAI signal: {openai_signal}")
+            self.logger.info(f"Anthropic signal: {anthropic_signal}")
+
+            # Choose the AI signal if at least one model returns a trade (with 100% confidence).
+            chosen_signal = fallback_hold_signal()
+            if (openai_signal["signal"] != "HOLD" and abs(openai_signal["confidence"] - 1.0) < 1e-9 and
+                anthropic_signal["signal"] != "HOLD" and abs(anthropic_signal["confidence"] - 1.0) < 1e-9 and
+                openai_signal["signal"] == anthropic_signal["signal"]):
+                chosen_signal = openai_signal  # Both agree.
+            elif openai_signal["signal"] != "HOLD" and abs(openai_signal["confidence"] - 1.0) < 1e-9:
+                chosen_signal = openai_signal
+            elif anthropic_signal["signal"] != "HOLD" and abs(anthropic_signal["confidence"] - 1.0) < 1e-9:
+                chosen_signal = anthropic_signal
+            else:
+                self.logger.info("No valid AI signal with full confidence; using rule-based signal.")
+                chosen_signal = rule_signal_info
+
+            self.logger.info(f"Chosen signal: {chosen_signal}")
+            return (chosen_signal["signal"], chosen_signal["confidence"],
+                    chosen_signal["stop_loss"], chosen_signal["take_profit"])
+        else:
+            # If AI integration is not enabled, return the rule-based signal.
+            return (rule_signal_info["signal"], rule_signal_info["confidence"],
+                    rule_signal_info["stop_loss"], rule_signal_info["take_profit"])
 
     async def fetch_historical_data(self, symbol: str, use_candles: bool = False):
         style = "candles" if use_candles else "ticks"
@@ -482,10 +552,10 @@ class TradingStrategy:
                 "contract_type": self.dynamic_contract_type,
                 "currency": config.CURRENCY,
                 "symbol": symbol,
+                "duration": 60,
+                "duration_unit": "s",
             }
-            # For instruments other than CALL/PUT options, include multiplier.
-            if getattr(config, "INSTRUMENT_TYPE", "underlying") != "call_put":
-                proposal_request["multiplier"] = self.multiplier_factor
+            # Since we're using CALL/PUT options exclusively, no multiplier is added.
             response = await self.deriv_api.proposal(proposal_request)
             if response and 'proposal' in response:
                 self.logger.info(f"Price proposal: {response['proposal'].get('ask_price', 'N/A')}")
@@ -520,7 +590,11 @@ class TradingStrategy:
 
     async def record_trade_results(self, profit: float, contract_id: str):
         if abs(profit) < 0.01:
-            real_profit = await self.deriv_api.get_contract_profit(contract_id)
+            try:
+                real_profit = await self.deriv_api.get_contract_profit(contract_id)
+            except Exception as e:
+                self.logger.error(f"Failed to fetch real profit: {e}")
+                real_profit = None
             if real_profit is not None:
                 profit = real_profit
 

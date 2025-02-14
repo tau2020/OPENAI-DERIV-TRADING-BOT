@@ -2,6 +2,7 @@ import openai
 import logging
 import asyncio
 import json
+import pandas as pd
 
 def initialize_openai(api_key, logger):
     """
@@ -32,26 +33,31 @@ async def call_openai_api(client, prompt, logger, retries=3):
     response = None
     for attempt in range(retries):
         try:
+            logger.info(f"Attempt {attempt + 1}/{retries}: Calling OpenAI API...")
+            # Log a preview of the prompt (first 200 characters) to avoid excessive logging.
+            logger.debug(f"Prompt preview: {prompt[:200]} ...")
             response = await asyncio.to_thread(
                 client.chat.completions.create,
-                model="o3-mini",  # Replace with the correct model name if needed.
+                model="o3-mini",
+                reasoning_effort="high",  # Replace with the correct model name if needed.
                 messages=[
                     {
                         "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt}
-                        ],
+                        "content": prompt,
                         "max_completion_tokens": 300
                     }
                 ]
             )
+            logger.info("OpenAI API call successful.")
+            logger.debug(f"API response: {response}")
             return response
         except Exception as e:
+            logger.exception(f"OpenAI API request failed on attempt {attempt + 1}/{retries}.")
             if attempt < retries - 1:
-                logger.warning(f"OpenAI request failed (attempt {attempt + 1}/{retries}). Retrying...")
+                logger.warning(f"Retrying after error: {e}")
                 await asyncio.sleep(2)
             else:
-                logger.error(f"OpenAI request failed after {retries} attempts: {e}")
+                logger.error(f"OpenAI API request failed after {retries} attempts: {e}", exc_info=True)
                 return None
     return response
 
@@ -60,7 +66,7 @@ def build_prompt(symbol, prices, times, recent_volatility, recent_trades_win_los
     Constructs the prompt sent to the AI.
     """
     price_data_str = "\n".join(
-        f"{t.strftime('%Y-%m-%d %H:%M:%S')}, {p}" for t, p in zip(times, prices)
+        f"{pd.Timestamp(t).strftime('%Y-%m-%d %H:%M:%S')}, {p}" for t, p in zip(times, prices)
     )
     prompt = f"""
 ENHANCED PROMPT (VERSION 3.5) — PROFESSIONAL PORTFOLIO MANAGER EDITION
@@ -99,8 +105,6 @@ GAME RULES
    - Your move must be executed with absolute confidence (confidence == 1.0).
    - A win is achieved only if your move, when executed, results in a profit relative to the algorithm’s move.
 
-
-   
 OUTPUT RULES:
 NO QUOTES
 NO FORMATTING
@@ -128,13 +132,16 @@ Volatility: {recent_volatility}
 Win/Loss Ratio: {recent_trades_win_loss_ratio}
 Balance: {account_balance}
 """
-    return prompt
+    logger.debug(f"Built prompt (first 500 chars): {prompt[:500]}")
+    return prompt.strip()
 
 def clean_openai_response(content, logger):
     """
     Removes any code fences or extraneous formatting from the OpenAI response.
     """
+    logger.debug("Cleaning OpenAI response.")
     if content.startswith("```"):
+        logger.debug("Response contains code fences. Stripping them.")
         content = content.strip("`").replace("```json", "").replace("```", "").strip()
     return content
 
@@ -142,10 +149,11 @@ def parse_signal_result(content, logger):
     """
     Attempts to parse the JSON response and verifies all required keys are present.
     """
+    logger.debug("Parsing OpenAI response into JSON.")
     try:
         result = json.loads(content)
-    except json.JSONDecodeError:
-        logger.error("Unable to parse JSON from the assistant response. Defaulting to HOLD.")
+    except json.JSONDecodeError as e:
+        logger.error("Unable to parse JSON from the assistant response.", exc_info=True)
         return None
     required_keys = [
         "signal", "stop_loss", "take_profit", "confidence",
@@ -153,7 +161,7 @@ def parse_signal_result(content, logger):
     ]
     for key in required_keys:
         if key not in result:
-            logger.error(f"Missing key '{key}' in the assistant response. Defaulting to HOLD.")
+            logger.error(f"Missing key '{key}' in the assistant response. Response: {result}")
             return None
     return result
 
@@ -198,7 +206,7 @@ def sanitize_signal_data(result, logger, account_balance):
 
     # Ensure position size is within acceptable limits.
     MIN_POSITION_SIZE = 1
-    MAX_POSITION_SIZE = 0.25 * account_balance  # Never risk more than 50% of the account.
+    MAX_POSITION_SIZE = 0.25 * account_balance  # Never risk more than 25% of the account.
 
     if position_size < MIN_POSITION_SIZE:
         logger.warning(
@@ -207,7 +215,7 @@ def sanitize_signal_data(result, logger, account_balance):
         position_size = MIN_POSITION_SIZE
     if position_size > MAX_POSITION_SIZE:
         logger.warning(
-            f"AI position_size={position_size:.2f} > 50% of balance ({MAX_POSITION_SIZE:.2f}). Clamping to {MAX_POSITION_SIZE:.2f}."
+            f"AI position_size={position_size:.2f} > 25% of balance ({MAX_POSITION_SIZE:.2f}). Clamping to {MAX_POSITION_SIZE:.2f}."
         )
         position_size = MAX_POSITION_SIZE
 
@@ -254,16 +262,17 @@ async def get_trading_signal_from_openai(
     recent_trades_win_loss_ratio = recent_trades_win_loss_ratio or 1.0
     account_balance = account_balance or 1000.0
 
-    logger.info(f"recent_volatility: {recent_volatility}")
-    logger.info(f"recent_trades_win_loss_ratio: {recent_trades_win_loss_ratio}")
-    logger.info(f"account_balance: {account_balance}")
+    logger.info(f"Recent Volatility: {recent_volatility}")
+    logger.info(f"Recent Win/Loss Ratio: {recent_trades_win_loss_ratio}")
+    logger.info(f"Account Balance: {account_balance}")
 
     # 3. Build the prompt.
     prompt = build_prompt(symbol, prices, times, recent_volatility, recent_trades_win_loss_ratio, account_balance, logger)
-
+    logger.debug(f"Final prompt (first 500 chars): {prompt[:500]}")
+    
     # 4. Call the OpenAI API using our retry helper.
     response = await call_openai_api(client, prompt, logger)
-    if not response or not response.choices or len(response.choices) == 0:
+    if not response or not getattr(response, 'choices', None) or len(response.choices) == 0:
         logger.error("OpenAI assistant returned no usable recommendation. Defaulting to HOLD.")
         return fallback_hold_signal()
 
@@ -273,6 +282,7 @@ async def get_trading_signal_from_openai(
     content = clean_openai_response(content, logger)
     result = parse_signal_result(content, logger)
     if result is None:
+        logger.error("Parsing of OpenAI response failed. Defaulting to HOLD.")
         return fallback_hold_signal()
 
     # 6. Sanitize and validate the signal data.

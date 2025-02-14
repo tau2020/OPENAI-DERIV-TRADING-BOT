@@ -27,7 +27,7 @@ FETCH_CANDLES_FOR_VOLUME = os.getenv("FETCH_CANDLES_FOR_VOLUME", "True").lower()
 # -------------------- Trading Parameters --------------------
 SYMBOL = os.getenv("SYMBOL", "R_10")
 AMOUNT = float(os.getenv("AMOUNT", "10"))
-DURATION = int(os.getenv("DURATION", "5"))
+DURATION = int(os.getenv("DURATION", "180"))
 CURRENCY = os.getenv("CURRENCY", "USD")
 
 # Data window for strategy indicators (e.g. number of candles to maintain)

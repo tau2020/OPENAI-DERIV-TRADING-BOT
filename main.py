@@ -8,10 +8,13 @@ starts the trading strategy, and runs indefinitely.
 
 import asyncio
 import logging
+from utils.ai_integration import initialize_anthropic
 from utils.logger import setup_logger  # Custom logger setup (if any)
 from strategy.trading_strategy import TradingStrategy
 from config import config
 from deriv_api import DerivAPI
+
+from utils.ai_integration import initialize_openai
 
 
 def setup_logging() -> logging.Logger:
@@ -39,6 +42,10 @@ async def main():
     """
     logger = setup_logging()
     logger.info("Starting trading bot...")
+    openai_client = initialize_openai(config.OPENAI_API_KEY, logger)
+    anthropic_client = initialize_anthropic(config.ANTHROPIC_API_KEY, logger)
+
+
 
     # Initialize Deriv API client with your app ID and logger.
     deriv_api = DerivAPI(app_id=config.DERIV_APP_ID, logger=logger)
@@ -60,7 +67,9 @@ async def main():
         strategy = TradingStrategy(
             logger=logger,
             deriv_api_client=deriv_api,
-            loginid=loginid
+            loginid=loginid,
+            openai_client=openai_client,
+            anthropic_client=anthropic_client
         )
 
         # Fetch active symbols from the API.
