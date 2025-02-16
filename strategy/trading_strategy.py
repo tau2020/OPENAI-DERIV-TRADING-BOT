@@ -9,9 +9,7 @@ from collections import deque
 from api.deriv_api import DerivAPI
 from config import config
 from utils.ai_integration import (
-    fallback_hold_signal,
-    get_trading_signal_from_anthropic,
-    get_trading_signal_from_openai,
+    AIIntegration,
     initialize_anthropic,
     initialize_openai
 )
@@ -35,6 +33,11 @@ class TradingStrategy:
 
         self.openai_client = openai_client
         self.anthropic_client = anthropic_client
+
+        # Create the rule-based signals instance.
+        self.rule_signals = RuleBasedSignals(logger=self.logger)
+        # Initialize AI integration instance using the new AIIntegration class.
+        self.ai_integration = AIIntegration(config.OPENAI_API_KEY, logger, self.rule_signals)
 
         # Concurrency locks.
         self.lock = asyncio.Lock()
@@ -105,7 +108,7 @@ class TradingStrategy:
         # Multiplier factor (only used for non-CALL/PUT instruments).
         self.multiplier_factor = getattr(config, 'MULTIPLIER_FACTOR', 2000)
 
-        # Risk manager & signal generator.
+        # Risk manager.
         self.risk_manager = RiskManager(
             logger=self.logger,
             max_daily_drawdown=config.MAX_DAILY_DRAWDOWN,
@@ -113,7 +116,6 @@ class TradingStrategy:
             daily_loss_limit_percent=config.DAILY_LOSS_LIMIT_PERCENT,
             daily_profit_target_percent=config.DAILY_PROFIT_TARGET_PERCENT
         )
-        self.rule_signals = RuleBasedSignals(logger=self.logger)
 
     async def tick_callback(self, tick: Dict):
         """
@@ -204,7 +206,7 @@ class TradingStrategy:
                 "contract_id": contract_id
             })
             start_time = datetime.now()
-            min_holding_period = 30  # seconds
+            min_holding_period = 15  # seconds
             future = asyncio.get_running_loop().create_future()
 
             def check_holding_time():
@@ -239,9 +241,9 @@ class TradingStrategy:
             self.logger.info(f"Best price updated to: {current_price:.2f}")
         atr = self.average_true_range or 1.0
         trailing_stop_offset = atr * 1.5 * self.conversion_factor
-        if self.dynamic_contract_type == "CALL":  # long (call) position
+        if self.dynamic_contract_type == "CALL":
             trailing_stop_threshold = normalized_best_price - trailing_stop_offset
-        else:  # short (put) position: trailing stop above best price
+        else:
             trailing_stop_threshold = normalized_best_price + trailing_stop_offset
         if (self.dynamic_contract_type == "CALL" and normalized_current_price <= trailing_stop_threshold) or \
            (self.dynamic_contract_type == "PUT" and normalized_current_price >= trailing_stop_threshold):
@@ -266,7 +268,6 @@ class TradingStrategy:
             self.average_true_range = self.rule_signals.calculate_atr(window=14) or 1.0
             self.last_volatility_update = datetime.now()
 
-        # For CALL/PUT options we use ATR-based trailing stop.
         async with self.trailing_stop_lock:
             if self.dynamic_trailing_stop <= 0:
                 self.dynamic_trailing_stop = max(self.average_true_range * 1.2, 3.0)
@@ -380,52 +381,30 @@ class TradingStrategy:
             self.logger.error(f"Error during data fetch for strategy evaluation: {e}")
             return "HOLD", 0.0, 0.0, 0.0
 
-        # First, generate the rule-based signal.
+        # Generate rule-based signal.
         rule_signal_info = self.rule_signals.generate_signal()
         self.logger.info(f"Rule-based signal: {rule_signal_info}")
 
-        # If AI is enabled via configuration, try to obtain an AI signal.
         if getattr(config, "AI_ENABLED", True):
-            # Retrieve market data from our buffers.
+            # Retrieve historical prices and times from the rule-based signals.
             try:
-                prices, times = self.rule_signals.close_buffer.get_all()
+                prices_hist, times_hist = self.rule_signals.close_buffer.get_all()
             except Exception as e:
                 self.logger.error(f"Error obtaining historical prices: {e}")
-                prices, times = [], []
-            # (For example purposes, we use self.volatility and performance stats.)
+                prices_hist, times_hist = [], []
             recent_volatility = self.volatility or 0.0
             wins = self.performance_stats.get('wins', 0)
             losses = self.performance_stats.get('losses', 1)
             recent_trades_win_loss_ratio = wins / losses if losses else wins
             account_balance = self.latest_balance or 1000.0
 
-            # Call both AI models concurrently.
-            openai_task = asyncio.create_task(
-                get_trading_signal_from_openai(
-                    self.openai_client, symbol, prices, times, self.logger,
-                    recent_volatility, recent_trades_win_loss_ratio, account_balance
-                )
-            )
-            anthropic_task = asyncio.create_task(
-                get_trading_signal_from_anthropic(
-                    self.anthropic_client, symbol, prices, times, self.logger,
-                    recent_volatility, recent_trades_win_loss_ratio, account_balance
-                )
-            )
-            openai_signal, anthropic_signal = await asyncio.gather(openai_task, anthropic_task)
-            self.logger.info(f"OpenAI signal: {openai_signal}")
-            self.logger.info(f"Anthropic signal: {anthropic_signal}")
+            # Use the new AIIntegration instance to get the AI signal.
+            ai_signal = await self.ai_integration.get_trading_signal(symbol, prices_hist, times_hist)
+            self.logger.info(f"AI signal: {ai_signal}")
 
-            # Choose the AI signal if at least one model returns a trade (with 100% confidence).
-            chosen_signal = fallback_hold_signal()
-            if (openai_signal["signal"] != "HOLD" and abs(openai_signal["confidence"] - 1.0) < 1e-9 and
-                anthropic_signal["signal"] != "HOLD" and abs(anthropic_signal["confidence"] - 1.0) < 1e-9 and
-                openai_signal["signal"] == anthropic_signal["signal"]):
-                chosen_signal = openai_signal  # Both agree.
-            elif openai_signal["signal"] != "HOLD" and abs(openai_signal["confidence"] - 1.0) < 1e-9:
-                chosen_signal = openai_signal
-            elif anthropic_signal["signal"] != "HOLD" and abs(anthropic_signal["confidence"] - 1.0) < 1e-9:
-                chosen_signal = anthropic_signal
+            # Choose AI signal if it returns a trade with full confidence.
+            if ai_signal["signal"] != "HOLD" and abs(ai_signal["confidence"] - 1.0) < 1e-9:
+                chosen_signal = ai_signal
             else:
                 self.logger.info("No valid AI signal with full confidence; using rule-based signal.")
                 chosen_signal = rule_signal_info
@@ -434,7 +413,6 @@ class TradingStrategy:
             return (chosen_signal["signal"], chosen_signal["confidence"],
                     chosen_signal["stop_loss"], chosen_signal["take_profit"])
         else:
-            # If AI integration is not enabled, return the rule-based signal.
             return (rule_signal_info["signal"], rule_signal_info["confidence"],
                     rule_signal_info["stop_loss"], rule_signal_info["take_profit"])
 
@@ -555,7 +533,6 @@ class TradingStrategy:
                 "duration": 60,
                 "duration_unit": "s",
             }
-            # Since we're using CALL/PUT options exclusively, no multiplier is added.
             response = await self.deriv_api.proposal(proposal_request)
             if response and 'proposal' in response:
                 self.logger.info(f"Price proposal: {response['proposal'].get('ask_price', 'N/A')}")
