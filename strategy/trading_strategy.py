@@ -87,7 +87,7 @@ class TradingStrategy:
         self.dynamic_take_profit = 0.0
         self.dynamic_confidence = 0.0
         self.dynamic_position_size = 0.0
-        self.dynamic_max_holding_time = 2  # in minutes
+        self.dynamic_max_holding_time = 5  # in minutes
         self.dynamic_trailing_stop = 0.0
         self.dynamic_contract_type = ""  # Will be set to "CALL" or "PUT"
         self.dynamic_duration = config.DURATION
@@ -206,7 +206,7 @@ class TradingStrategy:
                 "contract_id": contract_id
             })
             start_time = datetime.now()
-            min_holding_period = 15  # seconds
+            min_holding_period = 30#seconds
             future = asyncio.get_running_loop().create_future()
 
             def check_holding_time():
@@ -530,7 +530,7 @@ class TradingStrategy:
                 "contract_type": self.dynamic_contract_type,
                 "currency": config.CURRENCY,
                 "symbol": symbol,
-                "duration": 60,
+                "duration": config.DURATION,
                 "duration_unit": "s",
             }
             response = await self.deriv_api.proposal(proposal_request)
