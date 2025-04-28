@@ -95,7 +95,7 @@ class TradingStrategy:
         self.last_volatility_update = datetime.now()
 
         # ------------- Configurable factors ------------------------------- #
-        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 1000)
+        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 4000)
 
         # ------------- Signal engine -------------------------------------- #
         self.rule_signals = RuleBasedSignals(logger=self.logger)
@@ -175,36 +175,52 @@ class TradingStrategy:
             await self.cleanup_trade(contract_id)
 
     async def handle_poc_update(self, poc_update: Dict, cid: str, fut: asyncio.Future):
-        if self.contracts_closed.get(cid):
-            return
+            """
+            Stream update handler for a single open contract.
+            • Keeps per-trade best price
+            • Executes trailing-stop
+            • NEW: closes immediately when profit ≥ $5
+            """
+            # Skip if we’ve already closed / finalised this contract
+            if self.contracts_closed.get(cid):
+                return
 
-        poc         = poc_update.get("proposal_open_contract", {})
-        if not poc or not poc.get("is_valid_to_sell", False):
-            return                                  # Deriv still “waiting for entry tick”
+            poc = poc_update.get("proposal_open_contract", {})
+            if not poc or not poc.get("is_valid_to_sell", False):
+                # Contract not ready (Deriv still “waiting for entry tick”)
+                return
 
-        cur_price   = float(poc.get("current_spot", 0.0))
-        direction   = self.trade_directions.get(cid, "BUY")
+            cur_price = float(poc.get("current_spot", 0.0))
+            profit    = float(poc.get("profit", 0.0))
+            side      = self.trade_directions.get(cid, "BUY")   # BUY ↔ CALL, SELL ↔ PUT
 
-        # ----- update best price per direction ------------------------- #
-        if direction == "BUY":
-            self.best_prices[cid] = max(self.best_prices[cid] or cur_price, cur_price)
-            trail_price = self.best_prices[cid] - self.dynamic_trailing_stop
-            stop_hit    = cur_price <= trail_price
-        else:  # SELL
-            self.best_prices[cid] = min(self.best_prices[cid] or cur_price, cur_price)
-            trail_price = self.best_prices[cid] + self.dynamic_trailing_stop
-            stop_hit    = cur_price >= trail_price
+            # ── track extremum to drive trailing stop ───────────────────────── #
+            if side == "BUY":
+                self.best_prices[cid] = max(self.best_prices[cid] or cur_price, cur_price)
+                trail_level = self.best_prices[cid] - self.dynamic_trailing_stop
+                stop_hit    = cur_price <= trail_level
+            else:  # SELL
+                self.best_prices[cid] = min(self.best_prices[cid] or cur_price, cur_price)
+                trail_level = self.best_prices[cid] + self.dynamic_trailing_stop
+                stop_hit    = cur_price >= trail_level
 
-        # ----- fixed TP / SL handled elsewhere; trailing exit here ----- #
-        if stop_hit:
-            await self.execute_exit(cid, f"Trailing-stop @{trail_price:.4f}")
-            return
+            # ── exit conditions ─────────────────────────────────────────────── #
+            if stop_hit:
+                await self.execute_exit(cid, f"Trailing-stop @ {trail_level:.4f}")
+                return
 
-        # ----- normal closed-by-api path ------------------------------- #
-        if poc.get("is_sold", False):
-            profit = float(poc.get("profit", 0.0))
-            await self.finalize_trade(cid, profit, fut)
-            return
+            if profit >= 5.0:                              # ← NEW auto-TP
+                await self.execute_exit(cid, f"Auto-TP +$5 reached ({profit:.2f})")
+                return
+
+            if poc.get("is_sold", False):                  # closed on server side
+                await self.finalize_trade(cid, profit, fut)
+                return
+
+            # Optional: update volatility-based params & time / fixed SL-TP checks
+            await self.update_dynamic_parameters()
+            await self.check_exit_conditions(cid, profit)
+
 
 
     # --------------------------------------------------------------------- #
