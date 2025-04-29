@@ -97,6 +97,8 @@ class TradingStrategy:
         # ------------- Configurable factors ------------------------------- #
         self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 4000)
 
+        self.STOP_LOSS: float = getattr(config, "STOP_LOSS", 5.0)
+
         # ------------- Signal engine -------------------------------------- #
         self.rule_signals = RuleBasedSignals(logger=self.logger)
 
@@ -211,6 +213,10 @@ class TradingStrategy:
 
             if profit >= 5.0:                              # ← NEW auto-TP
                 await self.execute_exit(cid, f"Auto-TP +$5 reached ({profit:.2f})")
+                return
+            
+            if profit <= -self.STOP_LOSS:                                  # ← new $-SL
+                await self.execute_exit(cid, f"Fixed stop-loss −${self.STOP_LOSS} hit ({profit:.2f})")
                 return
 
             if poc.get("is_sold", False):                  # closed on server side
