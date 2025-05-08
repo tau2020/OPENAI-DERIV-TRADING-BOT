@@ -95,7 +95,7 @@ class TradingStrategy:
         self.last_volatility_update = datetime.now()
 
         # ------------- Configurable factors ------------------------------- #
-        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 4000)
+        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 800)
 
         self.STOP_LOSS: float = getattr(config, "STOP_LOSS", 5.0)
 
@@ -155,7 +155,7 @@ class TradingStrategy:
                 asyncio.create_task(self.monitor_trade(cid))
         except Exception as e:
             self.logger.error(f"Buy error → {e}")
-            await self.retry_trade_execution(symbol, signal)
+          
 
     async def monitor_trade(self, contract_id: str):
         """Stream POC → exit logic."""
@@ -207,15 +207,13 @@ class TradingStrategy:
                 stop_hit    = cur_price >= trail_level
 
             # ── exit conditions ─────────────────────────────────────────────── #
-            if stop_hit:
-                await self.execute_exit(cid, f"Trailing-stop @ {trail_level:.4f}")
-                return
+          
 
-            if profit >= 5.0:                              # ← NEW auto-TP
+            if profit >= 6.0:                              # ← NEW auto-TP
                 await self.execute_exit(cid, f"Auto-TP +$5 reached ({profit:.2f})")
                 return
             
-            if profit <= -self.STOP_LOSS:                                  # ← new $-SL
+            if profit <= -17:                                  # ← new $-SL
                 await self.execute_exit(cid, f"Fixed stop-loss −${self.STOP_LOSS} hit ({profit:.2f})")
                 return
 
@@ -697,7 +695,7 @@ class TradingStrategy:
 
     async def finalize_trade(self, contract_id: str, profit: float, future: asyncio.Future):
         self.contracts_closed[contract_id] = True
-        await self.record_trade_results(profit, contract_id)
+       
         await self.log_current_balance()
         future.set_result(None)
 

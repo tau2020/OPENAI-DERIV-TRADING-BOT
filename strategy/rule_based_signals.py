@@ -27,7 +27,7 @@ class RuleBasedSignals:
         self.macd_slow               = 50
         self.macd_signal             = 9
         self.volume_spike_multiplier = 3.0
-        self.min_confidence          = 0.70
+        self.min_confidence          = 0.80
         self.max_confidence          = 0.95          # slightly wider band
         self.risk_per_trade          = 0.02          # 2 %
 
@@ -126,31 +126,31 @@ class RuleBasedSignals:
 
     # Average True Range ------------------------------------------------------
     def _atr(self, highs: List[float], lows: List[float], closes: List[float]) -> np.ndarray:
-        length = len(closes)
-        cached = self._cache["atr"].get(length)
-        if cached is not None:
-            return cached
+            length = len(closes)
+            cached = self._cache["atr"].get(length)
+            if cached is not None:
+                return cached
 
-        h = self._to_np(highs)
-        l = self._to_np(lows)
-        c = self._to_np(closes)
-        prev_close = np.roll(c, 1)
-        prev_close[0] = c[0]
+            h = self._to_np(highs)
+            l = self._to_np(lows)
+            c = self._to_np(closes)
 
-        tr = np.maximum.reduce([
-            h - l,
-            np.abs(h - prev_close),
-            np.abs(l - prev_close)
-        ])
+            prev_close          = np.roll(c, 1)
+            prev_close[0]       = c[0]
+            true_range          = np.maximum.reduce([h - l,
+                                                    np.abs(h - prev_close),
+                                                    np.abs(l - prev_close)])
 
-        atr = np.empty_like(tr)
-        atr[0] = tr[: self.atr_window].mean()
-        alpha = 1.0 / self.atr_window
-        for i in range(1, tr.size):
-            atr[i] = alpha * tr[i] + (1 - alpha) * atr[i - 1]
+            atr = np.empty_like(true_range)
+            # SMA of first *n* TRs
+            atr[0] = true_range[: self.atr_window].mean()
 
-        self._cache["atr"][length] = atr
-        return atr
+            # Wilder’s smoothing
+            for i in range(1, true_range.size):
+                atr[i] = ((atr[i - 1] * (self.atr_window - 1)) + true_range[i]) / self.atr_window
+
+            self._cache["atr"][length] = atr
+            return atr
 
     # Volatility --------------------------------------------------------------
     def _calculate_volatility(self, prices: List[float]) -> float:
@@ -234,16 +234,26 @@ class RuleBasedSignals:
         return int(max(1, min(5, 3 * (1 + signal["strength"]))))
 
     # Confidence --------------------------------------------------------------
-    def _calculate_confidence(self, trend: str, momentum: Dict, volume: Dict, perf: float) -> float:
-        conf = 0.30
-        if "crossover" in trend:          conf += 0.25
-        elif trend in ("bullish", "bearish"): conf += 0.10
-        if momentum["rsi"] in ("overbought", "oversold"): conf += 0.20
-        if momentum["macd_crossover"] != "none":          conf += 0.10
-        if volume["volume_spike"]:                        conf += 0.15
-        if volume["volume_trend"] == "rising":            conf += 0.05
-        conf *= (1 + perf)
-        return float(np.clip(conf, self.min_confidence, self.max_confidence))
+        # ────────────────────────────────────────────────────────────
+    # 3️⃣  confidence score – keep raw score then clamp
+    # ────────────────────────────────────────────────────────────
+    def _calculate_confidence(self, trend: str, momentum: Dict,
+                               volume: Dict, perf: float) -> float:
+
+        raw = 0.0
+        # trend weight
+        raw += 0.25 if "crossover" in trend else 0.10 if trend in ("bullish", "bearish") else 0.0
+        # momentum
+        raw += 0.20 if momentum["rsi"] in ("overbought", "oversold") else 0.0
+        raw += 0.10 if momentum["macd_crossover"] != "none" else 0.0
+        # volume
+        raw += 0.15 if volume["volume_spike"] else 0.0
+        raw += 0.05 if volume["volume_trend"] == "rising" else 0.0
+
+        raw *= (1 + perf)           # recent P/L adjustment
+        conf = float(np.clip(raw, self.min_confidence, self.max_confidence))
+        return conf
+
 
     # ------------------------------------------------------------------ #
     #  PUBLIC ENTRY
