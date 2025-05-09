@@ -2,7 +2,7 @@ import asyncio
 import logging
 import numpy as np
 from asyncio import Lock
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from typing import List, Dict, Optional
 from collections import deque
 
@@ -73,7 +73,7 @@ class TradingStrategy:
         self.dynamic_confidence = 0.0
         self.dynamic_position_size = 0.0
         self.dynamic_max_holding_time = 3       # minutes
-        self.dynamic_trailing_stop = 0.0        # adaptive, set later
+        self.dynamic_trailing_stop = 0.5        # adaptive, set later
         self.dynamic_contract_type = ""
         self.dynamic_duration = config.DURATION
         self.entry_price = 0.0
@@ -87,6 +87,14 @@ class TradingStrategy:
         self.pl_values: List[float] = []
 
         # ------------- Market metrics ------------------------------------- #
+
+          # ------------- 🆕 Batch‑trading throttle ----------------------- #
+        #   Limit to N trades, then impose a cool‑down.
+        self.batch_trade_count: int = 0
+        self.batch_pause_until: datetime = datetime.min  # next time trading is allowed
+        self.batch_size: int = 5                         # contracts per cycle
+        self.batch_cooldown: timedelta = timedelta(minutes=5)
+
         self.volatility = 0.0
         self.average_true_range = 0.0
         self.allowed_trading_start = time(0, 0)
@@ -95,7 +103,7 @@ class TradingStrategy:
         self.last_volatility_update = datetime.now()
 
         # ------------- Configurable factors ------------------------------- #
-        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 800)
+        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 15)
 
         self.STOP_LOSS: float = getattr(config, "STOP_LOSS", 5.0)
 
@@ -105,26 +113,39 @@ class TradingStrategy:
     # --------------------------------------------------------------------- #
     # CORE STRATEGY METHODS
     # --------------------------------------------------------------------- #
+
+    def is_batch_pause_active(self) -> bool:
+        """Return True if the post‑batch cool‑down is in effect."""
+        return datetime.now() < self.batch_pause_until
+    
     async def tick_callback(self, tick: Dict):
-        """Handle real-time tick updates (throttled)."""
-        tick_data = tick.get("tick", {})
-        symbol = tick_data.get("symbol")
-        price = float(tick_data.get("quote", 0.0))
-        epoch = tick_data.get("epoch", 0)
+            """Handle real‑time tick updates (throttled)."""
+            tick_data = tick.get("tick", {})
+            symbol = tick_data.get("symbol")
+            price = float(tick_data.get("quote", 0.0))
+            epoch = tick_data.get("epoch", 0)
 
-        await self.append_tick_data(datetime.fromtimestamp(epoch), price)
+            await self.append_tick_data(datetime.fromtimestamp(epoch), price)
 
-        if not self.account_info_logged:
-            await self.log_account_info()
-            self.account_info_logged = True
+            if not self.account_info_logged:
+                await self.log_account_info()
+                self.account_info_logged = True
 
-        if self.should_evaluate_strategy():
-            asyncio.create_task(self.evaluate_and_execute_trade(symbol))
+            if self.should_evaluate_strategy():
+                asyncio.create_task(self.evaluate_and_execute_trade(symbol))
 
     async def evaluate_and_execute_trade(self, symbol: str):
         """Main decision loop."""
         self.last_strategy_evaluation = datetime.now()
 
+        # ▸ Batch cool‑down gate
+        if self.is_batch_pause_active():
+            self.logger.debug(
+                f"Batch pause active — trading resumes at {self.batch_pause_until.strftime('%H:%M:%S')}"
+            )
+            return
+
+        # ▸ Daily risk / loss guards
         if self.daily_risk_check() or self.consecutive_losses >= self.max_consecutive_losses:
             self.logger.warning("Risk guard active – skipping evaluation")
             return
@@ -150,9 +171,19 @@ class TradingStrategy:
                     raise RuntimeError("No buy receipt")
 
                 cid = resp["buy"]["contract_id"]
-                self.trade_directions[cid] = signal          # track side
+                self.trade_directions[cid] = signal  # track side
                 self.initialize_trade(cid, proposal)
                 asyncio.create_task(self.monitor_trade(cid))
+
+                # ▸🆕 Batch counter & scheduling ------------------------- #
+                self.batch_trade_count += 1
+                if self.batch_trade_count >= self.batch_size:
+                    self.batch_pause_until = datetime.now() + self.batch_cooldown
+                    self.logger.info(
+                        f"Batch limit reached ({self.batch_size}). Pausing new trades until "
+                        f"{self.batch_pause_until.strftime('%H:%M:%S')}"
+                    )
+                    self.batch_trade_count = 0  # reset counter for next cycle
         except Exception as e:
             self.logger.error(f"Buy error → {e}")
           
@@ -209,11 +240,11 @@ class TradingStrategy:
             # ── exit conditions ─────────────────────────────────────────────── #
           
 
-            if profit >= 6.0:                              # ← NEW auto-TP
+            if profit >= 0.25:                              # ← NEW auto-TP
                 await self.execute_exit(cid, f"Auto-TP +$5 reached ({profit:.2f})")
                 return
             
-            if profit <= -17:                                  # ← new $-SL
+            if profit <= -3:                                  # ← new $-SL
                 await self.execute_exit(cid, f"Fixed stop-loss −${self.STOP_LOSS} hit ({profit:.2f})")
                 return
 
