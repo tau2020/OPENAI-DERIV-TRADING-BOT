@@ -73,7 +73,7 @@ class TradingStrategy:
         self.dynamic_confidence = 0.0
         self.dynamic_position_size = 0.0
         self.dynamic_max_holding_time = 3       # minutes
-        self.dynamic_trailing_stop = 0.5        # adaptive, set later
+        self.dynamic_trailing_stop = 0.0        # adaptive, set later
         self.dynamic_contract_type = ""
         self.dynamic_duration = config.DURATION
         self.entry_price = 0.0
@@ -103,7 +103,7 @@ class TradingStrategy:
         self.last_volatility_update = datetime.now()
 
         # ------------- Configurable factors ------------------------------- #
-        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 15)
+        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 250)
 
         self.STOP_LOSS: float = getattr(config, "STOP_LOSS", 5.0)
 
@@ -240,11 +240,11 @@ class TradingStrategy:
             # ── exit conditions ─────────────────────────────────────────────── #
           
 
-            if profit >= 0.25:                              # ← NEW auto-TP
+            if profit >= 5:                              # ← NEW auto-TP
                 await self.execute_exit(cid, f"Auto-TP +$5 reached ({profit:.2f})")
                 return
             
-            if profit <= -3:                                  # ← new $-SL
+            if profit <= -27:                                  # ← new $-SL
                 await self.execute_exit(cid, f"Fixed stop-loss −${self.STOP_LOSS} hit ({profit:.2f})")
                 return
 
