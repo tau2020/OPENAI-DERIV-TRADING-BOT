@@ -3,21 +3,27 @@ import logging
 import numpy as np
 from asyncio import Lock
 from datetime import datetime, time, timedelta
-from typing import List, Dict, Optional
-from collections import deque
+from typing import DefaultDict, List, Dict, Optional
+from collections import defaultdict, deque
 
 from api.deriv_api import DerivAPI
 from config import config
 from utils.risk_manager import RiskManager
 from strategy.rule_based_signals import RuleBasedSignals
-from typing import DefaultDict
-from collections import defaultdict
 
 
 class TradingStrategy:
-    # --------------------------------------------------------------------- #
+    """Rule‑based multiplier trading strategy with dynamic risk controls.
+    
+    Modifications in this version (2025‑05‑10):
+        • Added **profit‑based trailing stop** that activates only after
+          profit ≥ $5; once active, if profit falls by ≥ $2 from the
+          peak _or_ falls back to $5, the position is closed.
+    """
+
+    # ------------------------------------------------------------------ #
     # INITIALISATION
-    # --------------------------------------------------------------------- #
+    # ------------------------------------------------------------------ #
     def __init__(
         self,
         logger: logging.Logger,
@@ -28,7 +34,7 @@ class TradingStrategy:
         self.deriv_api = deriv_api_client
         self.loginid = loginid
 
-        # ------------- Concurrency ---------------------------------------- #
+        # ------------- Concurrency ------------------------------------ #
         self.lock = Lock()
         self.trade_lock = Lock()
         self.balance_lock = Lock()
@@ -46,7 +52,7 @@ class TradingStrategy:
         self.candle_closes: deque[float] = deque(maxlen=max_pts)
         self.candle_volumes: deque[float] = deque(maxlen=max_pts)
 
-        # ------------- Trading state -------------------------------------- #
+        # ------------ Trading state ----------------------------------- #
         self.active_symbols: List[str] = []
         self.current_symbol = config.SYMBOL
         self.contracts_closed: Dict[str, bool] = {}
@@ -54,7 +60,7 @@ class TradingStrategy:
         self.active_trades: Dict[str, Dict] = {}
         self.trade_directions: Dict[str, str] = {}          # NEW
 
-        # ------------- Account info --------------------------------------- #
+        # ------------ Account information ----------------------------- #
         self.latest_balance = 0.0
         self.currency = "USD"
         self.daily_start_balance = 0.0
@@ -66,8 +72,10 @@ class TradingStrategy:
         self.max_consecutive_losses = config.MAX_CONSECUTIVE_LOSSES
         self.daily_loss_limit_percent = config.DAILY_LOSS_LIMIT_PERCENT
         self.daily_profit_target_percent = config.DAILY_PROFIT_TARGET_PERCENT
+        self.daily_loss_limit_reached = False
+        self.daily_profit_target_reached = False
 
-        # ------------- Dynamic trade params ------------------------------- #
+        # ------------ Dynamic trading parameters ---------------------- #
         self.dynamic_stop_loss = 0.0
         self.dynamic_take_profit = 0.0
         self.dynamic_confidence = 0.0
@@ -77,7 +85,8 @@ class TradingStrategy:
         self.dynamic_contract_type = ""
         self.dynamic_duration = config.DURATION
         self.entry_price = 0.0
-        self.best_price = 0.0                   # renamed (best_profit → best_price)
+        self.best_price = 0.0       
+        self.entry_balance: Dict[str, float] = {}             # renamed (best_profit → best_price)
 
         # ------------- Performance tracking ------------------------------- #
         self.total_wins = self.total_losses = 0
@@ -97,17 +106,18 @@ class TradingStrategy:
 
         self.volatility = 0.0
         self.average_true_range = 0.0
+        self.MAX_SCALPING_STAKE = 100.0
         self.allowed_trading_start = time(0, 0)
         self.allowed_trading_end = time(23, 59)
         self.last_strategy_evaluation = datetime.now()
         self.last_volatility_update = datetime.now()
 
         # ------------- Configurable factors ------------------------------- #
-        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 250)
+        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 500)
 
         self.STOP_LOSS: float = getattr(config, "STOP_LOSS", 5.0)
 
-        # ------------- Signal engine -------------------------------------- #
+        # Rule‑based signal engine
         self.rule_signals = RuleBasedSignals(logger=self.logger)
 
     # --------------------------------------------------------------------- #
@@ -207,54 +217,52 @@ class TradingStrategy:
         finally:
             await self.cleanup_trade(contract_id)
 
-    async def handle_poc_update(self, poc_update: Dict, cid: str, fut: asyncio.Future):
-            """
-            Stream update handler for a single open contract.
-            • Keeps per-trade best price
-            • Executes trailing-stop
-            • NEW: closes immediately when profit ≥ $5
-            """
-            # Skip if we’ve already closed / finalised this contract
-            if self.contracts_closed.get(cid):
+    async def handle_poc_update(self, poc_update: Dict, contract_id: str, fut: asyncio.Future):
+        """Per‑contract update handler applying:
+            1. Fixed stop‑loss (hard‑coded)
+            2. Price‑based trailing
+            3. Profit‑based trailing
+        """
+        if self.contracts_closed.get(contract_id):
+            return
+
+        poc = poc_update.get("proposal_open_contract", {})
+        if not poc or not poc.get("is_valid_to_sell", False):
+            return  # waiting for entry tick
+
+        current_price = float(poc.get("current_spot", 0.0))
+        profit = float(poc.get("profit", 0.0))
+        is_sold = poc.get("is_sold", False)
+
+        # ---- Fixed hard‑coded stop‑loss ------------------------------- #
+        if profit <= -abs(self.STOP_LOSS):
+            await self.execute_exit(contract_id, f"Fixed SL ${self.STOP_LOSS} hit ({profit:.2f})")
+            return
+
+ 
+
+        # ---- profit‑based trailing ----------------------------------- #
+        state = self.active_trades.setdefault(contract_id, {"best_profit": 0.0, "trailing": False})
+        if not state["trailing"] and profit >= 5.0:
+            state["trailing"] = True
+            state["best_profit"] = profit
+            self.logger.info(f"Contract {contract_id}: profit {profit:.2f} ⇒ trailing ON")
+        elif state["trailing"]:
+            if profit > state["best_profit"]:
+                state["best_profit"] = profit
+            drop = state["best_profit"] - profit
+            if drop >= 2.0 or profit <= 5.0:
+                await self.execute_exit(contract_id, f"Profit‑trail exit (peak {state['best_profit']:.2f} → {profit:.2f})")
                 return
 
-            poc = poc_update.get("proposal_open_contract", {})
-            if not poc or not poc.get("is_valid_to_sell", False):
-                # Contract not ready (Deriv still “waiting for entry tick”)
-                return
+        # ---- platform closed contract --------------------------------- #
+        if is_sold:
+            await self.finalize_trade(contract_id, profit, fut)
+            return
 
-            cur_price = float(poc.get("current_spot", 0.0))
-            profit    = float(poc.get("profit", 0.0))
-            side      = self.trade_directions.get(cid, "BUY")   # BUY ↔ CALL, SELL ↔ PUT
-
-            # ── track extremum to drive trailing stop ───────────────────────── #
-            if side == "BUY":
-                self.best_prices[cid] = max(self.best_prices[cid] or cur_price, cur_price)
-                trail_level = self.best_prices[cid] - self.dynamic_trailing_stop
-                stop_hit    = cur_price <= trail_level
-            else:  # SELL
-                self.best_prices[cid] = min(self.best_prices[cid] or cur_price, cur_price)
-                trail_level = self.best_prices[cid] + self.dynamic_trailing_stop
-                stop_hit    = cur_price >= trail_level
-
-            # ── exit conditions ─────────────────────────────────────────────── #
-          
-
-            if profit >= 5:                              # ← NEW auto-TP
-                await self.execute_exit(cid, f"Auto-TP +$5 reached ({profit:.2f})")
-                return
-            
-            if profit <= -27:                                  # ← new $-SL
-                await self.execute_exit(cid, f"Fixed stop-loss −${self.STOP_LOSS} hit ({profit:.2f})")
-                return
-
-            if poc.get("is_sold", False):                  # closed on server side
-                await self.finalize_trade(cid, profit, fut)
-                return
-
-            # Optional: update volatility-based params & time / fixed SL-TP checks
-            await self.update_dynamic_parameters()
-            await self.check_exit_conditions(cid, profit)
+        # ---- upkeep ---------------------------------------------------- #
+        await self.update_dynamic_parameters()
+        await self.check_exit_conditions(contract_id, profit)
 
 
 
@@ -329,11 +337,12 @@ class TradingStrategy:
         return held_secs > self.dynamic_max_holding_time * 60
 
     async def execute_exit(self, contract_id: str, reason: str) -> None:
-        """Idempotent exit wrapper with single entry-point."""
-        if self.contracts_closed.get(contract_id):
-            return
-        self.logger.info(f"Exit {contract_id} → {reason}")
-        await self.retry_sell_contract(contract_id)
+            """Wrapper for contract liquidation with built‑in cool‑off."""
+            if self.contracts_closed.get(contract_id):
+                return
+            self.logger.info(f"Exit {contract_id} → {reason}")
+            await self.retry_sell_contract(contract_id)
+            await asyncio.sleep(1)  # cool‑off so next checks use fresh state
 
     async def retry_sell_contract(self, contract_id: str, attempts: int = 4) -> None:
         """Exponential back-off sell retries."""
@@ -663,15 +672,21 @@ class TradingStrategy:
             await future
 
 
-    async def record_trade_results(self, profit: float, contract_id: str) -> None:
-        """
-        Update P/L book-keeping, win/loss counters and consecutive loss guard.
-        """
-        # small rounding noise – pull from API if near-zero
-        if abs(profit) < 0.01:
-            api_profit = await self.deriv_api.get_contract_profit(contract_id)
-            if api_profit is not None:
-                profit = api_profit
+    async def record_trade_results(self, contract_id: str) -> None:
+        """Derive P/L from balance delta: current balance – balance@entry."""
+        # Fetch fresh balance straight from API
+        try:
+            bal_resp = await self.deriv_api.balance()
+            cur_balance = float(bal_resp.get("balance", {}).get("balance", 0.0))
+        except Exception as e:
+            self.logger.error(f"Balance fetch failed for P/L calc → {e}")
+            return
+
+        entry_bal = self.entry_balance.get(contract_id, self.latest_balance)
+        profit = cur_balance - entry_bal
+
+        # Update cached latest balance
+        self.latest_balance = cur_balance
 
         self.trades_data.append({"profit": profit, "timestamp": datetime.now()})
 
@@ -692,8 +707,8 @@ class TradingStrategy:
         self.pl_times.append(datetime.now())
         self.pl_values.append(net_pl)
         self.daily_pl = self.latest_balance - self.daily_start_balance
-        self.logger.debug(f"P/L day {self.daily_pl:.2f} | net {net_pl:.2f} | "
-                        f"loss streak {self.consecutive_losses}/{self.max_consecutive_losses}")
+        self.logger.debug(f"P/L day {self.daily_pl:.2f} | net {net_pl:.2f} | loss streak {self.consecutive_losses}/{self.max_consecutive_losses}")
+
 
 
     def set_active_symbols(self, symbols):
@@ -710,32 +725,42 @@ class TradingStrategy:
         symbols = list(dict.fromkeys(filter(None, symbols)))
 
         self.active_symbols = symbols
-        self.logger.info(f"Active symbols ({len(symbols)}): {', '.join(symbols)}")
+   
 
 
 
     # ---------------------------------------------------------------------
     #  🔻 LIFE-CYCLE HELPERS
     # ---------------------------------------------------------------------
-    def initialize_trade(self, contract_id: str, price_proposal: Dict) -> None:
-        self.entry_price = float(price_proposal["ask_price"])
-        self.best_price  = self.entry_price
+    def initialize_trade(self, contract_id: str, proposal: Dict):
+        """Capture balance snapshot and set trailing state."""
+        self.entry_price = float(proposal["ask_price"])
+        self.best_price = self.entry_price
         self.trade_open_times[contract_id] = datetime.now()
-        self.logger.info(f"Open {contract_id} @ {self.entry_price:.4f}")
+        self.active_trades[contract_id] = {"best_profit": 0.0, "trailing": False}
+        self.entry_balance[contract_id] = self.latest_balance  # snapshot
+        self.logger.info(f"Open {contract_id} @ {self.entry_price:.4f} | entry bal {self.latest_balance:.2f}")
 
 
-    async def finalize_trade(self, contract_id: str, profit: float, future: asyncio.Future):
+
+
+    async def finalize_trade(self, contract_id: str, _unused_profit: float, fut: asyncio.Future):
+        """Profit now computed via balance delta; ignore broker profit arg."""
         self.contracts_closed[contract_id] = True
-       
+        await self.record_trade_results(contract_id)
         await self.log_current_balance()
-        future.set_result(None)
+        self.active_trades.pop(contract_id, None)
+        self.entry_balance.pop(contract_id, None)
+        if not fut.done():
+            fut.set_result(None)
 
 
 
-    async def cleanup_trade(self, contract_id: str) -> None:
+    async def cleanup_trade(self, contract_id: str):
         self.trade_open_times.pop(contract_id, None)
+        self.active_trades.pop(contract_id, None)
+        self.entry_balance.pop(contract_id, None)
         self.logger.debug(f"Cleanup {contract_id}")
-
 
     async def retry_trade_execution(
         self, symbol: str, signal: str, max_retries: int = 3
