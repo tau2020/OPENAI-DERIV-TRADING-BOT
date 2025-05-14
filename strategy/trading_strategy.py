@@ -113,7 +113,7 @@ class TradingStrategy:
         self.last_volatility_update = datetime.now()
 
         # ------------- Configurable factors ------------------------------- #
-        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 500)
+        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 1600)
 
         self.STOP_LOSS: float = getattr(config, "STOP_LOSS", 5.0)
 
@@ -243,7 +243,7 @@ class TradingStrategy:
 
         # ---- profit‑based trailing ----------------------------------- #
         state = self.active_trades.setdefault(contract_id, {"best_profit": 0.0, "trailing": False})
-        if not state["trailing"] and profit >= 5.0:
+        if not state["trailing"] and profit >= 1.0:
             state["trailing"] = True
             state["best_profit"] = profit
             self.logger.info(f"Contract {contract_id}: profit {profit:.2f} ⇒ trailing ON")
