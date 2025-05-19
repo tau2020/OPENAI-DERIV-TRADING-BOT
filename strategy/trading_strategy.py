@@ -276,7 +276,7 @@ class TradingStrategy:
             self.average_true_range = self.calculate_atr()
             self.last_volatility_update = datetime.now()
 
-        new_trail = max(self.average_true_range * 1.5, 3.0)
+        new_trail = max(self.average_true_range * 1.5, 950.0)
         async with self.trailing_stop_lock:
             if abs(new_trail - self.dynamic_trailing_stop) / (self.dynamic_trailing_stop or 1e-9) > 0.2:
                 self.dynamic_trailing_stop = new_trail
@@ -609,12 +609,12 @@ class TradingStrategy:
     async def get_price_proposal(self, symbol: str, signal: str) -> Optional[Dict]:
         req = {
             "proposal": 1,
-            "amount": 50,   # use dynamic size
+            "amount": 500,   # use dynamic size
             "basis": "stake",
             "contract_type": self.dynamic_contract_type,
             "currency": config.CURRENCY,
             "symbol": symbol,
-            "duration":3,
+            "duration":5,
             "duration_unit":'m' 
            
 
@@ -641,7 +641,7 @@ class TradingStrategy:
         self,
         contract_id: str,
         future: Optional[asyncio.Future] = None,
-        retries: int = 4,
+        retries: int = 3,
     ) -> None:
         """
         Attempt to close a contract with exponential back-off.
