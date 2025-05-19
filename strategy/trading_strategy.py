@@ -82,7 +82,7 @@ class TradingStrategy:
         self.dynamic_position_size = 0.0
         self.dynamic_max_holding_time = 3       # minutes
         self.dynamic_trailing_stop = 0.0        # adaptive, set later
-        self.dynamic_contract_type = ""
+        self.dynamic_contract_type = "CALL/PUT"
         self.dynamic_duration = config.DURATION
         self.entry_price = 0.0
         self.best_price = 0.0       
@@ -495,7 +495,7 @@ class TradingStrategy:
         self.dynamic_position_size    = round(sig["position_size"] * self.multiplier_factor, 2)
         self.dynamic_max_holding_time = sig["max_holding_time"]
         self.dynamic_trailing_stop    = sig["trailing_stop"]
-        self.dynamic_contract_type    = "MULTUP" if sig["signal"] == "BUY" else "MULTDOWN"
+        self.dynamic_contract_type    = "CALL" if sig["signal"] == "BUY" else "PUT"
 
         self.logger.info(f"▶ {sig['signal']} | SL {self.dynamic_stop_loss:.4f} TP {self.dynamic_take_profit:.4f} "
                         f"Conf {self.dynamic_confidence:.2f} Size {self.dynamic_position_size}")
@@ -614,7 +614,10 @@ class TradingStrategy:
             "contract_type": self.dynamic_contract_type,
             "currency": config.CURRENCY,
             "symbol": symbol,
-            "multiplier": self.multiplier_factor,
+            "duration":3,
+            "duration_unit":'m' 
+           
+
         }
         for attempt in range(3):
             try:
