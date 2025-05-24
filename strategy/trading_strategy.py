@@ -105,7 +105,7 @@ class TradingStrategy:
         # Batch throttle
         self.batch_trade_count: int = 0
         self.batch_pause_until: datetime = datetime.min
-        self.batch_size: int = 3
+        self.batch_size: int = 1
         self.batch_cooldown: timedelta = timedelta(minutes=5)
 
         # Market metrics
