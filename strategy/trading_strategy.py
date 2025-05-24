@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from asyncio import Lock
 from datetime import datetime, time, timedelta
-from typing import DefaultDict, List, Dict, Optional
+from typing import DefaultDict, List, Dict, Optional, Set
 from collections import defaultdict, deque
 
 from api.deriv_api import DerivAPI
@@ -24,23 +24,24 @@ class TradingStrategy:
     # ------------------------------------------------------------------ #
     # INITIALISATION
     # ------------------------------------------------------------------ #
-    def __init__(
+    def __init__(  # noqa: PLR0913, CCE001
         self,
         logger: logging.Logger,
         deriv_api_client: DerivAPI,
         loginid: str = "Unknown",
     ):
+        # ─────────── original init ───────────
         self.logger = logger
         self.deriv_api = deriv_api_client
         self.loginid = loginid
 
-        # ------------- Concurrency ------------------------------------ #
+        # Concurrency primitives
         self.lock = Lock()
         self.trade_lock = Lock()
         self.balance_lock = Lock()
         self.trailing_stop_lock = Lock()
 
-        # ------------- Market-data buffers (deque → faster & bounded) ----- #
+        # Market-data buffers
         max_pts = config.MAX_TICK_DATA_POINTS
         self.tick_times: deque[datetime] = deque(maxlen=max_pts)
         self.tick_prices: deque[float] = deque(maxlen=max_pts)
@@ -52,77 +53,101 @@ class TradingStrategy:
         self.candle_closes: deque[float] = deque(maxlen=max_pts)
         self.candle_volumes: deque[float] = deque(maxlen=max_pts)
 
-        # ------------ Trading state ----------------------------------- #
+        # Trading state
         self.active_symbols: List[str] = []
-        self.current_symbol = config.SYMBOL
+        self.current_symbol: str = config.SYMBOL
         self.contracts_closed: Dict[str, bool] = {}
         self.trade_open_times: Dict[str, datetime] = {}
         self.active_trades: Dict[str, Dict] = {}
-        self.trade_directions: Dict[str, str] = {}          # NEW
+        self.trade_directions: Dict[str, str] = {}  # "BUY"/"SELL"
 
-        # ------------ Account information ----------------------------- #
-        self.latest_balance = 0.0
-        self.currency = "USD"
-        self.daily_start_balance = 0.0
-        self.account_info_logged = False
+        # 🆕 Opposite-bid state
+        self.loss_reverse_threshold_points: float = -5.0  # ≤ –3 ⇒ reverse
+        self.reversed_trades: Set[str] = set()  # guard against flip-flops
+        self.hedged_trades: Set[str] = set()
+
+        # Account
+        self.latest_balance: float = 0.0
+        self.currency: str = "USD"
+        self.daily_start_balance: float = 0.0
+        self.account_info_logged: bool = False
         self.best_prices: DefaultDict[str, float] = defaultdict(float)
-        # ------------- Risk management ------------------------------------ #
+
+        # Risk-manager / streak trackers
         self.risk_manager = RiskManager(logger)
-        self.consecutive_losses = 0
-        self.max_consecutive_losses = config.MAX_CONSECUTIVE_LOSSES
+        self.consecutive_losses: int = 0
+        self.max_consecutive_losses: int = config.MAX_CONSECUTIVE_LOSSES
         self.daily_loss_limit_percent = config.DAILY_LOSS_LIMIT_PERCENT
         self.daily_profit_target_percent = config.DAILY_PROFIT_TARGET_PERCENT
-        self.daily_loss_limit_reached = False
-        self.daily_profit_target_reached = False
+        self.daily_loss_limit_reached: bool = False
+        self.daily_profit_target_reached: bool = False
 
-        # ------------ Dynamic trading parameters ---------------------- #
-        self.dynamic_stop_loss = 0.0
-        self.dynamic_take_profit = 0.0
-        self.dynamic_confidence = 0.0
-        self.dynamic_position_size = 0.0
-        self.dynamic_max_holding_time = 3       # minutes
-        self.dynamic_trailing_stop = 0.0        # adaptive, set later
-        self.dynamic_contract_type = "CALL/PUT"
-        self.dynamic_duration = config.DURATION
-        self.entry_price = 0.0
-        self.best_price = 0.0       
-        self.entry_balance: Dict[str, float] = {}             # renamed (best_profit → best_price)
+        # Dynamic params (updated per-signal)
+        self.dynamic_stop_loss: float = 0.0
+        self.dynamic_take_profit: float = 0.0
+        self.dynamic_confidence: float = 0.0
+        self.dynamic_position_size: float = 0.0
+        self.dynamic_max_holding_time: int = 3
+        self.dynamic_trailing_stop: float = 0.0
+        self.dynamic_contract_type: str = "CALL/PUT"
+        self.dynamic_duration: int = config.DURATION
+        self.entry_price: float = 0.0
+        self.best_price: float = 0.0
+        self.entry_balance: Dict[str, float] = {}
 
-        # ------------- Performance tracking ------------------------------- #
+        # Performance metrics
         self.total_wins = self.total_losses = 0
         self.cumulative_profit = self.cumulative_loss = 0.0
         self.trades_data: List[Dict] = []
         self.pl_times: List[datetime] = []
         self.pl_values: List[float] = []
 
-        # ------------- Market metrics ------------------------------------- #
-
-          # ------------- 🆕 Batch‑trading throttle ----------------------- #
-        #   Limit to N trades, then impose a cool‑down.
+        # Batch throttle
         self.batch_trade_count: int = 0
-        self.batch_pause_until: datetime = datetime.min  # next time trading is allowed
-        self.batch_size: int = 5                         # contracts per cycle
+        self.batch_pause_until: datetime = datetime.min
+        self.batch_size: int = 3
         self.batch_cooldown: timedelta = timedelta(minutes=5)
 
-        self.volatility = 0.0
-        self.average_true_range = 0.0
-        self.MAX_SCALPING_STAKE = 100.0
+        # Market metrics
+        self.volatility: float = 0.0
+        self.average_true_range: float = 0.0
+        self.MAX_SCALPING_STAKE: float = 100.0
         self.allowed_trading_start = time(0, 0)
         self.allowed_trading_end = time(23, 59)
         self.last_strategy_evaluation = datetime.now()
         self.last_volatility_update = datetime.now()
 
-        # ------------- Configurable factors ------------------------------- #
-        self.multiplier_factor = getattr(config, "MULTIPLIER_FACTOR", 1600)
-
+        # Config
+        self.multiplier_factor: float = getattr(config, "MULTIPLIER_FACTOR", 1600)
         self.STOP_LOSS: float = getattr(config, "STOP_LOSS", 5.0)
 
-        # Rule‑based signal engine
+        # Rule-based signal engine
         self.rule_signals = RuleBasedSignals(logger=self.logger)
 
     # --------------------------------------------------------------------- #
     # CORE STRATEGY METHODS
     # --------------------------------------------------------------------- #
+
+    async def _open_hedge(
+            self,
+            symbol: str,
+            signal: str,
+            stake: float,
+            parent_id: str,
+    ) -> None:
+        """
+        Fire a new contract in the opposite direction without touching the
+        original losing one.  Uses the same stake for symmetry.
+        """
+        self.dynamic_contract_type = "CALL" if signal == "BUY" else "PUT"
+        self.dynamic_position_size = stake  # ← same stake
+        try:
+            await self.execute_trade_safely(symbol, signal)
+            self.logger.info(
+                f"🛡 Hedged {parent_id} with a {signal} stake {stake:.2f}"
+            )
+        except Exception as exc:
+            self.logger.error(f"Hedge order failed → {exc}")
 
     def is_batch_pause_active(self) -> bool:
         """Return True if the post‑batch cool‑down is in effect."""
@@ -217,33 +242,61 @@ class TradingStrategy:
         finally:
             await self.cleanup_trade(contract_id)
 
-    async def handle_poc_update(self, poc_update: Dict, contract_id: str, fut: asyncio.Future):
-        """Per‑contract update handler applying:
-            1. Fixed stop‑loss (hard‑coded)
-            2. Price‑based trailing
-            3. Profit‑based trailing
+    async def handle_poc_update(  # noqa: C901, PLR0912
+        self,
+        poc_update: Dict,
+        contract_id: str,
+        fut: asyncio.Future,
+    ) -> None:
+        """
+        Per-contract POC handler.
+        Added logic block (► Opposite-Bid) **before** fixed-stop processing.
         """
         if self.contracts_closed.get(contract_id):
             return
 
         poc = poc_update.get("proposal_open_contract", {})
         if not poc or not poc.get("is_valid_to_sell", False):
-            return  # waiting for entry tick
+            return  # entry tick not yet confirmed
 
         current_price = float(poc.get("current_spot", 0.0))
         profit = float(poc.get("profit", 0.0))
         is_sold = poc.get("is_sold", False)
+        symbol = poc.get("shortcode", "").split("_")[0] or self.current_symbol
 
-        # ---- Fixed hard‑coded stop‑loss ------------------------------- #
+        # ──────────────────────────────────────────────────────────────── #
+        # ► Opposite-Bid Fail-Safe
+        #   If position drifts further than loss_reverse_threshold_points
+        #   we IMMEDIATELY close & flip direction *once*.
+        # ──────────────────────────────────────────────────────────────── #
+        if (
+                profit <= self.loss_reverse_threshold_points
+                and contract_id not in self.hedged_trades
+        ):
+            self.hedged_trades.add(contract_id)
+            original_dir = self.trade_directions.get(contract_id, "UNKNOWN")
+            opposite_signal = "SELL" if original_dir == "BUY" else "BUY"
+
+            stake = float(poc.get("buy_price", 1.0))  # same stake as entry
+            self.logger.warning(
+                f"🛡 {contract_id} loss {profit:.2f} ≤ {self.loss_reverse_threshold_points} "
+                f"→ hedging with {opposite_signal}"
+            )
+            # small async buffer so we don’t block the stream thread
+            asyncio.create_task(
+                self._open_hedge(symbol, opposite_signal, stake, contract_id)
+            )
+
+        # ---- Fixed hard-coded stop-loss ------------------------------- #
         if profit <= -abs(self.STOP_LOSS):
             await self.execute_exit(contract_id, f"Fixed SL ${self.STOP_LOSS} hit ({profit:.2f})")
             return
 
- 
-
-        # ---- profit‑based trailing ----------------------------------- #
-        state = self.active_trades.setdefault(contract_id, {"best_profit": 0.0, "trailing": False})
-        if not state["trailing"] and profit >= 1.0:
+        # ---- profit-based trailing ----------------------------------- #
+        state = self.active_trades.setdefault(
+            contract_id, {"best_profit": 0.0, "trailing": False}
+        )
+        if not state["trailing"] and profit >= 300.0:
             state["trailing"] = True
             state["best_profit"] = profit
             self.logger.info(f"Contract {contract_id}: profit {profit:.2f} ⇒ trailing ON")
@@ -251,8 +304,11 @@ class TradingStrategy:
             if profit > state["best_profit"]:
                 state["best_profit"] = profit
             drop = state["best_profit"] - profit
-            if drop >= 2.0 or profit <= 5.0:
-                await self.execute_exit(contract_id, f"Profit‑trail exit (peak {state['best_profit']:.2f} → {profit:.2f})")
+            if drop >= 10.0 or profit <= 100.0:
+                await self.execute_exit(
+                    contract_id,
+                    f"Profit-trail exit (peak {state['best_profit']:.2f} → {profit:.2f})",
+                )
                 return
 
         # ---- platform closed contract --------------------------------- #
@@ -263,6 +319,30 @@ class TradingStrategy:
         # ---- upkeep ---------------------------------------------------- #
         await self.update_dynamic_parameters()
         await self.check_exit_conditions(contract_id, profit)
+
+
+    async def _reverse_trade(self, contract_id: str, signal: str, symbol: str) -> None:
+            """
+            1. Gracefully close the losing contract (`execute_exit`)
+            2. Fire a new trade in the *opposite* direction with current params
+            """
+            try:
+                # ① close current
+                await self.execute_exit(contract_id, "auto-reverse trigger")
+                await asyncio.sleep(4.0)  # small buffer for P/L posting
+
+                # ② prep opposite contract-type/stake
+                self.dynamic_contract_type = "CALL" if signal == "BUY" else "PUT"
+                # keep latest dynamic_position_size etc. – stake symmetry
+
+                # ③ submit new order (obeys trade locks & batch rules)
+                await self.execute_trade_safely(symbol, signal)
+
+                self.logger.info(
+                    f"🔁 Reverse order placed ({signal}) after closing {contract_id}"
+                )
+            except Exception as exc:  # broad – must not bubble into stream
+                self.logger.error(f"Reverse-trade failure ({contract_id}) → {exc}")
 
 
 
@@ -276,7 +356,7 @@ class TradingStrategy:
             self.average_true_range = self.calculate_atr()
             self.last_volatility_update = datetime.now()
 
-        new_trail = max(self.average_true_range * 1.5, 950.0)
+        new_trail = max(self.average_true_range * 1.5, 1000.0)
         async with self.trailing_stop_lock:
             if abs(new_trail - self.dynamic_trailing_stop) / (self.dynamic_trailing_stop or 1e-9) > 0.2:
                 self.dynamic_trailing_stop = new_trail
@@ -334,7 +414,7 @@ class TradingStrategy:
         if not entry_time:
             return False
         held_secs = (datetime.now() - entry_time).total_seconds()
-        return held_secs > self.dynamic_max_holding_time * 60
+        return held_secs > self.dynamic_max_holding_time * 600
 
     async def execute_exit(self, contract_id: str, reason: str) -> None:
             """Wrapper for contract liquidation with built‑in cool‑off."""
