@@ -12,6 +12,10 @@ from utils.risk_manager import RiskManager
 from strategy.rule_based_signals import RuleBasedSignals
 
 
+MAX_HEDGE_DEPTH   = 1          # parent (0) + one mirror (1)
+HEDGE_COOLDOWN_S  = 60.0       # seconds between hedge events
+
+
 class TradingStrategy:
     """Rule‑based multiplier trading strategy with dynamic risk controls.
     
@@ -66,6 +70,9 @@ class TradingStrategy:
         self.reversed_trades: Set[str] = set()  # guard against flip-flops
         self.hedged_trades: Set[str] = set()
 
+        self._hedge_depth: Dict[str, int] = {}   # contract_id -> depth
+        self._last_hedge_ts: float        = 0.0  # epoch seconds
+
         # Account
         self.latest_balance: float = 0.0
         self.currency: str = "USD"
@@ -106,7 +113,7 @@ class TradingStrategy:
         self.batch_trade_count: int = 0
         self.batch_pause_until: datetime = datetime.min
         self.batch_size: int = 1
-        self.batch_cooldown: timedelta = timedelta(minutes=5)
+        self.batch_cooldown: timedelta = timedelta(minutes=2)
 
         # Market metrics
         self.volatility: float = 0.0
@@ -242,83 +249,97 @@ class TradingStrategy:
         finally:
             await self.cleanup_trade(contract_id)
 
-    async def handle_poc_update(  # noqa: C901, PLR0912
+    async def handle_poc_update(          # noqa: C901, PLR0912
         self,
         poc_update: Dict,
         contract_id: str,
         fut: asyncio.Future,
     ) -> None:
-        """
-        Per-contract POC handler.
-        Added logic block (► Opposite-Bid) **before** fixed-stop processing.
-        """
+
+        # --- basic guards --------------------------------------------------
         if self.contracts_closed.get(contract_id):
             return
-
         poc = poc_update.get("proposal_open_contract", {})
         if not poc or not poc.get("is_valid_to_sell", False):
-            return  # entry tick not yet confirmed
+            return
 
-        current_price = float(poc.get("current_spot", 0.0))
-        profit = float(poc.get("profit", 0.0))
+        profit  = float(poc.get("profit", 0.0))   # USD P/L
         is_sold = poc.get("is_sold", False)
-        symbol = poc.get("shortcode", "").split("_")[0] or self.current_symbol
+        symbol  = (
+            poc.get("underlying")                 # always present on multiplier POC
+            or poc.get("symbol")                  # fallback
+            or self.current_symbol
+        )
 
-        # ──────────────────────────────────────────────────────────────── #
-        # ► Opposite-Bid Fail-Safe
-        #   If position drifts further than loss_reverse_threshold_points
-        #   we IMMEDIATELY close & flip direction *once*.
-        # ──────────────────────────────────────────────────────────────── #
+        # ------------------------------------------------------------------
+        # ◀  OPPOSITE-BID HEDGE (depth & cooldown guards)  ▶
+        # ------------------------------------------------------------------
+        now   = asyncio.get_event_loop().time()
+        depth = self._hedge_depth.get(contract_id, 0)
+
         if (
-                profit <= self.loss_reverse_threshold_points
-                and contract_id not in self.hedged_trades
+            profit <= self.loss_reverse_threshold_points          # losing trade
+            and contract_id not in self.hedged_trades              # not hedged yet
+            and depth < MAX_HEDGE_DEPTH                            # depth guard
+            and now - self._last_hedge_ts >= HEDGE_COOLDOWN_S      # cooldown guard
         ):
             self.hedged_trades.add(contract_id)
-            original_dir = self.trade_directions.get(contract_id, "UNKNOWN")
-            opposite_signal = "SELL" if original_dir == "BUY" else "BUY"
 
-            stake = float(poc.get("buy_price", 1.0))  # same stake as entry
+            original_dir    = self.trade_directions.get(contract_id, "UNKNOWN")
+            opposite_signal = "SELL" if original_dir == "BUY" else "BUY"
+            stake           = float(poc.get("buy_price", 1.0))
+
             self.logger.warning(
-                f"🛡 {contract_id} loss {profit:.2f} ≤ {self.loss_reverse_threshold_points} "
-                f"→ hedging with {opposite_signal}"
+                f"🛡 {contract_id} loss {profit:.2f} ≤ "
+                f"{self.loss_reverse_threshold_points:.2f} → hedge {opposite_signal}"
             )
-            # small async buffer so we don’t block the stream thread
+
+            # depth & time bookkeeping
+            self._hedge_depth[contract_id] = depth + 1
+            self._last_hedge_ts = now
+
             asyncio.create_task(
                 self._open_hedge(symbol, opposite_signal, stake, contract_id)
             )
 
-        # ---- Fixed hard-coded stop-loss ------------------------------- #
+        # ------------------------------------------------------------------
+        # 2. Fixed stop-loss
+        # ------------------------------------------------------------------
         if profit <= -abs(self.STOP_LOSS):
-            await self.execute_exit(contract_id, f"Fixed SL ${self.STOP_LOSS} hit ({profit:.2f})")
+            await self.execute_exit(contract_id,
+                                    f"Fixed SL ${self.STOP_LOSS:.2f} hit ({profit:.2f})")
             return
 
-        # ---- profit-based trailing ----------------------------------- #
-        state = self.active_trades.setdefault(
-            contract_id, {"best_profit": 0.0, "trailing": False}
-        )
-        if not state["trailing"] and profit >= 300.0:
-            state["trailing"] = True
-            state["best_profit"] = profit
-            self.logger.info(f"Contract {contract_id}: profit {profit:.2f} ⇒ trailing ON")
-        elif state["trailing"]:
-            if profit > state["best_profit"]:
-                state["best_profit"] = profit
-            drop = state["best_profit"] - profit
-            if drop >= 10.0 or profit <= 100.0:
+        # ------------------------------------------------------------------
+        # 3. Trailing-profit logic (unchanged from your latest version)
+        # ------------------------------------------------------------------
+        trail = self.active_trades.setdefault(contract_id, {"peak": 0.0, "armed": False})
+        if not trail["armed"] and profit >= 100.0:                # arm at +100
+            trail.update({"armed": True, "peak": profit})
+            self.logger.info(f"{contract_id}: +{profit:.2f} → TRAIL ARMED")
+        elif trail["armed"]:
+            if profit > trail["peak"]:
+                trail["peak"] = profit
+            elif trail["peak"] - profit >= 2.0:                    # 2-USD give-back
                 await self.execute_exit(
                     contract_id,
-                    f"Profit-trail exit (peak {state['best_profit']:.2f} → {profit:.2f})",
+                    f"Trailing stop −2.00 (peak {trail['peak']:.2f} → {profit:.2f})"
                 )
                 return
 
-        # ---- platform closed contract --------------------------------- #
+        # ------------------------------------------------------------------
+        # 4. Broker-settled contract
+        # ------------------------------------------------------------------
         if is_sold:
             await self.finalize_trade(contract_id, profit, fut)
             return
 
-        # ---- upkeep ---------------------------------------------------- #
+        # ------------------------------------------------------------------
+        # 5. Upkeep
+        # ------------------------------------------------------------------
         await self.update_dynamic_parameters()
         await self.check_exit_conditions(contract_id, profit)
+
 
 
     async def _reverse_trade(self, contract_id: str, signal: str, symbol: str) -> None:
@@ -356,7 +377,7 @@ class TradingStrategy:
             self.average_true_range = self.calculate_atr()
             self.last_volatility_update = datetime.now()
 
-        new_trail = max(self.average_true_range * 1.5, 1000.0)
+        new_trail = max(self.average_true_range * 1.5, 20.0)
         async with self.trailing_stop_lock:
             if abs(new_trail - self.dynamic_trailing_stop) / (self.dynamic_trailing_stop or 1e-9) > 0.2:
                 self.dynamic_trailing_stop = new_trail
@@ -816,13 +837,22 @@ class TradingStrategy:
     #  🔻 LIFE-CYCLE HELPERS
     # ---------------------------------------------------------------------
     def initialize_trade(self, contract_id: str, proposal: Dict):
-        """Capture balance snapshot and set trailing state."""
-        self.entry_price = float(proposal["ask_price"])
-        self.best_price = self.entry_price
+        """Capture balance snapshot and seed trailing/hedge state."""
+        self.entry_price  = float(proposal["ask_price"])
+        self.best_price   = self.entry_price
+
         self.trade_open_times[contract_id] = datetime.now()
-        self.active_trades[contract_id] = {"best_profit": 0.0, "trailing": False}
-        self.entry_balance[contract_id] = self.latest_balance  # snapshot
-        self.logger.info(f"Open {contract_id} @ {self.entry_price:.4f} | entry bal {self.latest_balance:.2f}")
+        self.active_trades[contract_id]    = {"peak": 0.0, "armed": False}
+        self.entry_balance[contract_id]    = self.latest_balance
+
+        # ── NEW: initialise depth to 0 unless the hedge block set it already
+        self._hedge_depth.setdefault(contract_id, 0)
+
+        self.logger.info(
+            f"Open {contract_id} @ {self.entry_price:.4f} | "
+            f"entry bal {self.latest_balance:.2f}"
+        )
+
 
 
 
