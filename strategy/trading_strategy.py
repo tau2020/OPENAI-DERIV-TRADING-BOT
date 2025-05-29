@@ -66,7 +66,7 @@ class TradingStrategy:
         self.trade_directions: Dict[str, str] = {}  # "BUY"/"SELL"
 
         # 🆕 Opposite-bid state
-        self.loss_reverse_threshold_points: float = -5.0  # ≤ –3 ⇒ reverse
+        self.loss_reverse_threshold_points: float = -3.7  # ≤ –3 ⇒ reverse
         self.reversed_trades: Set[str] = set()  # guard against flip-flops
         self.hedged_trades: Set[str] = set()
 
@@ -113,7 +113,7 @@ class TradingStrategy:
         self.batch_trade_count: int = 0
         self.batch_pause_until: datetime = datetime.min
         self.batch_size: int = 1
-        self.batch_cooldown: timedelta = timedelta(minutes=2)
+        self.batch_cooldown: timedelta = timedelta(minutes=5)
 
         # Market metrics
         self.volatility: float = 0.0
@@ -314,13 +314,13 @@ class TradingStrategy:
         # 3. Trailing-profit logic (unchanged from your latest version)
         # ------------------------------------------------------------------
         trail = self.active_trades.setdefault(contract_id, {"peak": 0.0, "armed": False})
-        if not trail["armed"] and profit >= 100.0:                # arm at +100
+        if not trail["armed"] and profit >= 1.4:                # arm at +100
             trail.update({"armed": True, "peak": profit})
             self.logger.info(f"{contract_id}: +{profit:.2f} → TRAIL ARMED")
         elif trail["armed"]:
             if profit > trail["peak"]:
                 trail["peak"] = profit
-            elif trail["peak"] - profit >= 2.0:                    # 2-USD give-back
+            elif trail["peak"] - profit >= 0.8:                    # 2-USD give-back
                 await self.execute_exit(
                     contract_id,
                     f"Trailing stop −2.00 (peak {trail['peak']:.2f} → {profit:.2f})"
@@ -710,7 +710,7 @@ class TradingStrategy:
     async def get_price_proposal(self, symbol: str, signal: str) -> Optional[Dict]:
         req = {
             "proposal": 1,
-            "amount": 500,   # use dynamic size
+            "amount": 10,   # use dynamic size
             "basis": "stake",
             "contract_type": self.dynamic_contract_type,
             "currency": config.CURRENCY,

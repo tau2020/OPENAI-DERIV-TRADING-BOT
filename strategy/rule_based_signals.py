@@ -40,7 +40,7 @@ class RuleBasedSignals:
         self.volume_spike_multiplier: float = 2.0 # Less critical if volume is just tick count
 
         # Set this based on your testing (e.g., 0.55 or 0.60 allowed trades)
-        self.min_confidence: float    = 0.55 
+        self.min_confidence: float    = 0.55
         self.max_confidence: float    = 0.95
         
         self.risk_per_trade: float    = 0.01
