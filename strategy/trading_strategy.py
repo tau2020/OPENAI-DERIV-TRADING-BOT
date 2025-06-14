@@ -8,8 +8,12 @@ from collections import defaultdict, deque
 
 from api.deriv_api import DerivAPI
 from config import config
-from utils.risk_manager import RiskManager
 from strategy.rule_based_signals import RuleBasedSignals
+from utils.risk_manager import RiskManager
+
+from strategy.openai_signal_engine import OpenAISignalEngine
+
+
 
 
 MAX_HEDGE_DEPTH   = 1          # parent (0) + one mirror (1)
@@ -38,6 +42,13 @@ class TradingStrategy:
         self.logger = logger
         self.deriv_api = deriv_api_client
         self.loginid = loginid
+
+        # TradingStrategy.__init__
+        self.ai_signals = OpenAISignalEngine(
+            api_key=config.OPENAI_API_KEY,  # add this to your config
+            logger=self.logger,
+            model="o3-mini",
+        )
 
         # Concurrency primitives
         self.lock = Lock()
@@ -112,7 +123,7 @@ class TradingStrategy:
         # Batch throttle
         self.batch_trade_count: int = 0
         self.batch_pause_until: datetime = datetime.min
-        self.batch_size: int = 1
+        self.batch_size: int = 2
         self.batch_cooldown: timedelta = timedelta(minutes=5)
 
         # Market metrics
@@ -314,13 +325,13 @@ class TradingStrategy:
         # 3. Trailing-profit logic (unchanged from your latest version)
         # ------------------------------------------------------------------
         trail = self.active_trades.setdefault(contract_id, {"peak": 0.0, "armed": False})
-        if not trail["armed"] and profit >= 1.4:                # arm at +100
+        if not trail["armed"] and profit >= 0.4:                # arm at +100
             trail.update({"armed": True, "peak": profit})
             self.logger.info(f"{contract_id}: +{profit:.2f} → TRAIL ARMED")
         elif trail["armed"]:
             if profit > trail["peak"]:
                 trail["peak"] = profit
-            elif trail["peak"] - profit >= 0.8:                    # 2-USD give-back
+            elif trail["peak"] - profit >= 0.3:                    # 2-USD give-back
                 await self.execute_exit(
                     contract_id,
                     f"Trailing stop −2.00 (peak {trail['peak']:.2f} → {profit:.2f})"
@@ -377,7 +388,7 @@ class TradingStrategy:
             self.average_true_range = self.calculate_atr()
             self.last_volatility_update = datetime.now()
 
-        new_trail = max(self.average_true_range * 1.5, 20.0)
+        new_trail = max(self.average_true_range * 1.5, 5.0)
         async with self.trailing_stop_lock:
             if abs(new_trail - self.dynamic_trailing_stop) / (self.dynamic_trailing_stop or 1e-9) > 0.2:
                 self.dynamic_trailing_stop = new_trail
@@ -585,7 +596,14 @@ class TradingStrategy:
         ]
 
         self.rule_signals.account_balance = self.latest_balance
-        sig = self.rule_signals.generate_candle_signal(candle_data)
+        sig = await self.ai_signals.generate_candle_signal(
+            symbol=symbol,
+            candle_times=self.candle_times,
+            candle_closes=self.candle_closes,
+            account_balance=self.latest_balance,
+            recent_volatility=self.volatility,
+            recent_trades_win_loss_ratio=(self.total_wins / max(1, self.total_losses)),
+        )
         if sig["signal"] == "HOLD":
             return "HOLD", 0.0
 
@@ -710,7 +728,7 @@ class TradingStrategy:
     async def get_price_proposal(self, symbol: str, signal: str) -> Optional[Dict]:
         req = {
             "proposal": 1,
-            "amount": 10,   # use dynamic size
+            "amount": 4,   # use dynamic size
             "basis": "stake",
             "contract_type": self.dynamic_contract_type,
             "currency": config.CURRENCY,
