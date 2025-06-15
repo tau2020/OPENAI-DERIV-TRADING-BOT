@@ -10,7 +10,7 @@ from api.deriv_api import DerivAPI
 from config import config
 from strategy.rule_based_signals import RuleBasedSignals
 from utils.risk_manager import RiskManager
-
+from strategy.latency_adapter import LatencyAdapter
 from strategy.openai_signal_engine import OpenAISignalEngine
 
 
@@ -49,6 +49,18 @@ class TradingStrategy:
             logger=self.logger,
             model="o3-mini",
         )
+
+        self.latency = LatencyAdapter(
+            ai_engine=self.ai_signals,
+            logger=self.logger,
+            max_network_latency=6.0,
+        )
+
+        # after other dynamic params
+        self.macro_primary_signal = "HOLD"
+        self.grid_window = None
+        self.grid_step = None
+        self.macro_expires_at = datetime.min
 
         # Concurrency primitives
         self.lock = Lock()
@@ -170,22 +182,40 @@ class TradingStrategy:
     def is_batch_pause_active(self) -> bool:
         """Return True if the post‑batch cool‑down is in effect."""
         return datetime.now() < self.batch_pause_until
-    
+
     async def tick_callback(self, tick: Dict):
-            """Handle real‑time tick updates (throttled)."""
-            tick_data = tick.get("tick", {})
-            symbol = tick_data.get("symbol")
-            price = float(tick_data.get("quote", 0.0))
-            epoch = tick_data.get("epoch", 0)
+        """Handle real-time tick updates (1 per second for RDBEAR/BULL)."""
+        tick_data = tick.get("tick", {})
+        symbol = tick_data.get("symbol")
+        price = float(tick_data.get("quote", 0.0))
+        epoch = tick_data.get("epoch", 0)
 
-            await self.append_tick_data(datetime.fromtimestamp(epoch), price)
+        # 1️⃣ Store the tick
+        await self.append_tick_data(datetime.fromtimestamp(epoch), price)
 
-            if not self.account_info_logged:
-                await self.log_account_info()
-                self.account_info_logged = True
+        # 2️⃣ L A T E N C Y  A D A P T E R  -------------------------------
+        await self.latency.maybe_request(
+            symbol=symbol,
+            candle_times=self.candle_times,
+            candle_closes=self.candle_closes,
+            account_balance=self.latest_balance,
+            recent_volatility=self.volatility,
+            recent_trades_win_loss_ratio=self.total_wins / max(1, self.total_losses),
+        )
+        await self.latency.poll()  # non-blocking
 
-            if self.should_evaluate_strategy():
-                asyncio.create_task(self.evaluate_and_execute_trade(symbol))
+        macro = self.latency.macro()  # freshest macro-signal, if any
+        if macro:
+            self.apply_macro_signal(macro)  # update SL/TP, grid, stake …
+
+        # 3️⃣ One-off account log
+        if not self.account_info_logged:
+            await self.log_account_info()
+            self.account_info_logged = True
+
+        # 4️⃣ Main trade-evaluation gate
+        if self.should_evaluate_strategy():
+            asyncio.create_task(self.evaluate_and_execute_trade(symbol))
 
     async def evaluate_and_execute_trade(self, symbol: str):
         """Main decision loop."""
@@ -239,7 +269,62 @@ class TradingStrategy:
                     self.batch_trade_count = 0  # reset counter for next cycle
         except Exception as e:
             self.logger.error(f"Buy error → {e}")
-          
+
+    # ------------------------------------------------------------------ #
+    # MACRO-SIGNAL APPLICATION
+    # ------------------------------------------------------------------ #
+    def apply_macro_signal(self, macro):
+        """
+        Ingest a fresh MacroSignal (from LatencyAdapter) and update:
+        • dynamic risk parameters (SL/TP/trailing/etc.)
+        • position sizing
+        • optional grid-trading window/step
+        • a primary BUY/SELL/HOLD bias the rest of the strategy can read
+        """
+        data = macro.data
+        risk = data.get("risk", {})
+        bands = data.get("bands", {})
+        signal = data.get("signal", "HOLD").upper()
+
+        # 1️⃣ Risk & sizing -----------------------------------------------------
+        self.dynamic_stop_loss = float(risk.get("sl", self.dynamic_stop_loss))
+        self.dynamic_take_profit = float(risk.get("tp", self.dynamic_take_profit))
+        self.dynamic_trailing_stop = float(risk.get("trail", self.dynamic_trailing_stop))
+        self.dynamic_position_size = float(risk.get("stake", self.dynamic_position_size))
+        self.dynamic_max_holding_time = int(risk.get("mht", self.dynamic_max_holding_time))
+
+        # 2️⃣ Primary directional bias -----------------------------------------
+        if signal in {"BUY", "SELL", "HOLD"}:
+            self.macro_primary_signal = signal  # create attr on first call
+        else:
+            self.macro_primary_signal = "HOLD"
+
+        # 3️⃣ Grid-band parameters (optional) ----------------------------------
+        if bands.get("mode") == "grid":
+            self.grid_window = float(bands.get("window", 10.0))  # total pts width
+            self.grid_step = float(bands.get("step", 3.0))  # spacing between levels
+        else:
+            self.grid_window = None
+            self.grid_step = None
+
+        # 4️⃣ Expiry bookkeeping -----------------------------------------------
+        self.macro_expires_at = macro.expires_at  # datetime the TTL lapses
+
+        # 5️⃣ Logging -----------------------------------------------------------
+        ttl = (macro.expires_at - datetime.utcnow()).total_seconds()
+        self.logger.info(
+            "📥 Macro-signal applied — %s | SL=%.2f TP=%.2f Trail=%.2f Stake=%.2f "
+            "Grid=%s (win=%.1f step=%.1f) TTL=%.1fs",
+            self.macro_primary_signal,
+            self.dynamic_stop_loss,
+            self.dynamic_take_profit,
+            self.dynamic_trailing_stop,
+            self.dynamic_position_size,
+            bands.get('mode', 'off'),
+            getattr(self, 'grid_window', 0.0) or 0.0,
+            getattr(self, 'grid_step', 0.0) or 0.0,
+            ttl,
+        )
 
     async def monitor_trade(self, contract_id: str):
         """Stream POC → exit logic."""
