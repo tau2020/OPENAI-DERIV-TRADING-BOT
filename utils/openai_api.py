@@ -17,13 +17,13 @@ def analyze_sentiment(text):
     
     try:
         response = openai.chat.completions.create(
-            model="gpt-4o",  # Use a valid and accessible model
+            model="01-mini",  # Use a valid and accessible model
             messages=[{
                 "role": "user",
                 "content": prompt
             }],
-            max_tokens=5,              # Limit tokens to ensure concise output
-            temperature=0,             # Set temperature to 0 for deterministic results
+            max_completion_tokens=60,              # Limit tokens to ensure concise output
+                     # Set temperature to 0 for deterministic results
         )
         
         # Log the full response for debugging

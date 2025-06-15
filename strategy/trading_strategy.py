@@ -1,563 +1,996 @@
-# strategy/trading_strategy.py
-
-import logging
-from datetime import datetime
 import asyncio
-import statistics
-import threading
-import matplotlib.pyplot as plt
-import io
+import logging
+import numpy as np
+from asyncio import Lock
+from datetime import datetime, time, timedelta
+from typing import DefaultDict, List, Dict, Optional, Set
+from collections import defaultdict, deque
 
-import requests
+from api.deriv_api import DerivAPI
 from config import config
-from utils.openai_utils import initialize_openai, get_trading_signal_from_openai
+from strategy.rule_based_signals import RuleBasedSignals
+from utils.risk_manager import RiskManager
+from strategy.latency_adapter import LatencyAdapter
+from strategy.openai_signal_engine import OpenAISignalEngine
+
+
+
+
+MAX_HEDGE_DEPTH   = 1          # parent (0) + one mirror (1)
+HEDGE_COOLDOWN_S  = 60.0       # seconds between hedge events
+
 
 class TradingStrategy:
+    """Rule‑based multiplier trading strategy with dynamic risk controls.
+    
+    Modifications in this version (2025‑05‑10):
+        • Added **profit‑based trailing stop** that activates only after
+          profit ≥ $5; once active, if profit falls by ≥ $2 from the
+          peak _or_ falls back to $5, the position is closed.
+    """
 
-    def __init__(self, logger, deriv_api, openai_api_key):
+    # ------------------------------------------------------------------ #
+    # INITIALISATION
+    # ------------------------------------------------------------------ #
+    def __init__(  # noqa: PLR0913, CCE001
+        self,
+        logger: logging.Logger,
+        deriv_api_client: DerivAPI,
+        loginid: str = "Unknown",
+    ):
+        # ─────────── original init ───────────
         self.logger = logger
-        self.deriv_api = deriv_api
-        self.total_wins = 0
-        self.total_losses = 0
-        self.tick_times = []
-        self.tick_prices = []
-        self.lock = threading.Lock()
-        self.last_chart_update = datetime.now()
+        self.deriv_api = deriv_api_client
+        self.loginid = loginid
+
+        # TradingStrategy.__init__
+        self.ai_signals = OpenAISignalEngine(
+            api_key=config.OPENAI_API_KEY,  # add this to your config
+            logger=self.logger,
+            model="o3-mini",
+        )
+
+        self.latency = LatencyAdapter(
+            ai_engine=self.ai_signals,
+            logger=self.logger,
+            max_network_latency=6.0,
+        )
+
+        # after other dynamic params
+        self.macro_primary_signal = "HOLD"
+        self.grid_window = None
+        self.grid_step = None
+        self.macro_expires_at = datetime.min
+
+        # Concurrency primitives
+        self.lock = Lock()
+        self.trade_lock = Lock()
+        self.balance_lock = Lock()
+        self.trailing_stop_lock = Lock()
+
+        # Market-data buffers
+        max_pts = config.MAX_TICK_DATA_POINTS
+        self.tick_times: deque[datetime] = deque(maxlen=max_pts)
+        self.tick_prices: deque[float] = deque(maxlen=max_pts)
+
+        self.candle_times: deque[datetime] = deque(maxlen=max_pts)
+        self.candle_opens: deque[float] = deque(maxlen=max_pts)
+        self.candle_highs: deque[float] = deque(maxlen=max_pts)
+        self.candle_lows: deque[float] = deque(maxlen=max_pts)
+        self.candle_closes: deque[float] = deque(maxlen=max_pts)
+        self.candle_volumes: deque[float] = deque(maxlen=max_pts)
+
+        # Trading state
+        self.active_symbols: List[str] = []
+        self.current_symbol: str = config.SYMBOL
+        self.contracts_closed: Dict[str, bool] = {}
+        self.trade_open_times: Dict[str, datetime] = {}
+        self.active_trades: Dict[str, Dict] = {}
+        self.trade_directions: Dict[str, str] = {}  # "BUY"/"SELL"
+
+        # 🆕 Opposite-bid state
+        self.loss_reverse_threshold_points: float = -3.7  # ≤ –3 ⇒ reverse
+        self.reversed_trades: Set[str] = set()  # guard against flip-flops
+        self.hedged_trades: Set[str] = set()
+
+        self._hedge_depth: Dict[str, int] = {}   # contract_id -> depth
+        self._last_hedge_ts: float        = 0.0  # epoch seconds
+
+        # Account
+        self.latest_balance: float = 0.0
+        self.currency: str = "USD"
+        self.daily_start_balance: float = 0.0
+        self.account_info_logged: bool = False
+        self.best_prices: DefaultDict[str, float] = defaultdict(float)
+
+        # Risk-manager / streak trackers
+        self.risk_manager = RiskManager(logger)
+        self.consecutive_losses: int = 0
+        self.max_consecutive_losses: int = config.MAX_CONSECUTIVE_LOSSES
+        self.daily_loss_limit_percent = config.DAILY_LOSS_LIMIT_PERCENT
+        self.daily_profit_target_percent = config.DAILY_PROFIT_TARGET_PERCENT
+        self.daily_loss_limit_reached: bool = False
+        self.daily_profit_target_reached: bool = False
+
+        # Dynamic params (updated per-signal)
+        self.dynamic_stop_loss: float = 0.0
+        self.dynamic_take_profit: float = 0.0
+        self.dynamic_confidence: float = 0.0
+        self.dynamic_position_size: float = 0.0
+        self.dynamic_max_holding_time: int = 3
+        self.dynamic_trailing_stop: float = 0.0
+        self.dynamic_contract_type: str = "CALL/PUT"
+        self.dynamic_duration: int = config.DURATION
+        self.entry_price: float = 0.0
+        self.best_price: float = 0.0
+        self.entry_balance: Dict[str, float] = {}
+
+        # Performance metrics
+        self.total_wins = self.total_losses = 0
+        self.cumulative_profit = self.cumulative_loss = 0.0
+        self.trades_data: List[Dict] = []
+        self.pl_times: List[datetime] = []
+        self.pl_values: List[float] = []
+
+        # Batch throttle
+        self.batch_trade_count: int = 0
+        self.batch_pause_until: datetime = datetime.min
+        self.batch_size: int = 2
+        self.batch_cooldown: timedelta = timedelta(minutes=5)
+
+        # Market metrics
+        self.volatility: float = 0.0
+        self.average_true_range: float = 0.0
+        self.MAX_SCALPING_STAKE: float = 100.0
+        self.allowed_trading_start = time(0, 0)
+        self.allowed_trading_end = time(23, 59)
         self.last_strategy_evaluation = datetime.now()
-        self.account_info_logged = False
-        self.active_symbols = []
-        self.current_symbol = config.SYMBOL
-        self.latest_balance = 0.0
-        self.dynamic_stop_loss = config.STOP_LOSS  # Default from config, will be overridden
-        self.dynamic_take_profit = config.TAKE_PROFIT
-        self.dynamic_confidence = 0.0
-        self.currency = 'USD'  # Default currency, will be updated
+        self.last_volatility_update = datetime.now()
 
-        # Initialize OpenAI client
-        self.openai_client = initialize_openai(openai_api_key, self.logger)
+        # Config
+        self.multiplier_factor: float = getattr(config, "MULTIPLIER_FACTOR", 1600)
+        self.STOP_LOSS: float = getattr(config, "STOP_LOSS", 5.0)
 
-        # Initialize cumulative P/L trackers
-        self.cumulative_profit = 0.0
-        self.cumulative_loss = 0.0
-        self.pl_times = []
-        self.pl_values = []
+        # Rule-based signal engine
+        self.rule_signals = RuleBasedSignals(logger=self.logger)
 
-    async def tick_callback(self, tick):
+    # --------------------------------------------------------------------- #
+    # CORE STRATEGY METHODS
+    # --------------------------------------------------------------------- #
+
+    async def _open_hedge(
+            self,
+            symbol: str,
+            signal: str,
+            stake: float,
+            parent_id: str,
+    ) -> None:
         """
-        Callback function for tick updates.
+        Fire a new contract in the opposite direction without touching the
+        original losing one.  Uses the same stake for symmetry.
         """
-        tick_data = tick.get('tick', {})
-        symbol = tick_data.get('symbol')
-        price = float(tick_data.get('quote', 0.0))
-        epoch = tick_data.get('epoch')
-        timestamp = datetime.fromtimestamp(epoch)
-        self.logger.debug(f"Received tick: {tick_data}")
+        self.dynamic_contract_type = "CALL" if signal == "BUY" else "PUT"
+        self.dynamic_position_size = stake  # ← same stake
+        try:
+            await self.execute_trade_safely(symbol, signal)
+            self.logger.info(
+                f"🛡 Hedged {parent_id} with a {signal} stake {stake:.2f}"
+            )
+        except Exception as exc:
+            self.logger.error(f"Hedge order failed → {exc}")
 
-        # Append tick data
-        self.append_tick_data(timestamp, price)
+    def is_batch_pause_active(self) -> bool:
+        """Return True if the post‑batch cool‑down is in effect."""
+        return datetime.now() < self.batch_pause_until
 
-        # Log account info once
+    async def tick_callback(self, tick: Dict):
+        """Handle real-time tick updates (1 per second for RDBEAR/BULL)."""
+        tick_data = tick.get("tick", {})
+        symbol = tick_data.get("symbol")
+        price = float(tick_data.get("quote", 0.0))
+        epoch = tick_data.get("epoch", 0)
+
+        # 1️⃣ Store the tick
+        await self.append_tick_data(datetime.fromtimestamp(epoch), price)
+
+        # 2️⃣ L A T E N C Y  A D A P T E R  -------------------------------
+        await self.latency.maybe_request(
+            symbol=symbol,
+            candle_times=self.candle_times,
+            candle_closes=self.candle_closes,
+            account_balance=self.latest_balance,
+            recent_volatility=self.volatility,
+            recent_trades_win_loss_ratio=self.total_wins / max(1, self.total_losses),
+        )
+        await self.latency.poll()  # non-blocking
+
+        macro = self.latency.macro()  # freshest macro-signal, if any
+        if macro:
+            self.apply_macro_signal(macro)  # update SL/TP, grid, stake …
+
+        # 3️⃣ One-off account log
         if not self.account_info_logged:
             await self.log_account_info()
             self.account_info_logged = True
 
-        # Update chart if necessary
-        if self.should_update_chart():
-            self.update_chart(symbol)
-
-        # Evaluate strategy if necessary
+        # 4️⃣ Main trade-evaluation gate
         if self.should_evaluate_strategy():
             asyncio.create_task(self.evaluate_and_execute_trade(symbol))
 
-    def append_tick_data(self, timestamp, price):
-        """
-        Appends new tick data to the price and time lists.
-        """
-        with self.lock:
-            self.tick_times.append(timestamp)
-            self.tick_prices.append(price)
-            if len(self.tick_prices) > config.MAX_TICK_DATA_POINTS:
-                self.tick_times = self.tick_times[-config.MAX_TICK_DATA_POINTS:]
-                self.tick_prices = self.tick_prices[-config.MAX_TICK_DATA_POINTS:]
-        self.logger.debug(f"Tick data appended: {timestamp}, {price}")
-
-    async def log_account_info(self):
-        """
-        Logs account information such as balance and account type.
-        """
-        try:
-            account_status_response = await self.deriv_api.get_account_status()
-            account_status = account_status_response.get('get_account_status', {})
-            if account_status:
-                account_name = account_status.get('loginid', 'Unknown')
-                balance_response = await self.deriv_api.balance()
-                balance_data = balance_response.get('balance', {})
-                balance = float(balance_data.get('balance', 0.0))
-                currency = balance_data.get('currency', 'USD')
-                account_type = 'Real' if account_status.get('is_virtual', 1) == 0 else 'Demo'
-
-                with self.lock:
-                    self.latest_balance = balance
-                    self.currency = currency
-
-                self.logger.info(f"Account Name (Login ID): {account_name}")
-                self.logger.info(f"Account Balance: {balance} {currency}")
-                self.logger.info(f"Account Type: {account_type}")
-            else:
-                self.logger.error("Failed to retrieve account information.")
-        except Exception as e:
-            self.logger.error(f"Error fetching account info: {e}")
-
-    async def log_current_balance(self):
-            """
-            Logs the current account balance.
-            """
-            try:
-                balance_response = await self.deriv_api.balance()
-                if balance_response and 'balance' in balance_response:
-                    balance = float(balance_response['balance'])
-                    currency = balance_response.get('currency', 'USD')
-                    with self.lock:
-                        self.latest_balance = balance
-                        self.currency = currency
-                    self.logger.info(f"Updated Account Balance: {balance} {currency}")
-                else:
-                    self.logger.error("Failed to retrieve account balance.")
-            except Exception as e:
-                self.logger.error(f"Error fetching balance: {e}")
-
-
-    def should_update_chart(self):
-        """
-        Determines if it's time to update the price and P/L chart.
-        """
-        elapsed = (datetime.now() - self.last_chart_update).total_seconds()
-        return elapsed >= config.CHART_UPDATE_INTERVAL
-
-    def update_chart(self, symbol):
-        """
-        Updates the price and P/L charts with the latest data.
-        """
-        with self.lock:
-            fig, ax1 = plt.subplots(figsize=(10, 5))
-
-            # Plot Price
-            color = 'tab:blue'
-            ax1.set_xlabel('Time')
-            ax1.set_ylabel('Price', color=color)
-            ax1.plot(self.tick_times, self.tick_prices, label='Price', color=color)
-            ax1.tick_params(axis='y', labelcolor=color)
-
-            # Plot Net Cumulative P/L
-            ax2 = ax1.twinx()  # Instantiate a second axes that shares the same x-axis
-            color = 'tab:red'
-            ax2.set_ylabel('Net Cumulative P/L', color=color)
-            ax2.plot(self.pl_times, self.pl_values, label='Net P/L', color=color)
-            ax2.tick_params(axis='y', labelcolor=color)
-
-            fig.tight_layout()  # Otherwise the right y-label is slightly clipped
-            plt.title(f'{symbol} Price and Net Cumulative P/L Chart')
-            plt.legend(loc='upper left')
-
-            # Save chart to an in-memory buffer or file
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png')
-            buf.seek(0)
-            plt.close()
-
-            self.last_chart_update = datetime.now()
-            self.logger.info("Chart updated.")
-
-    def should_evaluate_strategy(self):
-        """
-        Determines if it's time to evaluate the trading strategy.
-        """
-        elapsed = (datetime.now() - self.last_strategy_evaluation).total_seconds()
-        return elapsed >= config.STRATEGY_EVALUATION_INTERVAL
-
-    async def evaluate_and_execute_trade(self, symbol):
-        """
-        Evaluates the trading strategy and executes a trade if conditions are met.
-        """
+    async def evaluate_and_execute_trade(self, symbol: str):
+        """Main decision loop."""
         self.last_strategy_evaluation = datetime.now()
 
-        # Fetch historical data for better analysis
-        await self.fetch_historical_data(symbol)
+        # ▸ Batch cool‑down gate
+        if self.is_batch_pause_active():
+            self.logger.debug(
+                f"Batch pause active — trading resumes at {self.batch_pause_until.strftime('%H:%M:%S')}"
+            )
+            return
 
-        signal, confidence = await self.evaluate_strategy()
-        self.logger.info(f"Strategy evaluated. Signal: {signal}, Confidence: {confidence}")
+        # ▸ Daily risk / loss guards
+        if self.daily_risk_check() or self.consecutive_losses >= self.max_consecutive_losses:
+            self.logger.warning("Risk guard active – skipping evaluation")
+            return
 
-        if signal in ["BUY", "SELL"]:
-            # Get price proposal before executing trade
-            price_proposal = await self.get_price_proposal(symbol, signal)
-            if price_proposal:
-                # Execute trade asynchronously
-                await self.execute_trade(symbol, signal, price_proposal)
-            else:
-                self.logger.error("Failed to get price proposal. Trade not executed.")
+        signal, confidence = await self.evaluate_strategy(symbol)
+        self.logger.info(f"Eval → {signal} ({confidence:.2f})")
+
+        if signal not in ("BUY", "SELL") or confidence < self.rule_signals.min_confidence:
+            return
+
+        await self.execute_trade_safely(symbol, signal)
+
+    async def execute_trade_safely(self, symbol: str, signal: str):
+        """Atomic trade submit with retries & locking."""
+        proposal = await self.get_price_proposal(symbol, signal)
+        if not proposal:
+            return
+
+        try:
+            async with self.trade_lock:
+                resp = await self.deriv_api.buy({"buy": proposal["id"], "price": proposal["ask_price"]})
+                if "buy" not in resp:
+                    raise RuntimeError("No buy receipt")
+
+                cid = resp["buy"]["contract_id"]
+                self.trade_directions[cid] = signal  # track side
+                self.initialize_trade(cid, proposal)
+                asyncio.create_task(self.monitor_trade(cid))
+
+                # ▸🆕 Batch counter & scheduling ------------------------- #
+                self.batch_trade_count += 1
+                if self.batch_trade_count >= self.batch_size:
+                    self.batch_pause_until = datetime.now() + self.batch_cooldown
+                    self.logger.info(
+                        f"Batch limit reached ({self.batch_size}). Pausing new trades until "
+                        f"{self.batch_pause_until.strftime('%H:%M:%S')}"
+                    )
+                    self.batch_trade_count = 0  # reset counter for next cycle
+        except Exception as e:
+            self.logger.error(f"Buy error → {e}")
+
+    # ------------------------------------------------------------------ #
+    # MACRO-SIGNAL APPLICATION
+    # ------------------------------------------------------------------ #
+    def apply_macro_signal(self, macro):
+        """
+        Ingest a fresh MacroSignal (from LatencyAdapter) and update:
+        • dynamic risk parameters (SL/TP/trailing/etc.)
+        • position sizing
+        • optional grid-trading window/step
+        • a primary BUY/SELL/HOLD bias the rest of the strategy can read
+        """
+        data = macro.data
+        risk = data.get("risk", {})
+        bands = data.get("bands", {})
+        signal = data.get("signal", "HOLD").upper()
+
+        # 1️⃣ Risk & sizing -----------------------------------------------------
+        self.dynamic_stop_loss = float(risk.get("sl", self.dynamic_stop_loss))
+        self.dynamic_take_profit = float(risk.get("tp", self.dynamic_take_profit))
+        self.dynamic_trailing_stop = float(risk.get("trail", self.dynamic_trailing_stop))
+        self.dynamic_position_size = float(risk.get("stake", self.dynamic_position_size))
+        self.dynamic_max_holding_time = int(risk.get("mht", self.dynamic_max_holding_time))
+
+        # 2️⃣ Primary directional bias -----------------------------------------
+        if signal in {"BUY", "SELL", "HOLD"}:
+            self.macro_primary_signal = signal  # create attr on first call
         else:
-            self.logger.info("No trade action taken.")
+            self.macro_primary_signal = "HOLD"
 
-    async def fetch_historical_data(self, symbol):
-        """
-        Fetches historical tick data for analysis.
-        """
+        # 3️⃣ Grid-band parameters (optional) ----------------------------------
+        if bands.get("mode") == "grid":
+            self.grid_window = float(bands.get("window", 10.0))  # total pts width
+            self.grid_step = float(bands.get("step", 3.0))  # spacing between levels
+        else:
+            self.grid_window = None
+            self.grid_step = None
+
+        # 4️⃣ Expiry bookkeeping -----------------------------------------------
+        self.macro_expires_at = macro.expires_at  # datetime the TTL lapses
+
+        # 5️⃣ Logging -----------------------------------------------------------
+        ttl = (macro.expires_at - datetime.utcnow()).total_seconds()
+        self.logger.info(
+            "📥 Macro-signal applied — %s | SL=%.2f TP=%.2f Trail=%.2f Stake=%.2f "
+            "Grid=%s (win=%.1f step=%.1f) TTL=%.1fs",
+            self.macro_primary_signal,
+            self.dynamic_stop_loss,
+            self.dynamic_take_profit,
+            self.dynamic_trailing_stop,
+            self.dynamic_position_size,
+            bands.get('mode', 'off'),
+            getattr(self, 'grid_window', 0.0) or 0.0,
+            getattr(self, 'grid_step', 0.0) or 0.0,
+            ttl,
+        )
+
+    async def monitor_trade(self, contract_id: str):
+        """Stream POC → exit logic."""
+        self.logger.info(f"Monitor {contract_id}")
         try:
-            # Using the Deriv API to get historical data
-            end_time = int(datetime.utcnow().timestamp())
-            start_time = end_time - config.HISTORICAL_DATA_DURATION
-            response = await self.deriv_api.ticks_history({
-                "ticks_history": symbol,
-                "start": start_time,
-                "end": end_time,
-                "style": "ticks",
-                "count": config.MAX_TICK_DATA_POINTS
-            })
-            history = response.get('history', {})
-            if history:
-                self.logger.info(f"Historical data fetched for symbol: {symbol}")
-                with self.lock:
-                    self.tick_times = [datetime.fromtimestamp(int(ts)) for ts in history.get('times', [])]
-                    self.tick_prices = [float(price) for price in history.get('prices', [])]
-            else:
-                self.logger.error(f"Failed to fetch historical data for symbol: {symbol}")
-        except Exception as e:
-            self.logger.error(f"Error fetching historical data: {e}")
-            
-               
-        
+            poc_stream = await self.deriv_api.subscribe(
+                {"proposal_open_contract": 1, "contract_id": contract_id}
+            )
+            fut = asyncio.get_event_loop().create_future()
+            poc_stream.subscribe(
+                on_next=lambda poc: asyncio.create_task(
+                    self.handle_poc_update(poc, contract_id, fut)
+                ),
+                on_error=lambda e: self.logger.error(f"POC stream err: {e}"),
+                on_completed=lambda: fut.set_result(None),
+            )
+            await fut
+        finally:
+            await self.cleanup_trade(contract_id)
 
-    def fetch_polygon_data(self, symbol):
-        
-        end_date = datetime.utcnow().strftime("%Y-%m-%d")  # Correct usage
-        url = f"https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/2020-01-01/{end_date}"
-        params = {
-            "apiKey": config.POLYGONIO_API_KEY
-        }
+    async def handle_poc_update(          # noqa: C901, PLR0912
+        self,
+        poc_update: Dict,
+        contract_id: str,
+        fut: asyncio.Future,
+    ) -> None:
 
-        try:
-            response = requests.get(url, params=params)
-            data = response.json()
-            results = data.get("results", [])
-            if not results:
-                return "No Polygon data available."
+        # --- basic guards --------------------------------------------------
+        if self.contracts_closed.get(contract_id):
+            return
+        poc = poc_update.get("proposal_open_contract", {})
+        if not poc or not poc.get("is_valid_to_sell", False):
+            return
 
-            # Take the most recent day's data
-            recent_data = results[-1]
-            o, h, l, c, v = recent_data["o"], recent_data["h"], recent_data["l"], recent_data["c"], recent_data["v"]
-            polygon_summary = f"Recent OHLC: O={o}, H={h}, L={l}, C={c}, Volume={v}"
-            return polygon_summary
-        except Exception as e:
-            self.logger.error(f"Error fetching Polygon data: {e}")
-            return "No Polygon data available."
+        profit  = float(poc.get("profit", 0.0))   # USD P/L
+        is_sold = poc.get("is_sold", False)
+        symbol  = (
+            poc.get("underlying")                 # always present on multiplier POC
+            or poc.get("symbol")                  # fallback
+            or self.current_symbol
+        )
 
-    async def evaluate_strategy(self):
-            with self.lock:
-                if len(self.tick_prices) < config.MIN_DATA_POINTS_FOR_STRATEGY:
-                    self.logger.debug("Insufficient data for strategy evaluation.")
-                    return "HOLD", 0.0
+        # ------------------------------------------------------------------
+        # ◀  OPPOSITE-BID HEDGE (depth & cooldown guards)  ▶
+        # ------------------------------------------------------------------
+        now   = asyncio.get_event_loop().time()
+        depth = self._hedge_depth.get(contract_id, 0)
 
-                prices = self.tick_prices.copy()
-                times = self.tick_times.copy()
+        if (
+            profit <= self.loss_reverse_threshold_points          # losing trade
+            and contract_id not in self.hedged_trades              # not hedged yet
+            and depth < MAX_HEDGE_DEPTH                            # depth guard
+            and now - self._last_hedge_ts >= HEDGE_COOLDOWN_S      # cooldown guard
+        ):
+            self.hedged_trades.add(contract_id)
 
-            recent_volume_data = self.calculate_recent_volume()
-            recent_volatility = self.calculate_volatility(prices)
-            sentiment_score = self.get_market_sentiment()
-            recent_trades_win_loss_ratio = self.calculate_win_loss_ratio()
-            account_balance = self.latest_balance
+            original_dir    = self.trade_directions.get(contract_id, "UNKNOWN")
+            opposite_signal = "SELL" if original_dir == "BUY" else "BUY"
+            stake           = float(poc.get("buy_price", 1.0))
 
-            # For now, still no actual fundamentals or polygon data
-           
-            polygon_data = "No Polygon data available."
-            news_headlines = []
+            self.logger.warning(
+                f"🛡 {contract_id} loss {profit:.2f} ≤ "
+                f"{self.loss_reverse_threshold_points:.2f} → hedge {opposite_signal}"
+            )
 
-            try:
-                result = await get_trading_signal_from_openai(
-                    self.openai_client,
-                    self.current_symbol,
-                    prices,
-                    times,
-                    self.logger,
-                    recent_volume=recent_volume_data,
-                    recent_volatility=recent_volatility,
-                    sentiment_score=sentiment_score,
-                    recent_trades_win_loss_ratio=recent_trades_win_loss_ratio,
-                    account_balance=account_balance,
-                    news_headlines=news_headlines,
-                    
-                    polygon_data=polygon_data
+            # depth & time bookkeeping
+            self._hedge_depth[contract_id] = depth + 1
+            self._last_hedge_ts = now
+
+            asyncio.create_task(
+                self._open_hedge(symbol, opposite_signal, stake, contract_id)
+            )
+
+        # ------------------------------------------------------------------
+        # 2. Fixed stop-loss
+        # ------------------------------------------------------------------
+        if profit <= -abs(self.STOP_LOSS):
+            await self.execute_exit(contract_id,
+                                    f"Fixed SL ${self.STOP_LOSS:.2f} hit ({profit:.2f})")
+            return
+
+        # ------------------------------------------------------------------
+        # 3. Trailing-profit logic (unchanged from your latest version)
+        # ------------------------------------------------------------------
+        trail = self.active_trades.setdefault(contract_id, {"peak": 0.0, "armed": False})
+        if not trail["armed"] and profit >= 0.4:                # arm at +100
+            trail.update({"armed": True, "peak": profit})
+            self.logger.info(f"{contract_id}: +{profit:.2f} → TRAIL ARMED")
+        elif trail["armed"]:
+            if profit > trail["peak"]:
+                trail["peak"] = profit
+            elif trail["peak"] - profit >= 0.3:                    # 2-USD give-back
+                await self.execute_exit(
+                    contract_id,
+                    f"Trailing stop −2.00 (peak {trail['peak']:.2f} → {profit:.2f})"
                 )
+                return
 
-                signal = result["signal"]
-                self.dynamic_stop_loss = result["stop_loss"]
-                self.dynamic_take_profit = result["take_profit"]
-                confidence = result["confidence"]
+        # ------------------------------------------------------------------
+        # 4. Broker-settled contract
+        # ------------------------------------------------------------------
+        if is_sold:
+            await self.finalize_trade(contract_id, profit, fut)
+            return
+
+        # ------------------------------------------------------------------
+        # 5. Upkeep
+        # ------------------------------------------------------------------
+        await self.update_dynamic_parameters()
+        await self.check_exit_conditions(contract_id, profit)
+
+
+
+    async def _reverse_trade(self, contract_id: str, signal: str, symbol: str) -> None:
+            """
+            1. Gracefully close the losing contract (`execute_exit`)
+            2. Fire a new trade in the *opposite* direction with current params
+            """
+            try:
+                # ① close current
+                await self.execute_exit(contract_id, "auto-reverse trigger")
+                await asyncio.sleep(4.0)  # small buffer for P/L posting
+
+                # ② prep opposite contract-type/stake
+                self.dynamic_contract_type = "CALL" if signal == "BUY" else "PUT"
+                # keep latest dynamic_position_size etc. – stake symmetry
+
+                # ③ submit new order (obeys trade locks & batch rules)
+                await self.execute_trade_safely(symbol, signal)
 
                 self.logger.info(
-                    f"Enhanced strategy evaluation: {signal}, SL={self.dynamic_stop_loss}, "
-                    f"TP={self.dynamic_take_profit}, Confidence={confidence}"
+                    f"🔁 Reverse order placed ({signal}) after closing {contract_id}"
                 )
+            except Exception as exc:  # broad – must not bubble into stream
+                self.logger.error(f"Reverse-trade failure ({contract_id}) → {exc}")
 
-                return signal, confidence
+
+
+    # --------------------------------------------------------------------- #
+    # ENHANCED FEATURES
+    # --------------------------------------------------------------------- #
+    async def update_dynamic_parameters(self):
+        """Refresh ATR & trailing distance every 5 min."""
+        if (datetime.now() - self.last_volatility_update).total_seconds() > 300:
+            self.volatility = await self.calculate_market_volatility()
+            self.average_true_range = self.calculate_atr()
+            self.last_volatility_update = datetime.now()
+
+        new_trail = max(self.average_true_range * 1.5, 5.0)
+        async with self.trailing_stop_lock:
+            if abs(new_trail - self.dynamic_trailing_stop) / (self.dynamic_trailing_stop or 1e-9) > 0.2:
+                self.dynamic_trailing_stop = new_trail
+                self.logger.debug(f"Trailing-stop → {self.dynamic_trailing_stop:.4f}")
+
+    async def calculate_market_volatility(self) -> float:
+        arr = np.asarray(self.candle_closes, dtype=np.float64)[-50:]
+        if arr.size < 2:
+            return 0.0
+        return float(np.diff(np.log(arr)).std() * np.sqrt(252))
+
+    def calculate_atr(self) -> float:
+        n = self.rule_signals.atr_window
+        if len(self.candle_highs) < n + 1:
+            return 0.0
+
+        h = np.asarray(self.candle_highs)[-n - 1 :]
+        l = np.asarray(self.candle_lows)[-n - 1 :]
+        c = np.asarray(self.candle_closes)[-n - 1 :]
+
+        tr = np.maximum.reduce([h[1:] - l[1:], np.abs(h[1:] - c[:-1]), np.abs(l[1:] - c[:-1])])
+        return float(tr.mean())
+
+
+        # ---------------------------------------------------------------------
+    # EXIT-LOGIC HELPERS  🔻 optimised
+    # ---------------------------------------------------------------------
+    async def check_exit_conditions(self, contract_id: str, profit: float) -> None:
+        """
+        Evaluate fixed SL/TP, max-holding-time (and any additional rules)
+        then trigger execute_exit() once a condition is met.
+        """
+        if contract_id in self.contracts_closed:        # already handled
+            return
+
+        exit_reason: Optional[str] = None
+
+        # --- fixed SL / TP ------------------------------------------------ #
+        if profit <= -abs(self.dynamic_stop_loss):
+            exit_reason = f"⬇ stop-loss hit ({profit:.2f})"
+        elif profit >= self.dynamic_take_profit:
+            exit_reason = f"⬆ take-profit hit ({profit:.2f})"
+
+        # --- time-based exit --------------------------------------------- #
+        if exit_reason is None and await self.check_holding_time(contract_id):
+            exit_reason = "⏰ max hold elapsed"
+
+        # (trailing-stop in handle_poc_update covers price-based trail)
+
+        if exit_reason:
+            await self.execute_exit(contract_id, exit_reason)
+
+    async def check_holding_time(self, contract_id: str) -> bool:
+        entry_time = self.trade_open_times.get(contract_id)
+        if not entry_time:
+            return False
+        held_secs = (datetime.now() - entry_time).total_seconds()
+        return held_secs > self.dynamic_max_holding_time * 600
+
+    async def execute_exit(self, contract_id: str, reason: str) -> None:
+            """Wrapper for contract liquidation with built‑in cool‑off."""
+            if self.contracts_closed.get(contract_id):
+                return
+            self.logger.info(f"Exit {contract_id} → {reason}")
+            await self.retry_sell_contract(contract_id)
+            await asyncio.sleep(1)  # cool‑off so next checks use fresh state
+
+    async def retry_sell_contract(self, contract_id: str, attempts: int = 4) -> None:
+        """Exponential back-off sell retries."""
+        for i in range(attempts):
+            try:
+                await self.sell_contract(contract_id)
+                return
             except Exception as e:
-                self.logger.error(f"Error evaluating strategy: {e}")
-                return "HOLD", 0.0
-        
-        
-        
-    def calculate_recent_volume(self, lookback=50):
-         
-            with self.lock:
-                recent_ticks = self.tick_prices[-lookback:]
-                # The 'volume' is just the number of ticks. We can also scale it by some factor if we want.
-                approx_volume = len(recent_ticks)
-
-            # Return a simple list with one volume data point or generate a series
-            # For demonstration, let's just return a series showing some variation.
-            # If we wanted multiple data points, we could take multiple smaller segments and count ticks in each.
-            return [approx_volume for _ in range(5)]  # Just replicate it 5 times as an example
+                delay = 1.5 ** i
+                self.logger.warning(f"Sell retry {i+1}/{attempts} ({delay:.1f}s) → {e}")
+                await asyncio.sleep(delay)
+        self.logger.error(f"‼ sell failed after {attempts} attempts ({contract_id})")
 
 
-    def calculate_volatility(self, prices, annualize=False):
-            """
-            Calculate volatility as the standard deviation of log returns or percentage returns.
-            Here we will use a simple percentage change between consecutive ticks.
-            If annualize=True, we can scale it, but since this is tick data, scaling might be arbitrary.
-
-            volatility = stddev of returns
-            returns = (price[i] - price[i-1]) / price[i-1]
-            """
-            if len(prices) < 2:
-                return 0.0
-
-            returns = []
-            for i in range(1, len(prices)):
-                if prices[i-1] != 0:
-                    ret = (prices[i] - prices[i-1]) / prices[i-1]
-                    returns.append(ret)
-
-            if not returns:
-                return 0.0
-
-            vol = statistics.pstdev(returns)  # population std dev
-            # If desired, annualize or scale by sqrt of periods, etc.
-            # Without time context, we just return raw std dev.
-            return vol
-
-    def get_market_sentiment(self, window=20):
-            """
-            Approximate sentiment from recent price action.
-            If the latest price is above the average of the last `window` prices, sentiment is positive.
-            If below, sentiment is negative.
-            Scale sentiment between -1 and 1 depending on how far from the mean the price is.
-
-            sentiment = (current_price - avg_price) / (avg_price) clipped to [-1,1].
-            """
-            with self.lock:
-                if len(self.tick_prices) < window:
-                    window_prices = self.tick_prices
-                else:
-                    window_prices = self.tick_prices[-window:]
-
-            if not window_prices:
-                return 0.0
-
-            avg_price = sum(window_prices) / len(window_prices)
-            current_price = window_prices[-1]
-
-            if avg_price == 0:
-                return 0.0
-
-            raw_sentiment = (current_price - avg_price) / avg_price
-            # Clip sentiment to range [-1,1]
-            sentiment = max(-1.0, min(1.0, raw_sentiment))
-            return sentiment
-
-    def calculate_win_loss_ratio(self):
-            """
-            Compute the ratio of total wins to total losses.
-            If no losses, and we have wins, ratio can be high.
-            If no trades at all, return 1.0 as neutral.
-            """
-            wins = self.total_wins
-            losses = self.total_losses
-
-            if wins == 0 and losses == 0:
-                return 1.0  # neutral if no trades
-
-            if losses == 0:
-                # If we never lost, ratio is very high, let's cap it at something
-                return float(wins)  # Could also return a large number like 10.0
-
-            return wins / losses   
-
-
-    async def get_price_proposal(self, symbol, signal):
+    # ---------------------------------------------------------------------
+    # CORE-FUNCTIONALITY  🔻 optimised methods
+    # ---------------------------------------------------------------------
+    async def append_tick_data(self, timestamp: datetime, price: float) -> None:
         """
-        Retrieves a price proposal for a contract before executing a trade.
+        O(1) push into fixed-size deques – no manual trimming.
+        """
+        async with self.lock:
+            self.tick_times.append(timestamp)   # deque(maxlen=…) auto-pops left
+            self.tick_prices.append(price)
+
+
+    async def log_account_info(self) -> None:
+        """
+        Fetch account status & balance in parallel, cache first fetch for the session.
         """
         try:
-            contract_type = "CALL" if signal == "BUY" else "PUT"
-            proposal_request = {
-                "proposal": 1,
-                "amount": config.AMOUNT,
-                "basis": "stake",
-                "contract_type": contract_type,
-                "currency": config.CURRENCY,
-                "duration": config.DURATION,
-                "duration_unit": "m",
-                "symbol": symbol
+            status_resp, bal_resp = await asyncio.gather(
+                self.deriv_api.get_account_status(),
+                self.deriv_api.balance(),
+            )
+
+            acc_status = status_resp.get("get_account_status", {})
+            bal_data   = bal_resp.get("balance", {})
+            if not acc_status or not bal_data:
+                self.logger.error("Account info fetch failed.")
+                return
+
+            balance   = float(bal_data.get("balance", 0.0))
+            currency  = bal_data.get("currency", "USD")
+            acc_type  = "Real" if acc_status.get("is_virtual", 1) == 0 else "Demo"
+
+            async with self.lock:
+                self.latest_balance = balance
+                self.currency = currency
+                if self.daily_start_balance == 0.0:
+                    self.daily_start_balance = balance
+
+            self.logger.info(f"Balance: {balance} {currency} | Type: {acc_type} | Day-start: {self.daily_start_balance}")
+        except Exception as e:
+            self.logger.error(f"Acct-info error → {e}")
+
+
+    async def log_current_balance(self, retries: int = 3) -> None:
+        """
+        Lightweight balance poll with retry/back-off.
+        """
+        for i in range(retries):
+            try:
+                resp = await self.deriv_api.balance()
+                if "balance" not in resp:
+                    raise ValueError("missing 'balance'")
+                bal = resp["balance"]
+                async with self.lock:
+                    self.latest_balance = float(bal.get("balance", 0.0))
+                    self.currency       = bal.get("currency", "USD")
+                self.logger.debug(f"Balance ↻ {self.latest_balance} {self.currency}")
+                return
+            except Exception as e:
+                self.logger.warning(f"Bal retry {i+1}/{retries} → {e}")
+                await asyncio.sleep(1.5 ** i)
+        self.logger.error("Balance fetch failed.")
+
+
+    def should_evaluate_strategy(self) -> bool:
+        now = datetime.now()
+        if (now - self.last_strategy_evaluation).total_seconds() < config.STRATEGY_EVALUATION_INTERVAL:
+            return False
+        if not (self.allowed_trading_start <= now.time() <= self.allowed_trading_end):
+            return False
+        return True
+
+
+    def daily_risk_check(self) -> bool:
+        """
+        Drawdown / incremental-loss guard with peak balance tracking.
+        """
+        self.peak_balance = max(getattr(self, "peak_balance", self.daily_start_balance), self.latest_balance)
+        dd = (self.peak_balance - self.latest_balance) / self.peak_balance
+        if dd >= 0.03:
+            self.logger.warning(f"⚠ max-drawdown {dd:.2%}")
+            return True
+
+        if (self.daily_start_balance - self.latest_balance) >= (self.daily_start_balance * 0.01):
+            self.consecutive_losses += 1
+            if self.consecutive_losses >= 3:
+                self.logger.warning("⚠ consecutive loss guard")
+                return True
+        else:
+            self.consecutive_losses = 0
+        return False
+
+
+    async def evaluate_strategy(self, symbol: str):
+        """
+        Concurrent historical fetch → rule-signal evaluation.
+        """
+        try:
+            await asyncio.gather(
+                self.fetch_historical_data(symbol, use_candles=True),
+                self.fetch_candle_history(symbol),
+            )
+        except Exception as e:
+            self.logger.error(f"Hist fetch error → {e}")
+            return "HOLD", 0.0
+
+        if len(self.candle_closes) < 8:
+            return "HOLD", 0.0
+
+        candle_data = [
+            {
+                "open": o,
+                "high": h,
+                "low": l,
+                "close": c,
+                "volume": v,
             }
-            response = await self.deriv_api.proposal(proposal_request)
-            if response and 'proposal' in response:
-                self.logger.info(f"Price proposal received: {response['proposal']['ask_price']}")
-                return response['proposal']
-            else:
-                self.logger.error("Failed to get price proposal.")
-                return None
-        except Exception as e:
-            self.logger.error(f"Error getting price proposal: {e}")
-            return None
+            for o, h, l, c, v in zip(
+                self.candle_opens,
+                self.candle_highs,
+                self.candle_lows,
+                self.candle_closes,
+                self.candle_volumes,
+            )
+        ]
 
-    async def execute_trade(self, symbol, signal, price_proposal):
-        """
-        Executes a trade based on the provided price proposal.
-        """
-        proposal_id = price_proposal['id']
-        self.logger.info(f"Executing trade: Symbol={symbol}, Signal={signal}, Amount={config.AMOUNT}")
-
-        try:
-            response = await self.deriv_api.buy({"buy": proposal_id, "price": price_proposal['ask_price']})
-            if response and 'buy' in response:
-                contract_id = response['buy']['contract_id']
-                self.logger.info(f"Trade executed. Contract ID: {contract_id}")
-                await self.monitor_trade(contract_id)
-                # Balance is logged in handle_poc_update
-            else:
-                self.logger.error("Trade execution failed.")
-        except Exception as e:
-            self.logger.error(f"Error during trade execution: {e}")
-
-    async def monitor_trade(self, contract_id):
-        """
-        Monitors the open trade for stop-loss and take-profit conditions.
-        """
-        self.logger.info(f"Monitoring trade. Contract ID: {contract_id}")
-        
-        try:
-            # Subscribe to proposal_open_contract stream
-            poc_stream = await self.deriv_api.subscribe({"proposal_open_contract": 1, "contract_id": contract_id})
-        except Exception as e:
-            self.logger.error(f"Error subscribing to poc_stream: {e}")
-            return
-        
-        # Create an asyncio Future to await until the contract is settled
-        loop = asyncio.get_event_loop()
-        future = loop.create_future()
-        
-        def on_next(poc):
-            # Handle each update from the proposal_open_contract stream
-            asyncio.create_task(self.handle_poc_update(poc, contract_id))
-            
-            # Check if the contract is settled
-            if poc.get('is_settled'):
-                if not future.done():
-                    future.set_result(None)
-        
-        def on_error(error):
-            self.logger.error(f"Error in poc_stream: {error}")
-            if not future.done():
-                future.set_exception(error)
-        
-        def on_completed():
-            if not future.done():
-                future.set_result(None)
-        
-        # Subscribe to the Observable with the defined callbacks
-        poc_subscription = poc_stream.subscribe(
-            on_next=on_next,
-            on_error=on_error,
-            on_completed=on_completed
+        self.rule_signals.account_balance = self.latest_balance
+        sig = await self.ai_signals.generate_candle_signal(
+            symbol=symbol,
+            candle_times=self.candle_times,
+            candle_closes=self.candle_closes,
+            account_balance=self.latest_balance,
+            recent_volatility=self.volatility,
+            recent_trades_win_loss_ratio=(self.total_wins / max(1, self.total_losses)),
         )
-        
+        if sig["signal"] == "HOLD":
+            return "HOLD", 0.0
+
+        # apply dynamic params
+        self.dynamic_stop_loss        = sig["stop_loss"]
+        self.dynamic_take_profit      = sig["take_profit"]
+        self.dynamic_confidence       = sig["confidence"]
+        self.dynamic_position_size    = round(sig["position_size"] * self.multiplier_factor, 2)
+        self.dynamic_max_holding_time = sig["max_holding_time"]
+        self.dynamic_trailing_stop    = sig["trailing_stop"]
+        self.dynamic_contract_type    = "CALL" if sig["signal"] == "BUY" else "PUT"
+
+        self.logger.info(f"▶ {sig['signal']} | SL {self.dynamic_stop_loss:.4f} TP {self.dynamic_take_profit:.4f} "
+                        f"Conf {self.dynamic_confidence:.2f} Size {self.dynamic_position_size}")
+        return sig["signal"], sig["confidence"]
+
+
+    # ---------------------------------------------------------------------
+    #  📈  MARKET-DATA + QUOTE HELPERS  (optimised)
+    # ---------------------------------------------------------------------
+    # 1) HISTORICAL DATA  ──────────────────────────────────────────────────
+    async def fetch_historical_data(
+        self,
+        symbol: str,
+        use_candles: bool = False,
+        cache_secs: int = 30,
+    ) -> None:
+        """
+        Unified tick / candle fetch with lightweight caching and deque-friendly
+        updates.  When `use_candles=True` we ALSO populate the candle buffers,
+        so `fetch_candle_history()` becomes a thin wrapper (kept for BC).
+        """
+        now = datetime.utcnow()
+        last = getattr(self, "_last_hist_fetch", {}).get((symbol, use_candles))
+        if last and (now - last).total_seconds() < cache_secs:
+            return  # skip – data still fresh
+        style = "candles" if use_candles else "ticks"
+        req = {
+            "ticks_history": symbol,
+            "style": style,
+            "start": int(now.timestamp()) - config.HISTORICAL_DATA_DURATION,
+            "end": "latest",
+            "count": config.MAX_TICK_DATA_POINTS,
+            "adjust_start_time": 1,
+        }
+        if use_candles:
+            req["granularity"] = 60
         try:
-            # Await the future until the contract is settled
-            await future
+            res = await self.deriv_api.ticks_history(req)
+            async with self.lock:
+                if style == "candles":
+                    cnd = res.get("candles", [])
+                    if not cnd:
+                        self.logger.error(f"{symbol}: empty candle history")
+                        return
+                    self.tick_times.clear()
+                    self.tick_prices.clear()
+                    self.candle_times.clear()
+                    self.candle_opens.clear()
+                    self.candle_highs.clear()
+                    self.candle_lows.clear()
+                    self.candle_closes.clear()
+                    self.candle_volumes.clear()
+                    for c in cnd:
+                        ts = datetime.fromtimestamp(c["epoch"])
+                        self.tick_times.append(ts)
+                        self.tick_prices.append(float(c["close"]))
+                        self.candle_times.append(ts)
+                        self.candle_opens.append(float(c["open"]))
+                        self.candle_highs.append(float(c["high"]))
+                        self.candle_lows.append(float(c["low"]))
+                        self.candle_closes.append(float(c["close"]))
+                        self.candle_volumes.append(float(c.get("volume", 1)))
+                    self.logger.debug(f"{symbol}: {len(cnd)} candles")
+                else:  # ticks
+                    hist = res.get("history", {})
+                    times = hist.get("times", [])
+                    prices = hist.get("prices", [])
+                    if not times or not prices:
+                        self.logger.error(f"{symbol}: empty tick history")
+                        return
+                    self.tick_times.clear()
+                    self.tick_prices.clear()
+                    for t, p in zip(times, prices):
+                        self.tick_times.append(datetime.fromtimestamp(int(t)))
+                        self.tick_prices.append(float(p))
+                    self.logger.debug(f"{symbol}: {len(prices)} ticks")
+            # cache timestamp
+            self._last_hist_fetch = getattr(self, "_last_hist_fetch", {})
+            self._last_hist_fetch[(symbol, use_candles)] = now
         except Exception as e:
-            self.logger.error(f"Exception while monitoring trade: {e}")
-        finally:
-            # Dispose of the subscription when done
-            poc_subscription.dispose()
-            self.logger.info(f"Stopped monitoring trade. Contract ID: {contract_id}")
+            self.logger.error(f"{symbol}: hist fetch error ({style}) → {e}")
 
-    async def handle_poc_update(self, poc_update, contract_id):
-        poc_data = poc_update.get('proposal_open_contract', {})
-        is_sold = poc_data.get('is_sold', False)
-        profit = float(poc_data.get('profit', 0.0))
 
-        if is_sold:
-            self.logger.info(f"Contract {contract_id} has been sold or expired.")
-            self.logger.info(f"Profit/Loss for Contract {contract_id}: {profit}")
+    # 2)  LEGACY WRAPPER – retains original call-site.  ────────────────────
+    async def fetch_candle_history(self, symbol: str) -> None:
+        await self.fetch_historical_data(symbol, use_candles=True)
 
-            if profit > 0:
-                self.cumulative_profit += profit
-                self.total_wins += 1
-                self.logger.info(f"Cumulative Profit: {self.cumulative_profit}")
-            elif profit < 0:
-                self.cumulative_loss += abs(profit)
-                self.total_losses += 1
-                self.logger.info(f"Cumulative Loss: {self.cumulative_loss}")
-            else:
-                self.logger.info("No profit or loss for this contract.")
 
-            current_time = datetime.now()
-            net_pl = self.cumulative_profit - self.cumulative_loss
-            self.pl_times.append(current_time)
-            self.pl_values.append(net_pl)
+    # 3)  LIVE-TICK SUBSCRIPTION  ──────────────────────────────────────────
+    async def subscribe_live_ticks(self, symbol: str) -> None:
+        req = {"ticks": symbol, "subscribe": 1}
+        try:
+            stream = await self.deriv_api.subscribe(req)
 
-            await self.log_current_balance()
+            async def _restart(err):
+                self.logger.warning(f"tick stream error: {err}; reconnecting…")
+                await asyncio.sleep(2)
+                await self.subscribe_live_ticks(symbol)
+
+            stream.subscribe(
+                on_next=lambda t: asyncio.create_task(self.tick_callback(t)),
+                on_error=lambda e: asyncio.create_task(_restart(e)),
+                on_completed=lambda: self.logger.info(f"{symbol}: tick stream closed"),
+            )
+            self.logger.info(f"{symbol}: tick stream subscribed")
+        except Exception as e:
+            self.logger.error(f"{symbol}: subscribe error → {e}")
+
+
+    # 4)  PRICE PROPOSAL  ──────────────────────────────────────────────────
+    async def get_price_proposal(self, symbol: str, signal: str) -> Optional[Dict]:
+        req = {
+            "proposal": 1,
+            "amount": 4,   # use dynamic size
+            "basis": "stake",
+            "contract_type": self.dynamic_contract_type,
+            "currency": config.CURRENCY,
+            "symbol": symbol,
+            "duration":5,
+            "duration_unit":'m' 
+           
+
+        }
+        for attempt in range(3):
+            try:
+                rsp = await self.deriv_api.proposal(req)
+                prop = rsp.get("proposal")
+                if prop:
+                    self.logger.debug(f"proposal ask={prop.get('ask_price')}")
+                    return prop
+                raise ValueError("empty proposal")
+            except Exception as e:
+                self.logger.warning(f"proposal retry {attempt+1}/3 → {e}")
+                await asyncio.sleep(1.5 ** attempt)
+        self.logger.error("proposal failed after retries")
+        return None
+
+
+        # ---------------------------------------------------------------------
+    #  🔻 TRADE-CLOSE & RESULT HANDLERS (optimised)
+    # ---------------------------------------------------------------------
+    async def sell_contract(
+        self,
+        contract_id: str,
+        future: Optional[asyncio.Future] = None,
+        retries: int = 3,
+    ) -> None:
+        """
+        Attempt to close a contract with exponential back-off.
+        On first successful sell we immediately finalise records.
+        """
+        if self.contracts_closed.get(contract_id):
             return
+
+        dummy_fut = False
+        if future is None:
+            future, dummy_fut = asyncio.get_event_loop().create_future(), True
+
+        for i in range(retries):
+            try:
+                rsp = await self.deriv_api.sell({"sell": contract_id, "price": 0})
+                if "sell" in rsp:
+                    profit = float(rsp["sell"].get("profit", 0.0))
+                    await self.finalize_trade(contract_id, profit, future)
+                    return
+                raise RuntimeError("no sell receipt")
+            except Exception as e:
+                self.logger.warning(f"Sell retry {i+1}/{retries} → {e}")
+                await asyncio.sleep(1.5 ** i)
+
+        # still here → failed
+        self.logger.error(f"‼ sell failed ({contract_id}) after {retries} attempts")
+        self.contracts_closed[contract_id] = True
+        if not future.done():
+            future.set_result(None)
+        if dummy_fut:  # silence potential 'never awaited'
+            await future
+
+
+    async def record_trade_results(self, contract_id: str) -> None:
+        """Derive P/L from balance delta: current balance – balance@entry."""
+        # Fetch fresh balance straight from API
+        try:
+            bal_resp = await self.deriv_api.balance()
+            cur_balance = float(bal_resp.get("balance", {}).get("balance", 0.0))
+        except Exception as e:
+            self.logger.error(f"Balance fetch failed for P/L calc → {e}")
+            return
+
+        entry_bal = self.entry_balance.get(contract_id, self.latest_balance)
+        profit = cur_balance - entry_bal
+
+        # Update cached latest balance
+        self.latest_balance = cur_balance
+
+        self.trades_data.append({"profit": profit, "timestamp": datetime.now()})
+
+        if profit > 0:
+            self.cumulative_profit += profit
+            self.total_wins += 1
+            self.consecutive_losses = 0
+            self.logger.info(f"✓ profit  +{profit:.2f}")
+        elif profit < 0:
+            self.cumulative_loss += -profit
+            self.total_losses += 1
+            self.consecutive_losses += 1
+            self.logger.info(f"✗ loss    {profit:.2f}")
+        else:
+            self.logger.info("↔ break-even")
+
+        net_pl = self.cumulative_profit - self.cumulative_loss
+        self.pl_times.append(datetime.now())
+        self.pl_values.append(net_pl)
+        self.daily_pl = self.latest_balance - self.daily_start_balance
+        self.logger.debug(f"P/L day {self.daily_pl:.2f} | net {net_pl:.2f} | loss streak {self.consecutive_losses}/{self.max_consecutive_losses}")
+
+
 
     def set_active_symbols(self, symbols):
         """
-        Sets the list of active symbols available for trading.
+        Accepts either:
+        • a list of strings  → ["R_10", "R_25", …]
+        • a list of dicts    → [{"symbol": "R_10", …}, …]
+        and normalises to a string list for internal use / logging.
         """
+        if symbols and isinstance(symbols[0], dict):
+            symbols = [s.get("symbol", "") for s in symbols]
+
+        # remove empties & deduplicate
+        symbols = list(dict.fromkeys(filter(None, symbols)))
+
         self.active_symbols = symbols
-        self.logger.info(f"Active symbols set. Total symbols: {len(symbols)}")
- 
- 
-    def fetch_recent_news(self, symbol):
-        """
-        Fetch recent market news related to the provided symbol using the News API.
-        """
-        url = "https://newsapi.org/v2/everything"
-        params = {
-            "q": symbol,
-            "sortBy": "publishedAt",
-            "language": "en",
-            "apiKey": config.NEWS_API_KEY,
-            "pageSize": 5
-        }
+   
 
-        try:
-            response = requests.get(url, params=params)
-            data = response.json()
-            articles = data.get("articles", [])
-            news_list = []
-            for article in articles:
-                title = article.get("title", "")
-                description = article.get("description", "")
-                news_list.append(f"{title}: {description}")
-            return news_list
-        except Exception as e:
-            self.logger.error(f"Error fetching news: {e}")
-            return []
-        
-        
-        
-        
 
-        
-        
-        
-        
+
+    # ---------------------------------------------------------------------
+    #  🔻 LIFE-CYCLE HELPERS
+    # ---------------------------------------------------------------------
+    def initialize_trade(self, contract_id: str, proposal: Dict):
+        """Capture balance snapshot and seed trailing/hedge state."""
+        self.entry_price  = float(proposal["ask_price"])
+        self.best_price   = self.entry_price
+
+        self.trade_open_times[contract_id] = datetime.now()
+        self.active_trades[contract_id]    = {"peak": 0.0, "armed": False}
+        self.entry_balance[contract_id]    = self.latest_balance
+
+        # ── NEW: initialise depth to 0 unless the hedge block set it already
+        self._hedge_depth.setdefault(contract_id, 0)
+
+        self.logger.info(
+            f"Open {contract_id} @ {self.entry_price:.4f} | "
+            f"entry bal {self.latest_balance:.2f}"
+        )
+
+
+
+
+
+    async def finalize_trade(self, contract_id: str, _unused_profit: float, fut: asyncio.Future):
+        """Profit now computed via balance delta; ignore broker profit arg."""
+        self.contracts_closed[contract_id] = True
+        await self.record_trade_results(contract_id)
+        await self.log_current_balance()
+        self.active_trades.pop(contract_id, None)
+        self.entry_balance.pop(contract_id, None)
+        if not fut.done():
+            fut.set_result(None)
+
+
+
+    async def cleanup_trade(self, contract_id: str):
+        self.trade_open_times.pop(contract_id, None)
+        self.active_trades.pop(contract_id, None)
+        self.entry_balance.pop(contract_id, None)
+        self.logger.debug(f"Cleanup {contract_id}")
+
+    async def retry_trade_execution(
+        self, symbol: str, signal: str, max_retries: int = 3
+    ) -> None:
+        """
+        Re-obtain proposal & resubmit buy with geometric back-off.
+        """
+        for i in range(max_retries):
+            await asyncio.sleep(1.5 ** i)
+            try:
+                prop = await self.get_price_proposal(symbol, signal)
+                if prop:
+                    await self.execute_trade_safely(symbol, signal)
+                    return
+            except Exception as e:
+                self.logger.warning(f"Buy retry {i+1}/{max_retries} → {e}")
+

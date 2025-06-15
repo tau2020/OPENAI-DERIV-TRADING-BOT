@@ -135,7 +135,7 @@ class DerivAPI:
 
     async def handle_subscription(self, response_data: dict):
         """
-        Handles subscription updates such as tick data.
+        Handles subscription updates such as tick data or proposal_open_contract updates.
         """
         if 'tick' in response_data:
             symbol = response_data['tick']['symbol']
@@ -145,6 +145,14 @@ class DerivAPI:
                 await callback(response_data['tick'])
             else:
                 self.logger.warning(f"No callback found for symbol: {symbol}")
+        elif 'proposal_open_contract' in response_data:
+            contract_id = response_data['proposal_open_contract'].get('contract_id')
+            callback = self.subscriptions.get(contract_id)
+            if callback:
+                self.logger.debug(f"Dispatching POC update for contract ID: {contract_id}")
+                await callback(response_data['proposal_open_contract'])
+            else:
+                self.logger.warning(f"No callback found for contract ID: {contract_id}")
         else:
             self.logger.debug(f"Unhandled subscription message: {response_data}")
 
@@ -209,9 +217,6 @@ class DerivAPI:
 
     # Additional methods for API interactions
     async def get_active_symbols(self):
-        """
-        Retrieves a list of active symbols available for trading.
-        """
         request = {"active_symbols": "full"}
         response = await self.send_request(request)
         if response and 'active_symbols' in response:
@@ -220,10 +225,8 @@ class DerivAPI:
             self.logger.error("Failed to retrieve active symbols.")
             return None
 
+
     async def get_contracts_for_symbol(self, symbol):
-        """
-        Retrieves available contracts for a given symbol.
-        """
         request = {"contracts_for": symbol}
         response = await self.send_request(request)
         if response and 'contracts_for' in response:
@@ -233,9 +236,6 @@ class DerivAPI:
             return None
 
     async def get_ticks_history(self, symbol, start_time, end_time):
-        """
-        Retrieves historical tick data for a given symbol.
-        """
         request = {
             "ticks_history": symbol,
             "start": start_time,
@@ -251,9 +251,6 @@ class DerivAPI:
             return None
 
     async def get_account_info(self):
-        """
-        Retrieves account information.
-        """
         request = {"get_account_status": 1}
         response = await self.send_request(request)
         if response and 'get_account_status' in response:
@@ -263,9 +260,6 @@ class DerivAPI:
             return None
 
     async def get_balance(self):
-        """
-        Retrieves account balance information.
-        """
         request = {"balance": 1}
         response = await self.send_request(request)
         if response and 'balance' in response:
@@ -275,13 +269,9 @@ class DerivAPI:
             return None
 
     async def get_contract_profit(self, contract_id):
-        """
-        Retrieves the profit of an open contract.
-        """
         request = {"profit_table": 1, "contract_id": contract_id}
         response = await self.send_request(request)
         if response and 'profit_table' in response:
-            # Extract profit information
             transactions = response['profit_table'].get('transactions', [])
             if transactions:
                 profit = float(transactions[0].get('profit', 0.0))
@@ -292,13 +282,11 @@ class DerivAPI:
             self.logger.error(f"Failed to retrieve profit for contract ID: {contract_id}")
             return None
 
-    async def sell_contract(self, contract_id):
-        """
-        Sells an open contract to close the position.
-        """
-        request = {"sell": contract_id, "price": 0}
+    async def sell_contract(self, contract_id: int, price: float = 0.0) -> dict:
+        request = {
+            "sell": contract_id,
+            "price": price,
+            "req_id": uuid.uuid4().int & (1 << 32) - 1
+        }
         response = await self.send_request(request)
-        if response and 'sell' in response:
-            self.logger.info(f"Contract {contract_id} sold successfully.")
-        else:
-            self.logger.error(f"Failed to sell contract ID: {contract_id}")
+        return response

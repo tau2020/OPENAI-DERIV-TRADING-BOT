@@ -7,19 +7,19 @@ from utils.logger import setup_logger
 from strategy.trading_strategy import TradingStrategy
 from config import config
 from deriv_api import DerivAPI
-from dashboard import Dashboard
+
 
 async def main():
     """
     Main entry point for the trading bot.
-    Sets up logging, initializes API connections, starts the trading strategy, and runs the dashboard.
+    Sets up logging, initializes API connections, starts the trading strategy, and runs indefinitely.
     """
-    # Setup logger with configuration
     logger = setup_logger(config.LOG_LEVEL, config.LOG_FILE)
     logger.info("Starting trading bot...")
 
-    # Initialize Deriv API using the official `python_deriv_api` package
+    # Initialize Deriv API
     deriv_api = DerivAPI(app_id=config.DERIV_APP_ID)
+    openai_api_key = config.OPENAI_API_KEY
     logger.info("Deriv API instance created.")
 
     try:
@@ -31,11 +31,14 @@ async def main():
         else:
             logger.info("Authorized with Deriv API.")
 
-        # Initialize trading strategy with OpenAI API Key
+        # Retrieve loginid from the authorize response (optional)
+        loginid = authorize_response.get('authorize', {}).get('loginid', 'Unknown')
+
+        # Initialize the AI-free TradingStrategy
         strategy = TradingStrategy(
             logger=logger,
-            deriv_api=deriv_api,
-            openai_api_key=config.OPENAI_API_KEY  # Ensure this is defined in config.py
+            deriv_api_client=deriv_api,
+            loginid=loginid  # pass the loginid for logging/trace if desired
         )
 
         # Fetch active symbols
@@ -48,35 +51,25 @@ async def main():
             logger.error("Failed to retrieve active symbols.")
             return
 
-        # Initialize and start the Dashboard in a separate thread
-        dashboard = Dashboard(trading_strategy=strategy, host='0.0.0.0', port=8050)
-        dashboard_thread = threading.Thread(target=dashboard.run, daemon=True)
-        dashboard_thread.start()
-        logger.info("Dashboard is running... Access it at http://localhost:8050/")
-
-        # Start receiving ticks
+        # Start receiving ticks for the configured symbol
         tick_stream = await deriv_api.subscribe({"ticks": config.SYMBOL})
 
-        # Define an asynchronous tick handler
         async def handle_tick(tick):
             await strategy.tick_callback(tick)
 
-        # Subscribe to ticks with the asynchronous handler
-        tick_stream.subscribe(
-            on_next=lambda tick: asyncio.create_task(handle_tick(tick))
-        )
+        tick_stream.subscribe(on_next=lambda t: asyncio.create_task(handle_tick(t)))
         logger.info(f"Subscribed to ticks for symbol: {config.SYMBOL}")
 
-        # Run indefinitely
-        await asyncio.Future()  # Keeps the main coroutine running
+        # Keep running indefinitely
+        await asyncio.Future()  # Blocks so the bot keeps running
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")
-
     finally:
         await deriv_api.disconnect()
         logger.info("Disconnected from Deriv API.")
         logger.info("Trading bot stopped.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

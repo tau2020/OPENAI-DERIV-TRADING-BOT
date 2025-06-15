@@ -1,13 +1,53 @@
-/bin
-trading_bot_env/
-utils/__pycache__
-config/__pycache__
-api/__pycache__
-bot_env
-strategy/__pycache__
-Python-3.12.0
-settings.json
-Python-3.12.0.tgz
-models.cpython-312.pyc
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+trading_bot.log
+trading_strategy.log
+*.db
+trades.db
+Python-3.12.0.tgz
+
+# Logs
 logs/
+*.log
+
+
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
