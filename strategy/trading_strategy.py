@@ -89,7 +89,7 @@ class TradingStrategy:
         self.trade_directions: Dict[str, str] = {}  # "BUY"/"SELL"
 
         # 🆕 Opposite-bid state
-        self.loss_reverse_threshold_points: float = -3.7  # ≤ –3 ⇒ reverse
+        self.loss_reverse_threshold_points: float = -2.7  # ≤ –3 ⇒ reverse
         self.reversed_trades: Set[str] = set()  # guard against flip-flops
         self.hedged_trades: Set[str] = set()
 
@@ -136,7 +136,7 @@ class TradingStrategy:
         self.batch_trade_count: int = 0
         self.batch_pause_until: datetime = datetime.min
         self.batch_size: int = 2
-        self.batch_cooldown: timedelta = timedelta(minutes=5)
+        self.batch_cooldown: timedelta = timedelta(minutes=3)
 
         # Market metrics
         self.volatility: float = 0.0
@@ -878,6 +878,41 @@ class TradingStrategy:
         if dummy_fut:  # silence potential 'never awaited'
             await future
 
+    async def get_open_contracts_info(self) -> list[dict]:
+        """
+        Retrieves all open contracts directly using the portfolio call for efficiency.
+        """
+        try:
+            # The portfolio() method is defined in the deriv_api_calls.py library
+            portfolio_response = await self.deriv_api.portfolio({})
+
+            # The response contains a 'contracts' list under the 'portfolio' key
+            if portfolio_response.get("portfolio"):
+                return portfolio_response["portfolio"].get("contracts", [])
+            return []
+        except Exception as e:
+            self.logger.error(f"Error fetching portfolio: {e}")
+            return []
+
+        live_ids = [cid for cid, closed in self.contracts_closed.items() if not closed]
+        return await asyncio.gather(*(_info(cid) for cid in live_ids))
+
+        # expose sell with a simple wrapper so the API layer stays thin
+
+
+    async def api_sell_contract(self, contract_id: str) -> dict:
+        """
+        A wrapper to expose the core sell_contract logic to the API layer.
+        """
+        try:
+            # The sell() method is defined in the deriv_api_calls.py library
+            await self.sell_contract(contract_id)  # Using the existing retry logic
+            self.logger.info(f"API request to sell contract {contract_id} submitted.")
+            return {"status": "sell_submitted", "contract_id": contract_id}
+        except Exception as e:
+            self.logger.error(f"API sell request for {contract_id} failed: {e}")
+            # In a real app, you might raise HTTPException here, but for now, we return an error state.
+            return {"status": "error", "message": str(e), "contract_id": contract_id}
 
     async def record_trade_results(self, contract_id: str) -> None:
         """Derive P/L from balance delta: current balance – balance@entry."""
