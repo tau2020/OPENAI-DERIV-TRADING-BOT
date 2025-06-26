@@ -49,7 +49,7 @@ async def call_openai_api(
             start_ts = asyncio.get_event_loop().time()
             response = await asyncio.to_thread(
                 client.chat.completions.create,
-                model="o4-mini",
+                model="o3-mini",
                 messages=[
                     {
                         "role": "user",

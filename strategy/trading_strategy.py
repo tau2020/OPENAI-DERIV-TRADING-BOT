@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from asyncio import Lock
 from datetime import datetime, time, timedelta
-from typing import DefaultDict, List, Dict, Optional, Set
+from typing import DefaultDict, List, Dict, Optional, Set,Callable, Awaitable
 from collections import defaultdict, deque
 
 from api.deriv_api import DerivAPI
@@ -37,11 +37,13 @@ class TradingStrategy:
         logger: logging.Logger,
         deriv_api_client: DerivAPI,
         loginid: str = "Unknown",
+        portfolio_update_callback: Optional[Callable[[], Awaitable[None]]] = None,  # --- ADDED ---
     ):
         # ─────────── original init ───────────
         self.logger = logger
         self.deriv_api = deriv_api_client
         self.loginid = loginid
+        self.portfolio_update_callback = portfolio_update_callback  # --- ADDED ---
 
         # TradingStrategy.__init__
         self.ai_signals = OpenAISignalEngine(
@@ -87,6 +89,9 @@ class TradingStrategy:
         self.trade_open_times: Dict[str, datetime] = {}
         self.active_trades: Dict[str, Dict] = {}
         self.trade_directions: Dict[str, str] = {}  # "BUY"/"SELL"
+
+        # This dictionary will hold the real-time state for the UI
+        self.open_positions_state: Dict[int, Dict] = {}
 
         # 🆕 Opposite-bid state
         self.loss_reverse_threshold_points: float = -2.7  # ≤ –3 ⇒ reverse
@@ -157,6 +162,12 @@ class TradingStrategy:
     # --------------------------------------------------------------------- #
     # CORE STRATEGY METHODS
     # --------------------------------------------------------------------- #
+
+    async def _trigger_portfolio_update(self):
+        """If a callback is configured, invoke it to signal a portfolio change."""
+        if self.portfolio_update_callback and callable(self.portfolio_update_callback):
+            self.logger.info("Triggering real-time portfolio update for clients.")
+            await self.portfolio_update_callback()
 
     async def _open_hedge(
             self,
@@ -348,18 +359,39 @@ class TradingStrategy:
     async def handle_poc_update(          # noqa: C901, PLR0912
         self,
         poc_update: Dict,
-        contract_id: str,
+        contract_id_str: str,
         fut: asyncio.Future,
     ) -> None:
 
         # --- basic guards --------------------------------------------------
-        if self.contracts_closed.get(contract_id):
+        if self.contracts_closed.get(contract_id_str):
             return
         poc = poc_update.get("proposal_open_contract", {})
         if not poc or not poc.get("is_valid_to_sell", False):
             return
 
-        profit  = float(poc.get("profit", 0.0))   # USD P/L
+        # --- START: MODIFICATION FOR LIVE P/L ---
+
+        # Standardize data types
+        contract_id = int(contract_id_str)
+        profit = float(poc.get("profit", 0.0))
+
+        # If it's the first time we see this contract, populate its static info.
+        if contract_id not in self.open_positions_state:
+            self.open_positions_state[contract_id] = {
+                "contract_id": contract_id,
+                "buy_price": float(poc.get("buy_price", 0.0)),
+                "display_name": poc.get("display_name", poc.get("underlying", "Unknown Asset")),
+            }
+
+        # On every update, refresh the dynamic profit value.
+        # This is the key to showing live P/L on the UI.
+        self.open_positions_state[contract_id]['profit'] = profit
+
+        # The existing trigger will now broadcast our fresh, in-memory data.
+        asyncio.create_task(self._trigger_portfolio_update())
+
+        # --- END: MODIFICATION FOR LIVE P/L ---
         is_sold = poc.get("is_sold", False)
         symbol  = (
             poc.get("underlying")                 # always present on multiplier POC
@@ -880,24 +912,11 @@ class TradingStrategy:
 
     async def get_open_contracts_info(self) -> list[dict]:
         """
-        Retrieves all open contracts directly using the portfolio call for efficiency.
+        Retrieves open contracts from the live, in-memory state.
+        This is highly efficient and reflects real-time P/L.
         """
-        try:
-            # The portfolio() method is defined in the deriv_api_calls.py library
-            portfolio_response = await self.deriv_api.portfolio({})
-
-            # The response contains a 'contracts' list under the 'portfolio' key
-            if portfolio_response.get("portfolio"):
-                return portfolio_response["portfolio"].get("contracts", [])
-            return []
-        except Exception as e:
-            self.logger.error(f"Error fetching portfolio: {e}")
-            return []
-
-        live_ids = [cid for cid, closed in self.contracts_closed.items() if not closed]
-        return await asyncio.gather(*(_info(cid) for cid in live_ids))
-
-        # expose sell with a simple wrapper so the API layer stays thin
+        # The 'list()' creates a copy to prevent mutation issues during iteration.
+        return list(self.open_positions_state.values())
 
 
     async def api_sell_contract(self, contract_id: str) -> dict:
@@ -990,13 +1009,24 @@ class TradingStrategy:
             f"Open {contract_id} @ {self.entry_price:.4f} | "
             f"entry bal {self.latest_balance:.2f}"
         )
+        asyncio.create_task(self._trigger_portfolio_update())
 
 
 
 
-
-    async def finalize_trade(self, contract_id: str, _unused_profit: float, fut: asyncio.Future):
+    async def finalize_trade(self, contract_id_str: str, _unused_profit: float, fut: asyncio.Future):
         """Profit now computed via balance delta; ignore broker profit arg."""
+
+        # --- ADD THIS BLOCK ---
+        contract_id = int(contract_id_str)
+        # Remove the closed position from our real-time state for the UI
+        if contract_id in self.open_positions_state:
+            del self.open_positions_state[contract_id]
+        # --- END ADD ---
+
+
+
+
         self.contracts_closed[contract_id] = True
         await self.record_trade_results(contract_id)
         await self.log_current_balance()
@@ -1004,6 +1034,8 @@ class TradingStrategy:
         self.entry_balance.pop(contract_id, None)
         if not fut.done():
             fut.set_result(None)
+
+        asyncio.create_task(self._trigger_portfolio_update())
 
 
 
